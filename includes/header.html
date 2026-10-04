@@ -1,49 +1,56 @@
-<header class="header">
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIBE STUDIO</title>
+    <link rel="stylesheet" href="header.css">
+</head>
+<body>
 
-    <a href="index.html" class="logo">VIBE<span>STUDIO</span></a>
+    <header class="header">
+        <!-- Logo -->
+        <a href="index.html" class="logo">VIBE<span>STUDIO</span></a>
 
-    <nav class="navbar">
-        <a href="index.html">TRANG CHỦ</a>
-        <a href="index.html#about">GIỚI THIỆU</a>
-        <a href="index.html#services">DỊCH VỤ</a>
-        <a href="san-pham.html" data-page="san-pham.html">SẢN PHẨM</a>
-        <a href="index.html#contact">LIÊN HỆ</a>
-    </nav>
+        <!-- Menu giữa -->
+        <nav class="navbar">
+            <a href="index.html" class="active">TRANG CHỦ</a>
+            <a href="index.html#about">GIỚI THIỆU</a>
+            <a href="index.html#services">DỊCH VỤ</a>
+            <a href="san-pham.html">SẢN PHẨM</a>
+            <a href="index.html#contact">LIÊN HỆ</a>
+        </nav>
 
-    <div class="header-right">
+        <!-- Cụm 3 Icon Chức Năng -->
+        <div class="header-right">
 
-        <!-- THANH TÌM KIẾM ĐỒNG BỘ PHONG CÁCH TỐI GIẢN (VIBE STUDIO) -->
-        <form action="tim-kiem.php" method="GET" class="search-box">
-            <input type="text" name="q" placeholder="TÌM KIẾM..." required autocomplete="off">
-            <button type="submit" aria-label="Tìm kiếm">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                    stroke-linecap="round" stroke-linejoin="round">
+            <!-- 1. TÌM KIẾM -->
+            <a href="san-pham.html" class="header-icon" aria-label="Tìm kiếm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"/>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
-            </button>
-        </form>
+            </a>
 
-        <a href="dang-nhap.html" class="account-link" aria-label="Đăng nhập">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="8" r="4"/>
-                <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
-            </svg>
-            <span>ĐĂNG NHẬP</span>
-        </a>
+            <!-- 2. ĐĂNG NHẬP -->
+            <a href="dang-nhap.html" class="header-icon" aria-label="Đăng nhập">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
+                </svg>
+            </a>
 
-        <a href="gio-hang.html" class="icon-link" aria-label="Giỏ hàng">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M6 7h12l1 13H5L6 7z"/>
-                <path d="M9 7V6a3 3 0 0 1 6 0v1"/>
-            </svg>
-            <span class="cart-count is-empty" data-cart-count>0</span>
-        </a>
+            <!-- 3. GIỎ HÀNG -->
+            <a href="gio-hang.html" class="header-icon cart-icon" aria-label="Giỏ hàng">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 7h12l1 13H5L6 7z"/>
+                    <path d="M9 7V6a3 3 0 0 1 6 0v1"/>
+                </svg>
+                <span class="cart-badge">0</span>
+            </a>
 
-        <a href="dat-lich.html" class="header-button">ĐẶT LỊCH</a>
+        </div>
+    </header>
 
-    </div>
-
-</header>
+</body>
+</html>
