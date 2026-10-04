@@ -1,19 +1,15 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-if (!defined('BASE_URL')) {
-    define('BASE_URL', '/QUAN_LY_STUDIO/');
-}
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/auth.php';
 
 $tieu_de_trang = $tieu_de_trang ?? 'VIBE STUDIO';
 $trang_hien_tai = $trang_hien_tai ?? '';
 $css_rieng = $css_rieng ?? [];
 
-$da_dang_nhap = isset($_SESSION['user_id']);
+$da_dang_nhap = da_dang_nhap();
 $so_luong_gio = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
 ?>
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>

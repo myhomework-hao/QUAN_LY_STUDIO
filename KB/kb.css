@@ -1,0 +1,181 @@
+.auth-trang {
+    min-height: calc(100vh - 180px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    background: var(--soft);
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 440px;
+    padding: 45px 40px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+}
+
+.auth-container .small-title {
+    margin-bottom: 15px;
+}
+
+.auth-container h1 {
+    font-size: clamp(36px, 5vw, 52px);
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -2px;
+    margin-bottom: 30px;
+}
+
+
+.auth-container label,
+.khung-danh-gia form > label {
+    display: block;
+    margin: 22px 0 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.auth-container input,
+.auth-container select,
+.khung-danh-gia textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 0;
+    background: #ffffff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    transition: 0.3s;
+}
+
+.auth-container input:focus,
+.auth-container select:focus,
+.khung-danh-gia textarea:focus {
+    border-color: var(--ink);
+}
+
+.auth-container input:disabled {
+    background: var(--soft);
+    color: var(--muted);
+}
+
+.auth-container button,
+.khung-danh-gia button {
+    display: block;
+    width: 100%;
+    margin-top: 30px;
+    padding: 17px 28px;
+    border: none;
+    background: var(--ink);
+    color: #ffffff;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.auth-container button:hover,
+.khung-danh-gia button:hover {
+    background: #333333;
+}
+
+
+.message {
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--ink);
+    background: var(--soft);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.message.error {
+    border-left-color: var(--error);
+    background: #fdf3f2;
+    color: var(--error);
+}
+
+.message.success {
+    border-left-color: #2e7d32;
+    background: #f1f8f2;
+    color: #2e7d32;
+}
+
+
+.auth-container > p:last-child {
+    margin-top: 28px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.auth-container > p a {
+    margin-left: 6px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--ink);
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+
+.khung-danh-gia {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 60px 20px 100px;
+}
+
+.khung-danh-gia h1 {
+    font-size: clamp(32px, 5vw, 56px);
+    line-height: 1.05;
+    font-weight: 600;
+    letter-spacing: -2px;
+    margin-bottom: 30px;
+}
+
+.khung-danh-gia textarea {
+    resize: vertical;
+}
+
+.chon-sao {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.chon-sao input {
+    position: absolute;
+    opacity: 0;
+}
+
+.chon-sao label {
+    padding-right: 4px;
+    font-size: 38px;
+    color: var(--line);
+    cursor: pointer;
+}
+
+.chon-sao input:checked ~ label,
+.chon-sao label:hover,
+.chon-sao label:hover ~ label {
+    color: var(--ink);
+}
+
+.chon-sao input:focus-visible + label {
+    outline: 2px solid var(--ink);
+}
+
+
+@media (max-width: 480px) {
+    .auth-container {
+        padding: 30px 22px;
+    }
+}

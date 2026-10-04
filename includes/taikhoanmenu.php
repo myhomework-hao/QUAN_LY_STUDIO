@@ -8,13 +8,21 @@
 
     <div class="tai-khoan-menu">
         <?php if ($da_dang_nhap): ?>
-            <?php if (!empty($_SESSION['ho_ten'])): ?>
-                <p class="tai-khoan-ten"><?= htmlspecialchars($_SESSION['ho_ten']) ?></p>
-            <?php endif; ?>
-            <a href="<?= BASE_URL ?>KB/profile.php">HỒ SƠ CỦA TÔI</a>
-            <a href="<?= BASE_URL ?>KB/my-orders.php">ĐƠN HÀNG CỦA TÔI</a>
-            <a href="<?= BASE_URL ?>KB/logout.php" class="dang-xuat">ĐĂNG XUẤT</a>
-        <?php else: ?>
+    <?php if (!empty($_SESSION['user_name'])): ?>
+    <p class="tai-khoan-ten"><?= htmlspecialchars($_SESSION['user_name']) ?></p>
+<?php endif; ?>
+
+    <?php if (vai_tro_hien_tai() === 'admin'): ?>
+        <a href="<?= BASE_URL ?>TP/admin/dashboard.php">QUẢN TRỊ</a>
+    <?php elseif (vai_tro_hien_tai() === 'vendor'): ?>
+        <a href="<?= BASE_URL ?>AT/vendor/my-services.php">QUẢN LÝ DỊCH VỤ</a>
+        <a href="<?= BASE_URL ?>HH/vendor-orders.php">ĐƠN CỦA DỊCH VỤ</a>
+    <?php endif; ?>
+
+    <a href="<?= BASE_URL ?>KB/profile.php">HỒ SƠ CỦA TÔI</a>
+    <a href="<?= BASE_URL ?>KB/my-orders.php">ĐƠN HÀNG CỦA TÔI</a>
+    <a href="<?= BASE_URL ?>KB/logout.php" class="dang-xuat">ĐĂNG XUẤT</a>
+<?php else: ?>
             <a href="<?= BASE_URL ?>KB/login.php">ĐĂNG NHẬP</a>
             <a href="<?= BASE_URL ?>KB/register.php">ĐĂNG KÝ</a>
         <?php endif; ?>
