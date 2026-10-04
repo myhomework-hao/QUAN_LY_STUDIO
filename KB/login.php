@@ -51,17 +51,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($user['role'] == 1) {
 
-                header('Location: ../PERSON_A/admin/dashboard.php');
+                header('Location: ../TP/admin/dashboard.php');
                 exit;
 
             } elseif ($user['role'] == 2) {
 
-                header('Location: ../PERSON_B/vendor/dashboard.php');
+                header('Location: ../AT/vendor/dashboard.php');
                 exit;
 
             } else {
 
-                header('Location: ../PERSON_A/index.php');
+                header('Location: ../TP/index.php');
                 exit;
             }
 

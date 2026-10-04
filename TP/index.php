@@ -1,22 +1,11 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIBE Studio</title>
+<?php
+$tieu_de_trang = 'VIBE Studio';
+$trang_hien_tai = 'trang-chu';
+$css_rieng = ['homepage.css'];
 
-    <link rel="stylesheet" href="../assets/style.css">
-    <link rel="stylesheet" href="homepage.css">
-    <link rel="stylesheet" href="../includes/footer.css">
-    <link rel="stylesheet" href="../includes/header.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
-</head>
+require_once __DIR__ . '/../includes/header.php';
+?>
 
-<body>
-
-    <div data-include="../includes/header.html"></div>
     <main>
 
     <!-- HERO -->
@@ -88,7 +77,7 @@
 
         <div class="service-list">
 
-            <a href="dat-lich.html?dich-vu=portrait" class="service-item">
+            <a href="<?= BASE_URL ?>AT/services.php?dich-vu=portrait" class="service-item">
                 <span>01</span>
                 <div>
                     <h3>PORTRAIT</h3>
@@ -97,7 +86,7 @@
                 <strong>↗</strong>
             </a>
 
-            <a href="dat-lich.html?dich-vu=event" class="service-item">
+            <a href="<?= BASE_URL ?>AT/services.php?dich-vu=event" class="service-item">
                 <span>02</span>
                 <div>
                     <h3>EVENT</h3>
@@ -106,7 +95,7 @@
                 <strong>↗</strong>
             </a>
 
-            <a href="dat-lich.html?dich-vu=product" class="service-item">
+            <a href="<?= BASE_URL ?>AT/services.php?dich-vu=product" class="service-item">
                 <span>03</span>
                 <div>
                     <h3>PRODUCT</h3>
@@ -115,7 +104,7 @@
                 <strong>↗</strong>
             </a>
 
-            <a href="dat-lich.html?dich-vu=couple" class="service-item">
+            <a href="<?= BASE_URL ?>AT/services.php?dich-vu=couple" class="service-item">
                 <span>04</span>
                 <div>
                     <h3>COUPLE</h3>
@@ -188,7 +177,7 @@
                 trong những khoảnh khắc đặc biệt.
             </p>
 
-            <a href="dat-lich.html" class="white-button">ĐẶT LỊCH NGAY</a>
+            <a href="<?= BASE_URL ?>AT/services.php" class="white-button">ĐẶT LỊCH NGAY</a>
 
         </div>
 
@@ -238,8 +227,4 @@
 
     </main>
 
-    <div data-include="../includes/footer.html"></div>
-    <script src="../includes/link.js"></script>
-
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
