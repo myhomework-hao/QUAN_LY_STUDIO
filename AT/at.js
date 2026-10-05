@@ -1,7 +1,7 @@
 /* =========================
    TRANG SẢN PHẨM
 ========================= */
-
+//sanpham.js
 
 /* =========================
    LẤY CÁC PHẦN TỬ HTML
@@ -27,8 +27,8 @@ const noProduct =
    BIẾN LƯU DANH MỤC
 ========================= */
 
-let currentCategory = "all";
-
+const nutDangChon = document.querySelector(".category-button.active");
+let currentCategory = nutDangChon ? nutDangChon.dataset.category : "all";
 
 /* =========================
    HÀM HIỂN THỊ SẢN PHẨM
@@ -188,3 +188,4 @@ searchInput.addEventListener(
 
     }
 );
+hienThiSanPham();
