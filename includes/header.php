@@ -29,15 +29,15 @@ $so_luong_gio = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
 <body>
 
     <header class="header">
-     <a href="<?= BASE_URL ?>TP/index.php" class="logo">VIBE<span>STUDIO</span></a>
+        <a href="<?= BASE_URL ?>TP/index.php" class="logo">VIBE<span>STUDIO</span></a>
 
-<nav class="navbar">
-    <a href="<?= BASE_URL ?>TP/index.php" class="<?= $trang_hien_tai === 'trang-chu' ? 'active' : '' ?>">TRANG CHỦ</a>
-    <a href="<?= BASE_URL ?>TP/index.php#about">GIỚI THIỆU</a>
-    <a href="<?= BASE_URL ?>TP/index.php#services">DỊCH VỤ</a>
-    <a href="<?= BASE_URL ?>AT/services.php" class="<?= $trang_hien_tai === 'san-pham' ? 'active' : '' ?>">SẢN PHẨM</a>
-    <a href="<?= BASE_URL ?>TP/index.php#contact">LIÊN HỆ</a>
-</nav>
+        <nav class="navbar">
+            <a href="<?= BASE_URL ?>TP/index.php" class="<?= $trang_hien_tai === 'trang-chu' ? 'active' : '' ?>">TRANG CHỦ</a>
+            <a href="<?= BASE_URL ?>TP/index.php#about">GIỚI THIỆU</a>
+            <a href="<?= BASE_URL ?>TP/index.php#services">DỊCH VỤ</a>
+            <a href="<?= BASE_URL ?>AT/services.php" class="<?= $trang_hien_tai === 'san-pham' ? 'active' : '' ?>">SẢN PHẨM</a>
+            <a href="<?= BASE_URL ?>TP/index.php#contact">LIÊN HỆ</a>
+        </nav>
 
         <div class="header-right">
             <a href="<?= BASE_URL ?>TP/search.php" class="header-icon" aria-label="Tìm kiếm">
@@ -48,11 +48,6 @@ $so_luong_gio = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
             </a>
 
             <?php require __DIR__ . '/taikhoanmenu.php'; ?>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="8" r="4"/>
-                    <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
-                </svg>
-            </a>
 
             <a href="<?= BASE_URL ?>HH/cart.php" class="header-icon cart-icon" aria-label="Giỏ hàng">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
