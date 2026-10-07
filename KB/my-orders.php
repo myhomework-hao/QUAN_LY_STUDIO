@@ -43,7 +43,7 @@ require_once '../includes/header.php';
         <div class="card" style="text-align: center; padding: 40px;">
             <p>Bạn chưa đăng nhập hoặc chưa có đơn hàng nào vừa đặt.</p>
             <br>
-            <a href="../login.php" class="btn-dark">ĐĂNG NHẬP NGAY</a>
+            <a href="../KB/login.php" class="btn-dark">ĐĂNG NHẬP NGAY</a>
         </div>
     <?php elseif (empty($orders)) : ?>
         <div class="card" style="text-align: center; padding: 40px;">

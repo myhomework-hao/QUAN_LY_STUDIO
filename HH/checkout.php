@@ -128,7 +128,7 @@ require_once '../includes/header.php';
             
             <div style="margin-top: 25px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                 <a href="../TP/index.php" class="btn-dark" style="text-decoration: none; padding: 10px 20px;">VỀ TRANG CHỦ</a>
-                <a href="my-orders.php" class="btn-dark" style="text-decoration: none; padding: 10px 20px; background-color: #333; color: #fff;">XEM ĐƠN HÀNG CỦA TÔI</a>
+                <a href="../KB/my-orders.php" class="btn-dark" style="text-decoration: none; padding: 10px 20px; background-color: #333; color: #fff;">XEM ĐƠN HÀNG CỦA TÔI</a>
             </div>
         </div>
     <?php else : ?>
