@@ -1,191 +1,90 @@
-/* =========================
-   TRANG SẢN PHẨM
-========================= */
-//sanpham.js
+document.addEventListener("DOMContentLoaded", function () {
+    const categoryButtons = document.querySelectorAll(".category-button");
+    const categorySections = document.querySelectorAll(".category-section-box");
+    const searchInput = document.getElementById("search-product");
+    const searchButton = document.getElementById("search-button");
+    const noProductMessage = document.getElementById("no-product");
 
-/* =========================
-   LẤY CÁC PHẦN TỬ HTML
-========================= */
+    // Hàm thực hiện lọc theo danh mục và từ khóa tìm kiếm
+    function applyFilter() {
+        const activeBtn = document.querySelector(".category-button.active");
+        const selectedCategory = activeBtn ? activeBtn.getAttribute("data-category") : "all";
+        const keyword = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
-const categoryButtons =
-    document.querySelectorAll(".category-button");
+        let totalVisibleProducts = 0;
 
-const productCards =
-    document.querySelectorAll(".product-card");
+        categorySections.forEach(section => {
+            const sectionCategory = section.getAttribute("data-category");
+            const productCards = section.querySelectorAll(".product-card");
+            let sectionVisibleCount = 0;
 
-const searchInput =
-    document.getElementById("search-product");
+            // Kiểm tra xem Khung này có khớp với Danh mục đang chọn hay không
+            const isCategoryMatch = (selectedCategory === "all" || selectedCategory === sectionCategory);
 
-const searchButton =
-    document.getElementById("search-button");
+            if (isCategoryMatch) {
+                productCards.forEach(card => {
+                    const name = card.querySelector(".product-name")?.textContent.toLowerCase() || "";
+                    const desc = card.querySelector(".product-description")?.textContent.toLowerCase() || "";
+                    
+                    const isKeywordMatch = (keyword === "" || name.includes(keyword) || desc.includes(keyword));
 
-const noProduct =
-    document.getElementById("no-product");
+                    if (isKeywordMatch) {
+                        card.style.display = "";
+                        sectionVisibleCount++;
+                    } else {
+                        card.style.display = "none";
+                    }
+                });
+            }
 
-
-/* =========================
-   BIẾN LƯU DANH MỤC
-========================= */
-
-const nutDangChon = document.querySelector(".category-button.active");
-let currentCategory = nutDangChon ? nutDangChon.dataset.category : "all";
-
-/* =========================
-   HÀM HIỂN THỊ SẢN PHẨM
-========================= */
-
-function hienThiSanPham() {
-
-    const keyword =
-        searchInput.value.toLowerCase().trim();
-
-    let count = 0;
-
-
-    productCards.forEach(function(card) {
-
-        const category =
-            card.dataset.category;
-
-        const productName =
-            card.querySelector(".product-name")
-                .textContent
-                .toLowerCase();
-
-        const productDescription =
-            card.querySelector(".product-description")
-                .textContent
-                .toLowerCase();
-
-
-        /* Kiểm tra danh mục */
-
-        const dungDanhMuc =
-            currentCategory === "all" ||
-            category === currentCategory;
-
-
-        /* Kiểm tra từ khóa */
-
-        const dungTuKhoa =
-            productName.includes(keyword) ||
-            productDescription.includes(keyword);
-
-
-        /* Hiển thị hoặc ẩn */
-
-        if (dungDanhMuc && dungTuKhoa) {
-
-            card.style.display = "";
-
-            count++;
-
-        } else {
-
-            card.style.display = "none";
-
-        }
-
-    });
-
-
-    /* =========================
-       KHÔNG TÌM THẤY
-    ========================== */
-
-    if (count === 0) {
-
-        noProduct.hidden = false;
-
-    } else {
-
-        noProduct.hidden = true;
-
-    }
-
-}
-
-
-/* =========================
-   XỬ LÝ NÚT DANH MỤC
-========================= */
-
-categoryButtons.forEach(function(button) {
-
-    button.addEventListener("click", function() {
-
-
-        /* Xóa active ở tất cả nút */
-
-        categoryButtons.forEach(function(item) {
-
-            item.classList.remove("active");
-
+            // Nếu khớp danh mục VÀ có sản phẩm hiển thị thì HIỆN khung lớn, ngược lại ẨN hẳn
+            if (isCategoryMatch && sectionVisibleCount > 0) {
+                section.style.display = "block";
+                totalVisibleProducts += sectionVisibleCount;
+            } else {
+                section.style.display = "none";
+            }
         });
 
+        // Hiển thị dòng thông báo nếu không tìm thấy sản phẩm nào
+        if (noProductMessage) {
+            if (totalVisibleProducts === 0) {
+                noProductMessage.removeAttribute("hidden");
+                noProductMessage.style.display = "block";
+            } else {
+                noProductMessage.setAttribute("hidden", "true");
+                noProductMessage.style.display = "none";
+            }
+        }
+    }
 
-        /* Thêm active cho nút đang chọn */
+    // Sự kiện khi bấm vào các nút Danh mục (Tất cả / Máy ảnh / Chỗ chụp ảnh / Bộ đồ)
+    categoryButtons.forEach(button => {
+        button.addEventListener("click", function (e) {
+            e.preventDefault();
 
-        button.classList.add("active");
+            categoryButtons.forEach(btn => btn.classList.remove("active"));
+            this.classList.add("active");
 
+            // Reset ô tìm kiếm khi chuyển danh mục
+            if (searchInput) searchInput.value = "";
 
-        /* Lấy danh mục */
-
-        currentCategory =
-            button.dataset.category;
-
-
-        /* Hiển thị lại sản phẩm */
-
-        hienThiSanPham();
-
+            applyFilter();
+        });
     });
 
+    // Sự kiện khi gõ vào ô tìm kiếm
+    if (searchInput) {
+        searchInput.addEventListener("input", applyFilter);
+    }
+
+    if (searchButton) {
+        searchButton.addEventListener("click", function (e) {
+            e.preventDefault();
+            applyFilter();
+        });
+    }
+
+    // Chạy lọc 1 lần đầu tiên khi vừa tải trang
+    applyFilter();
 });
-
-
-/* =========================
-   TÌM KIẾM KHI NHẬP
-========================= */
-
-searchInput.addEventListener(
-    "input",
-    function() {
-
-        hienThiSanPham();
-
-    }
-);
-
-
-/* =========================
-   NÚT TÌM KIẾM
-========================= */
-
-searchButton.addEventListener(
-    "click",
-    function() {
-
-        hienThiSanPham();
-
-    }
-);
-
-
-/* =========================
-   ENTER ĐỂ TÌM KIẾM
-========================= */
-
-searchInput.addEventListener(
-    "keydown",
-    function(event) {
-
-        if (event.key === "Enter") {
-
-            hienThiSanPham();
-
-        }
-
-    }
-);
-hienThiSanPham();
