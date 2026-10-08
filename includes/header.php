@@ -58,3 +58,9 @@ $so_luong_gio = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
             </a>
         </div>
     </header>
+    <!-- Đặt ở header.php hoặc trước khi gọi cart.js -->
+
+    
+<script>
+    const IS_LOGGED_IN = <?= !empty($_SESSION['user_id']) ? 'true' : 'false' ?>;
+</script>
