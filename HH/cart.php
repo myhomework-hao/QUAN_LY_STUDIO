@@ -3,6 +3,19 @@ require_once '../config/app.php';
 require_once '../config/db.php';
 require_once '../includes/cart_helper.php';
 
+// --- CHẶN TRUY CẬP KHI CHƯA ĐĂNG NHẬP ---
+if (empty($_SESSION['user_id'])) {
+    // Lưu thông báo lỗi vào Session để hiển thị ở trang đăng nhập (nếu cần)
+    $_SESSION['error'] = 'Vui lòng đăng nhập để xem giỏ hàng và thực hiện thanh toán!';
+    
+    // Lưu lại trang người dùng đang muốn vào để sau khi đăng nhập có thể quay lại đúng trang đó
+    $_SESSION['redirect_back'] = $_SERVER['REQUEST_URI'];
+
+    // Chuyển hướng người dùng về trang đăng nhập (thay đổi đường dẫn theo file login của bạn)
+    header('Location: ../KB/login.php'); 
+    exit;
+}
+
 // Xử lý các thao tác giỏ hàng (Thêm, Tăng, Giảm, Xóa, Mã giảm giá)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'add';

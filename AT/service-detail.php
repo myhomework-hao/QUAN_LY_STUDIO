@@ -4,6 +4,23 @@ require_once '../includes/auth.php';
 require_once '../config/db.php';
 require_once '../includes/dich_vu.php';
 
+// Hàm chuẩn hóa loại sản phẩm đồng bộ với trang danh sách
+function chuan_hoa_loai($loai_goc) {
+    $loai_goc = strtolower(trim((string)$loai_goc));
+    
+    if (in_array($loai_goc, ['studio', 'cho_chup', 'diadiem', 'dia_diem', 'khong_gian'], true)) {
+        return 'studio';
+    }
+    if (in_array($loai_goc, ['trang_phuc', 'do_bo', 'quan_ao', 'trangphuc', 'dobo'], true)) {
+        return 'trang_phuc';
+    }
+    if (in_array($loai_goc, ['may_anh', 'mayanh', 'camera'], true)) {
+        return 'may_anh';
+    }
+
+    return $loai_goc;
+}
+
 $ma_dich_vu = (int) ($_GET['id'] ?? 0);
 
 $stmt = $conn->prepare(
@@ -35,8 +52,12 @@ if ($dv) {
         $diem_trung_binh = array_sum(array_column($ds_danh_gia, 'so_sao')) / count($ds_danh_gia);
     }
 
-    $tt_loai = thong_tin_loai($dv['loai']);
-    $tt_don_vi = thong_tin_don_vi($dv['don_vi']);
+    // Chuẩn hóa loại dịch vụ để lấy thông tin tên danh mục chuẩn
+    $loai_chuan = chuan_hoa_loai($dv['loai']);
+    $tt_loai = function_exists('thong_tin_loai') ? thong_tin_loai($loai_chuan) : [];
+    $ten_danh_muc = $tt_loai['ten'] ?? ucfirst(str_replace('_', ' ', $loai_chuan));
+
+    $tt_don_vi = function_exists('thong_tin_don_vi') ? thong_tin_don_vi($dv['don_vi']) : ['hinh_thuc' => 'Cho thuê'];
     $theo_gio = $dv['don_vi'] === 'gio';
     $kieu_nhap = $theo_gio ? 'datetime-local' : 'date';
     $nho_nhat = date($theo_gio ? 'Y-m-d\TH:i' : 'Y-m-d');
@@ -70,39 +91,59 @@ require_once '../includes/header.php';
 
 <?php else: ?>
 
+    <!-- Breadcrumb điều hướng -->
     <section class="detail-breadcrumb">
         <a href="services.php">Sản phẩm cho thuê</a>
+        <i class="fa-solid fa-angle-right"></i>
+        <a href="services.php?loai=<?= h($loai_chuan) ?>"><?= h($ten_danh_muc) ?></a>
         <i class="fa-solid fa-angle-right"></i>
         <span><?= h($dv['ten']) ?></span>
     </section>
 
+    <!-- Khung thông tin chính sản phẩm -->
     <section class="product-detail">
 
+        <!-- Ảnh chính sản phẩm bo góc -->
         <div class="detail-image">
             <?php if (!empty($dv['anh'])): ?>
                 <img src="<?= BASE_URL ?>assets/uploads/<?= h($dv['anh']) ?>" alt="<?= h($dv['ten']) ?>">
+            <?php else: ?>
+                <img src="<?= BASE_URL ?>assets/images/no-image.jpg" alt="<?= h($dv['ten']) ?>">
             <?php endif; ?>
         </div>
 
+        <!-- Chi tiết thông tin và Đặt thuê -->
         <div class="detail-info">
 
-            <p class="detail-category"><?= h($tt_loai['nhan']) ?></p>
+            <!-- Thanh nhãn phân loại đồng bộ với trang danh sách -->
+            <div class="product-tags">
+                <span class="product-category-tag"><?= h($ten_danh_muc) ?></span>
+                <span class="product-status-tag">Có sẵn</span>
+            </div>
+
             <h1 class="detail-name"><?= h($dv['ten']) ?></h1>
+            
+            <div class="product-vendor">
+                <i class="fa-solid fa-camera"></i>
+                <span>VIBE STUDIO</span>
+                <i class="fa-solid fa-circle-check check-icon"></i>
+            </div>
+
             <p class="detail-price"><?= h(dinh_dang_gia((int) $dv['gia'], $dv['don_vi'])) ?></p>
             <p class="detail-description"><?= h($dv['mo_ta']) ?></p>
 
             <div class="detail-information">
                 <div class="information-item">
-                    <span>Loại</span>
-                    <strong><?= h($tt_loai['ten']) ?></strong>
+                    <span>Loại danh mục</span>
+                    <strong><?= h($ten_danh_muc) ?></strong>
                 </div>
                 <div class="information-item">
-                    <span>Tình trạng</span>
-                    <strong>Có sẵn</strong>
+                    <span>Địa điểm</span>
+                    <strong>TP.HCM</strong>
                 </div>
                 <div class="information-item">
                     <span>Hình thức</span>
-                    <strong><?= h($tt_don_vi['hinh_thuc']) ?></strong>
+                    <strong><?= h($tt_don_vi['hinh_thuc'] ?? 'Cho thuê') ?></strong>
                 </div>
             </div>
 
@@ -131,10 +172,11 @@ require_once '../includes/header.php';
                 </div>
 
                 <div class="detail-buttons">
-                    <button type="submit" class="main-button rental-button">Đặt thuê</button>
+                    <button type="submit" class="main-button rental-button">
+                        <i class="fa-solid fa-bag-shopping"></i> Đặt thuê
+                    </button>
                     <a href="services.php" class="back-button">
-                        <i class="fa-solid fa-arrow-left"></i>
-                        Quay lại sản phẩm
+                        <i class="fa-solid fa-arrow-left"></i> Quay lại
                     </a>
                 </div>
             </form>
@@ -147,14 +189,16 @@ require_once '../includes/header.php';
 
     </section>
 
+    <!-- Khung mô tả chi tiết -->
     <section class="detail-description-section">
         <p class="small-title">INFORMATION</p>
         <h2>Thông tin <i>sản phẩm</i></h2>
         <div class="detail-description-content">
-            <p><?= h($dv['mo_ta_chi_tiet']) ?></p>
+            <p><?= nl2br(h($dv['mo_ta_chi_tiet'])) ?></p>
         </div>
     </section>
 
+    <!-- Khung đánh giá sản phẩm -->
     <section class="danh-gia-khung">
         <p class="small-title">REVIEWS</p>
         <h2>Đánh giá <i>của khách</i></h2>

@@ -51,11 +51,20 @@ function saveCart(cart) {
     updateBadge();
 }
 function addToCart(id, qty = 1) {
+    // Kiểm tra nếu chưa đăng nhập thì thông báo và chuyển hướng
+    if (typeof IS_LOGGED_IN !== 'undefined' && !IS_LOGGED_IN) {
+        alert("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
+        window.location.href = "../auth/login.php"; // Thay đường dẫn trang login của bạn
+        return;
+    }
+
     const cart = getCart();
     const item = cart.find((i) => i.id === id);
     item ? (item.qty = Math.min(item.qty + qty, 20)) : cart.push({ id, qty });
     saveCart(cart);
+    toast("Đã thêm vào giỏ hàng!");
 }
+
 function setQty(id, qty) {
     let cart = getCart();
     cart = qty <= 0
