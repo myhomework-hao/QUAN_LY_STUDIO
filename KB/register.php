@@ -12,11 +12,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
 
-    $role = (int) ($_POST['role'] ?? 0);
-    if (!in_array($role, [0, 2], true)) {
-        $role = 0;
-    }
-
     if ($name === '' || $email === '' || $password === '' || $confirm_password === '') {
 
         $message = 'Vui lòng nhập đầy đủ thông tin.';
@@ -52,27 +47,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-            $trang_thai = ($role === 2) ? 'cho_duyet' : 'hoat_dong';
-
             $sql = "INSERT INTO users (name, email, password, role, trang_thai)
-                    VALUES (?, ?, ?, ?, ?)";
+                    VALUES (?, ?, ?, 0, 'hoat_dong')";
 
             $stmt = $conn->prepare($sql);
+            $stmt->execute([$name, $email, $hashed_password]);
 
-            $stmt->execute([
-                $name,
-                $email,
-                $hashed_password,
-                $role,
-                $trang_thai
-            ]);
-
-            if ($role === 2) {
-                $message = 'Đăng ký thành công! Tài khoản Vendor cần Admin duyệt trước khi đăng nhập.';
-            } else {
-                $message = 'Đăng ký thành công! Bạn có thể đăng nhập.';
-            }
-            $message_type = 'success';
+            header('Location: login.php?dangky=ok');
+            exit;
         }
     }
 }
@@ -109,16 +91,6 @@ require_once '../includes/header.php';
 
             <label for="confirm_password">Xác nhận mật khẩu</label>
             <input type="password" id="confirm_password" name="confirm_password" placeholder="Nhập lại mật khẩu" required>
-
-            <label for="role">Bạn đăng ký với vai trò</label>
-            <select id="role" name="role">
-                <option value="0" <?= ($_POST['role'] ?? '0') === '0' ? 'selected' : '' ?>>
-                    Khách hàng (thuê đồ, thuê studio)
-                </option>
-                <option value="2" <?= ($_POST['role'] ?? '') === '2' ? 'selected' : '' ?>>
-                    Vendor (cho thuê, cần Admin duyệt)
-                </option>
-            </select>
 
             <button type="submit">ĐĂNG KÝ</button>
 
