@@ -1,6 +1,6 @@
 <?php
 require_once '../config/app.php';
-require_once '../includes/auth.php';
+require_once '../config/auth.php';
 require_once '../config/db.php';
 
 if (da_dang_nhap()) {
