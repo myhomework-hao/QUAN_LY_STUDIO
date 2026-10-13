@@ -3,8 +3,18 @@ require_once '../config/app.php';
 require_once '../includes/auth.php';
 require_once '../config/db.php';
 
+if (da_dang_nhap()) {
+    header('Location: ' . trang_chu_theo_vai_tro(vai_tro_hien_tai()));
+    exit;
+}
+
 $message = '';
 $message_type = '';
+
+if (($_GET['dangky'] ?? '') === 'ok') {
+    $message = 'Đăng ký thành công! Mời bạn đăng nhập.';
+    $message_type = 'success';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -37,16 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Email hoặc mật khẩu không chính xác.';
             $message_type = 'error';
 
-        } elseif ($user['trang_thai'] === 'cho_duyet') {
-
-            $message = 'Tài khoản Vendor của bạn đang chờ Admin duyệt.';
-            $message_type = 'error';
-
-        } elseif ($user['trang_thai'] === 'tu_choi') {
-
-            $message = 'Yêu cầu đăng ký Vendor của bạn đã bị từ chối.';
-            $message_type = 'error';
-
         } elseif ($user['trang_thai'] === 'bi_khoa') {
 
             $message = 'Tài khoản của bạn đã bị khóa.';
@@ -73,8 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-?>
-<?php
 $tieu_de_trang = 'Đăng nhập - VIBE STUDIO';
 $css_rieng = ['kb.css'];
 require_once '../includes/header.php';
