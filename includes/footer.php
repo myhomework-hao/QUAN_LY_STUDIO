@@ -1,15 +1,3 @@
-<!--<footer>
-
-    <div class="footer-logo">
-        VIBE<span>STUDIO</span>
-    </div>
-
-    <p>© 2026 VIBE Studio. All Rights Reserved.</p>
-
-    <a href="#">BACK TO TOP ↑</a>
-
-</footer>
--->
 <?php $js_rieng = $js_rieng ?? []; ?>
 
     <footer>

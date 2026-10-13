@@ -1,6 +1,7 @@
 <?php
-$vai_tro = vai_tro_hien_tai();
-$ten_hien_thi = ten_nguoi_dung_hien_tai();
+$vai_tro = function_exists('vai_tro_hien_tai') ? vai_tro_hien_tai() : 'guest';
+$ten_hien_thi = function_exists('ten_nguoi_dung_hien_tai') ? ten_nguoi_dung_hien_tai() : '';
+$da_dn = function_exists('da_dang_nhap') ? da_dang_nhap() : false;
 ?>
 <div class="tai-khoan">
     <button type="button" class="header-icon tai-khoan-nut" aria-label="Tài khoản" aria-haspopup="true" aria-expanded="false">
@@ -11,7 +12,7 @@ $ten_hien_thi = ten_nguoi_dung_hien_tai();
     </button>
 
     <div class="tai-khoan-menu">
-        <?php if (da_dang_nhap()): ?>
+        <?php if ($da_dn): ?>
 
             <?php if ($ten_hien_thi !== ''): ?>
                 <p class="tai-khoan-ten"><?= htmlspecialchars($ten_hien_thi) ?></p>

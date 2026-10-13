@@ -1,6 +1,7 @@
 <?php
+// Gọi app.php và auth.php nằm ở thư mục cha /config/
 require_once __DIR__ . '/../config/app.php';
-require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../config/auth.php';
 
 $tieu_de_trang = $tieu_de_trang ?? 'VIBE STUDIO';
 $trang_hien_tai = $trang_hien_tai ?? '';
@@ -58,9 +59,7 @@ $so_luong_gio = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
             </a>
         </div>
     </header>
-    <!-- Đặt ở header.php hoặc trước khi gọi cart.js -->
 
-    
 <script>
     const IS_LOGGED_IN = <?= !empty($_SESSION['user_id']) ? 'true' : 'false' ?>;
 </script>
