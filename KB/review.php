@@ -1,117 +1,111 @@
 <?php
 require_once '../config/app.php';
-require_once '../includes/auth.php';
 require_once '../config/db.php';
 
-yeu_cau_dang_nhap();
-
-$ma_mon = (int) ($_GET['item'] ?? $_POST['item'] ?? 0);
-
-$sql = "SELECT oi.id AS ma_mon, oi.order_id AS ma_don, s.id AS ma_dich_vu, s.ten, s.anh
-        FROM order_items oi
-        JOIN orders o ON o.id = oi.order_id
-        JOIN services s ON s.id = oi.service_id
-        WHERE oi.id = ? AND o.user_id = ? AND o.trang_thai = 'da_tra'";
-$stmt = $conn->prepare($sql);
-$stmt->execute([$ma_mon, $_SESSION['user_id']]);
-$mon = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if (!$mon) {
-    http_response_code(404);
-    die('Không tìm thấy món cần đánh giá, hoặc đơn chưa hoàn thành.');
+// Đảm bảo session đã được khởi tạo
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+// Thêm đoạn kiểm tra trạng thái đơn hàng trong review.php nếu muốn bắt buộc phải hoàn tất mới được đánh giá
+if ($order['status'] !== 'hoan_tat') {
+    $loi = 'Bạn chỉ có thể đánh giá dịch vụ sau khi đơn hàng đã hoàn tất.';
+}
+// Bắt buộc đăng nhập
+$user_id = $_SESSION['user_id'] ?? null;
+if (!$user_id) {
+    header('Location: ' . BASE_URL . 'KB/login.php');
+    exit;
 }
 
-$stmt = $conn->prepare("SELECT id FROM reviews WHERE order_item_id = ?");
-$stmt->execute([$ma_mon]);
-$da_danh_gia = (bool) $stmt->fetch();
-
+$order_code = trim($_GET['code'] ?? '');
+$service_id = intval($_GET['service_id'] ?? 0);
 $thong_bao = '';
-$loai_thong_bao = '';
+$loi = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$da_danh_gia) {
+// Kiểm tra xem đơn hàng có thuộc về user này không và có chứa dịch vụ đó không
+$order = null;
+if ($order_code && $service_id) {
+    $stmt = $conn->prepare("SELECT * FROM orders WHERE code = ? AND user_id = ?");
+    $stmt->execute([$order_code, $user_id]);
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+}
 
-    $so_sao = (int) ($_POST['so_sao'] ?? 0);
-    $binh_luan = trim($_POST['binh_luan'] ?? '');
+if (!$order) {
+    $loi = 'Không tìm thấy đơn hàng hợp lệ hoặc bạn không có quyền đánh giá.';
+}
 
-    if ($so_sao < 1 || $so_sao > 5) {
+// Xử lý khi submit form đánh giá
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $order) {
+    $rating = intval($_POST['rating'] ?? 5);
+    $comment = trim($_POST['comment'] ?? '');
 
-        $thong_bao = 'Vui lòng chọn số sao từ 1 đến 5.';
-        $loai_thong_bao = 'error';
-
-    } elseif (mb_strlen($binh_luan) > 1000) {
-
-        $thong_bao = 'Bình luận tối đa 1000 ký tự.';
-        $loai_thong_bao = 'error';
-
+    if ($rating < 1 || $rating > 5) {
+        $loi = 'Vui lòng chọn số sao đánh giá từ 1 đến 5.';
     } else {
-
+        // Lưu vào bảng reviews (hoặc bảng đánh giá tương ứng trong CSDL)
+        // Kiểm tra xem bảng reviews đã có chưa, nếu có thì insert
         try {
-            $stmt = $conn->prepare(
-                "INSERT INTO reviews (user_id, order_item_id, service_id, so_sao, binh_luan)
-                 VALUES (?, ?, ?, ?, ?)"
-            );
-            $stmt->execute([
-                $_SESSION['user_id'],
-                $mon['ma_mon'],
-                $mon['ma_dich_vu'],
-                $so_sao,
-                $binh_luan
-            ]);
-
-            header('Location: ' . BASE_URL . 'KB/order-detail.php?id=' . $mon['ma_don'] . '&danh_gia=ok');
-            exit;
-
-        } catch (PDOException $loi) {
-            if ($loi->getCode() === '23000') {
-                $da_danh_gia = true;
-            } else {
-                throw $loi;
-            }
+            // Thử lưu đánh giá
+            $stmt_ins = $conn->prepare("
+                INSERT INTO reviews (user_id, service_id, order_id, rating, comment, created_at) 
+                VALUES (?, ?, ?, ?, ?, NOW())
+            ");
+            $stmt_ins->execute([$user_id, $service_id, $order['id'], $rating, $comment]);
+            $thong_bao = 'Cảm ơn bạn đã đánh giá dịch vụ!';
+        } catch (Exception $e) {
+            $loi = 'Có lỗi xảy ra hoặc bạn đã đánh giá dịch vụ này rồi.';
         }
     }
 }
 
-$tieu_de_trang = 'Đánh giá - VIBE STUDIO';
-$css_rieng = ['kb.css'];
+$tieu_de_trang = 'Đánh giá dịch vụ - VIBE Studio';
+$css_rieng = ['cart.css'];
 require_once '../includes/header.php';
 ?>
 
-<main class="khung-danh-gia">
+<section class="page-head" id="pageHead">
+    <p class="page-label">REVIEW</p>
+    <h1>ĐÁNH GIÁ <i>DỊCH VỤ.</i></h1>
+</section>
 
-    <p class="small-title">REVIEW</p>
-    <h1>ĐÁNH GIÁ <i><?= htmlspecialchars($mon['ten']) ?></i></h1>
-
-    <?php if ($da_danh_gia): ?>
-
-        <p class="message success">Bạn đã đánh giá món này rồi. Cảm ơn bạn!</p>
-        <a href="<?= BASE_URL ?>KB/order-detail.php?id=<?= (int) $mon['ma_don'] ?>" class="main-button">VỀ CHI TIẾT ĐƠN</a>
-
+<section class="shop-area" style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <?php if (!empty($thong_bao)): ?>
+        <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 6px; margin-bottom: 20px; text-align: center;">
+            <p style="margin-bottom: 10px;"><?= htmlspecialchars($thong_bao) ?></p>
+            <a href="order-detail.php?code=<?= urlencode($order_code) ?>" class="btn-dark" style="text-decoration: none; padding: 8px 16px; font-size: 0.9rem;">QUAY LẠI CHI TIẾT ĐƠN HÀNG</a>
+        </div>
+    <?php elseif (!empty($loi)): ?>
+        <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 20px; text-align: center;">
+            <p><?= htmlspecialchars($loi) ?></p>
+            <br>
+            <a href="my-orders.php" class="btn-dark" style="text-decoration: none; padding: 8px 16px; font-size: 0.9rem;">ĐƠN HÀNG CỦA TÔI</a>
+        </div>
     <?php else: ?>
+        <div class="card" style="background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <form action="review.php?code=<?= urlencode($order_code) ?>&service_id=<?= $service_id ?>" method="POST">
+                <div style="margin-bottom: 20px; text-align: center;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: bold; font-size: 1.1rem;">Chất lượng dịch vụ thế nào?</label>
+                    <select name="rating" style="padding: 10px; font-size: 1rem; border-radius: 4px; border: 1px solid #ddd; width: 100%;">
+                        <option value="5">⭐⭐⭐⭐⭐ - Tuyệt vời (5 sao)</option>
+                        <option value="4">⭐⭐⭐⭐ - Hài lòng (4 sao)</option>
+                        <option value="3">⭐⭐⭐ - Bình thường (3 sao)</option>
+                        <option value="2">⭐⭐ - Tạm được (2 sao)</option>
+                        <option value="1">⭐ - Không tốt (1 sao)</option>
+                    </select>
+                </div>
 
-        <?php if ($thong_bao !== ''): ?>
-            <p class="message <?= htmlspecialchars($loai_thong_bao) ?>">
-                <?= htmlspecialchars($thong_bao) ?>
-            </p>
-        <?php endif; ?>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">Nhận xét chi tiết của bạn</label>
+                    <textarea name="comment" rows="5" placeholder="Hãy chia sẻ trải nghiệm của bạn về dịch vụ tại studio..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+                </div>
 
-        <form method="POST" action="">
-            <input type="hidden" name="item" value="<?= (int) $mon['ma_mon'] ?>">
-
-            <div class="chon-sao">
-                <?php for ($i = 5; $i >= 1; $i--): ?>
-                    <input type="radio" id="sao<?= $i ?>" name="so_sao" value="<?= $i ?>" <?= ((int) ($_POST['so_sao'] ?? 0) === $i) ? 'checked' : '' ?>>
-                    <label for="sao<?= $i ?>" title="<?= $i ?> sao">★</label>
-                <?php endfor; ?>
-            </div>
-
-            <label for="binh_luan">Nhận xét của bạn</label>
-            <textarea id="binh_luan" name="binh_luan" rows="5" maxlength="1000" placeholder="Chia sẻ trải nghiệm thuê của bạn..."><?= htmlspecialchars($_POST['binh_luan'] ?? '') ?></textarea>
-
-            <button type="submit">GỬI ĐÁNH GIÁ</button>
-        </form>
-
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <a href="order-detail.php?code=<?= urlencode($order_code) ?>" style="color: #666; text-decoration: none;">Hủy bỏ</a>
+                    <button type="submit" class="btn-dark" style="padding: 10px 25px; cursor: pointer;">GỬI ĐÁNH GIÁ</button>
+                </div>
+            </form>
+        </div>
     <?php endif; ?>
-
-</main>
+</section>
 
 <?php require_once '../includes/footer.php'; ?>
