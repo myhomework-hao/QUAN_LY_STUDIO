@@ -239,6 +239,43 @@ h2 i {
     border-top: 1px solid #e5e5e5;
     color: var(--error);
 }
+.tai-khoan-nut.da-dang-nhap {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background: linear-gradient(135deg, #b08d57, #8f6f3f);
+    box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(176, 141, 87, .55);
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+}
+
+.tai-khoan-nut.da-dang-nhap:hover {
+    transform: scale(1.06);
+}
+
+.tai-khoan-nut.da-dang-nhap.vt-admin {
+    background: linear-gradient(135deg, #3a342c, #1f1b16);
+    box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(31, 27, 22, .55);
+}
+
+.tai-khoan-nut.da-dang-nhap.vt-nhanvien {
+    background: linear-gradient(135deg, #3f8a5a, #2e6b3f);
+    box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(46, 107, 63, .55);
+}
+
+.tai-khoan-chu {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    pointer-events: none;
+}
 
 /* ===== FOOTER ===== */
 

@@ -23,10 +23,11 @@ function chuan_hoa_loai($loai_goc) {
 
 $ma_dich_vu = (int) ($_GET['id'] ?? 0);
 
+// Truy vấn chuẩn xác theo các tên cột trong bảng dich_vu của bạn
 $stmt = $conn->prepare(
-    "SELECT id, ten, loai, gia, don_vi, so_luong, mo_ta, mo_ta_chi_tiet, anh
-     FROM services
-     WHERE id = ? AND trang_thai = 'hien'"
+    "SELECT DV_Ma as id, DV_Ten as ten, DV_Loai as loai, DV_GiaThue as gia, DV_DonViTinh as don_vi, DV_SoLuong as so_luong, DV_MoTa as mo_ta, DV_MoTaChiTiet as mo_ta_chi_tiet, DV_HinhAnh as anh
+     FROM dich_vu
+     WHERE DV_Ma = ? AND (DV_DangBan = 'hien' OR DV_DangBan = '1')"
 );
 $stmt->execute([$ma_dich_vu]);
 $dv = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -38,21 +39,24 @@ $ds_danh_gia = [];
 $diem_trung_binh = 0;
 
 if ($dv) {
-    $stmt = $conn->prepare(
-        "SELECT r.so_sao, r.binh_luan, r.ngay_tao, u.name
-         FROM reviews r
-         JOIN users u ON u.id = r.user_id
-         WHERE r.service_id = ?
-         ORDER BY r.id DESC"
-    );
-    $stmt->execute([$dv['id']]);
-    $ds_danh_gia = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        $stmt = $conn->prepare(
+            "SELECT r.so_sao, r.binh_luan, r.ngay_tao, u.name
+             FROM reviews r
+             JOIN users u ON u.id = r.user_id
+             WHERE r.service_id = ?
+             ORDER BY r.id DESC"
+        );
+        $stmt->execute([$dv['id']]);
+        $ds_danh_gia = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        $ds_danh_gia = [];
+    }
 
     if ($ds_danh_gia) {
         $diem_trung_binh = array_sum(array_column($ds_danh_gia, 'so_sao')) / count($ds_danh_gia);
     }
 
-    // Chuẩn hóa loại dịch vụ để lấy thông tin tên danh mục chuẩn
     $loai_chuan = chuan_hoa_loai($dv['loai']);
     $tt_loai = function_exists('thong_tin_loai') ? thong_tin_loai($loai_chuan) : [];
     $ten_danh_muc = $tt_loai['ten'] ?? ucfirst(str_replace('_', ' ', $loai_chuan));
@@ -91,7 +95,6 @@ require_once '../includes/header.php';
 
 <?php else: ?>
 
-    <!-- Breadcrumb điều hướng -->
     <section class="detail-breadcrumb">
         <a href="services.php">Sản phẩm cho thuê</a>
         <i class="fa-solid fa-angle-right"></i>
@@ -100,10 +103,7 @@ require_once '../includes/header.php';
         <span><?= h($dv['ten']) ?></span>
     </section>
 
-    <!-- Khung thông tin chính sản phẩm -->
     <section class="product-detail">
-
-        <!-- Ảnh chính sản phẩm bo góc -->
         <div class="detail-image">
             <?php if (!empty($dv['anh'])): ?>
                 <img src="<?= BASE_URL ?>assets/uploads/<?= h($dv['anh']) ?>" alt="<?= h($dv['ten']) ?>">
@@ -112,10 +112,7 @@ require_once '../includes/header.php';
             <?php endif; ?>
         </div>
 
-        <!-- Chi tiết thông tin và Đặt thuê -->
         <div class="detail-info">
-
-            <!-- Thanh nhãn phân loại đồng bộ với trang danh sách -->
             <div class="product-tags">
                 <span class="product-category-tag"><?= h($ten_danh_muc) ?></span>
                 <span class="product-status-tag">Có sẵn</span>
@@ -184,21 +181,17 @@ require_once '../includes/header.php';
             <?php if ($thong_bao_dat !== ''): ?>
                 <p class="rental-message"><?= h($thong_bao_dat) ?></p>
             <?php endif; ?>
-
         </div>
-
     </section>
 
-    <!-- Khung mô tả chi tiết -->
     <section class="detail-description-section">
         <p class="small-title">INFORMATION</p>
         <h2>Thông tin <i>sản phẩm</i></h2>
         <div class="detail-description-content">
-            <p><?= nl2br(h($dv['mo_ta_chi_tiet'])) ?></p>
+            <p><?= nl2br(h($dv['mo_ta_chi_tiet'] ?? '')) ?></p>
         </div>
     </section>
 
-    <!-- Khung đánh giá sản phẩm -->
     <section class="danh-gia-khung">
         <p class="small-title">REVIEWS</p>
         <h2>Đánh giá <i>của khách</i></h2>

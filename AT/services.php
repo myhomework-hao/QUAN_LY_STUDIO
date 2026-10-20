@@ -14,31 +14,32 @@ $danh_muc_chinh = [
 function chuan_hoa_loai($loai_goc) {
     $loai = strtolower(trim((string)$loai_goc));
 
-    // Nhóm Chỗ chụp / Studio
     if (in_array($loai, ['studio', 'cho_chup', 'cho_chup_anh', 'diadiem', 'dia_diem', 'khong_gian', 'phong_chup', 'location'], true)) {
         return 'studio';
     }
-    // Nhóm Bộ đồ / Trang phục
     if (in_array($loai, ['trang_phuc', 'trangphuc', 'do_bo', 'dobo', 'quan_ao', 'quanao', 'co_truong', 'vay', 'dam', 'costume'], true)) {
         return 'trang_phuc';
     }
-    // Nhóm Máy ảnh
     if (in_array($loai, ['may_anh', 'mayanh', 'camera', 'lens', 'ong_kinh'], true)) {
         return 'may_anh';
     }
 
-    return 'may_anh'; // Mặc định nếu không khớp
+    return 'may_anh';
 }
 
-// Truy vấn dữ liệu từ MySQL
-$ds_dich_vu = $conn->query(
-    "SELECT id, ten, loai, gia, don_vi, mo_ta, anh
-     FROM services
-     WHERE trang_thai = 'hien'
-     ORDER BY id DESC"
-)->fetchAll(PDO::FETCH_ASSOC);
+// Truy vấn trực tiếp chính xác theo cấu trúc bảng dich_vu của bạn
+$sql = "SELECT DV_Ma as id, DV_Ten as ten, DV_Loai as loai, DV_GiaThue as gia, DV_DonViTinh as don_vi, DV_MoTa as mo_ta, DV_HinhAnh as anh 
+        FROM dich_vu 
+        WHERE DV_DangBan = 'hien' OR DV_DangBan = '1' 
+        ORDER BY DV_Ma DESC";
 
-// Phân loại dữ liệu vào mảng
+$ds_dich_vu = [];
+try {
+    $ds_dich_vu = $conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $ds_dich_vu = [];
+}
+
 $danh_sach_theo_loai = [
     'may_anh'   => [],
     'studio'    => [],
@@ -46,7 +47,7 @@ $danh_sach_theo_loai = [
 ];
 
 foreach ($ds_dich_vu as $dv) {
-    $loai_chuan = chuan_hoa_loai($dv['loai']);
+    $loai_chuan = chuan_hoa_loai($dv['loai'] ?? '');
     $dv['loai_chuan'] = $loai_chuan;
     $danh_sach_theo_loai[$loai_chuan][] = $dv;
 }
@@ -61,7 +62,6 @@ $css_rieng = [
     'at.css'
 ];
 
-// Thêm time() vào tên file JS để trình duyệt không dùng cache cũ
 $js_rieng = ['at.js?v=' . time()];
 
 require_once '../includes/header.php';
@@ -84,8 +84,6 @@ require_once '../includes/header.php';
     </section>
 
     <section class="product-list-section">
-
-        <!-- NÚT LỌC VÀ TÌM KIẾM -->
         <div class="product-tools">
             <div class="product-category">
                 <button type="button" class="category-button <?= $loai_chon === 'all' ? 'active' : '' ?>" data-category="all">
@@ -107,17 +105,11 @@ require_once '../includes/header.php';
             </div>
         </div>
 
-        <!-- DANH SÁCH KHUNG SẢN PHẨM -->
         <div class="product-sections-wrapper" id="product-list">
-
             <?php foreach ($danh_muc_chinh as $ma_loai => $ten_loai): ?>
-                <?php 
-                $items = $danh_sach_theo_loai[$ma_loai] ?? [];
-                ?>
+                <?php $items = $danh_sach_theo_loai[$ma_loai] ?? []; ?>
 
-                <!-- KHUNG LỚN CỦA TỪNG DANH MỤC -->
                 <section class="category-section-box" data-category="<?= h($ma_loai) ?>">
-
                     <div class="category-box-header">
                         <div class="category-box-title">
                             <h2><?= h($ten_loai) ?></h2>
@@ -129,9 +121,7 @@ require_once '../includes/header.php';
                         <?php foreach ($items as $dv): ?>
                             <?php $link = BASE_URL . 'AT/service-detail.php?id=' . (int) $dv['id']; ?>
 
-                            <!-- CARD SẢN PHẨM -->
                             <article class="product-card" data-category="<?= h($dv['loai_chuan']) ?>">
-
                                 <div class="product-image">
                                     <?php if (!empty($dv['anh'])): ?>
                                         <img src="<?= BASE_URL ?>assets/uploads/<?= h($dv['anh']) ?>" alt="<?= h($dv['ten']) ?>" loading="lazy">
@@ -164,7 +154,7 @@ require_once '../includes/header.php';
                                     </div>
 
                                     <div class="product-price-box">
-                                        <span class="product-price"><?= h(dinh_dang_gia((int) $dv['gia'], $dv['don_vi'])) ?></span>
+                                        <span class="product-price"><?= h(dinh_dang_gia((int) ($dv['gia'] ?? 0), $dv['don_vi'] ?? '')) ?></span>
                                     </div>
 
                                     <div class="product-actions">
@@ -174,20 +164,16 @@ require_once '../includes/header.php';
                                         </a>
                                     </div>
                                 </div>
-
                             </article>
                         <?php endforeach; ?>
                     </div>
-
                 </section>
             <?php endforeach; ?>
-
         </div>
 
         <div class="no-product" id="no-product" style="display: none; text-align: center; padding: 40px 0; color: #666;" hidden>
             Không tìm thấy sản phẩm phù hợp trong danh mục này.
         </div>
-
     </section>
 </main>
 

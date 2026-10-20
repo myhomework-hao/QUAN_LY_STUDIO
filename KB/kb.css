@@ -179,3 +179,200 @@
         padding: 30px 22px;
     }
 }
+/* profile*/
+.hs-trang {
+    --hs-nen: #faf7f2;
+    --hs-the: #ffffff;
+    --hs-chu: #1f1b16;
+    --hs-chu-phu: #6f665b;
+    --hs-nhan: #b08d57;
+    --hs-nhan-dam: #8f6f3f;
+    --hs-vien: #e6dfd3;
+    --hs-loi: #b3261e;
+    --hs-loi-nen: #fdecea;
+    --hs-ok: #2e6b3f;
+    --hs-ok-nen: #e8f4ec;
+
+    background: var(--hs-nen);
+    color: var(--hs-chu);
+    font-family: 'Montserrat', sans-serif;
+    padding: 120px 20px 70px;
+    min-height: 70vh;
+}
+
+.hs-khung { max-width: 980px; margin: 0 auto; }
+
+.hs-dau {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    padding: 32px 36px;
+    background: var(--hs-the);
+    border: 1px solid var(--hs-vien);
+    border-radius: 18px;
+    box-shadow: 0 8px 30px rgba(60, 45, 20, .06);
+}
+
+.hs-avatar {
+    flex: 0 0 auto;
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 40px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--hs-nhan), var(--hs-nhan-dam));
+    box-shadow: 0 0 0 5px var(--hs-nen), 0 0 0 6px var(--hs-vien);
+}
+
+.hs-nhan-nho {
+    margin: 0 0 4px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--hs-nhan-dam);
+    font-weight: 600;
+}
+
+.hs-ten {
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    font-size: 34px;
+    font-weight: 500;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.hs-email { margin: 6px 0 12px; color: var(--hs-chu-phu); font-size: 14px; word-break: break-all; }
+
+.hs-the { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+
+.hs-vai-tro {
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: var(--hs-nen);
+    border: 1px solid var(--hs-nhan);
+    color: var(--hs-nhan-dam);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.hs-ngay { font-size: 12px; color: var(--hs-chu-phu); }
+
+.hs-thongbao {
+    margin: 22px 0 0;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    border-left: 4px solid;
+}
+.hs-thongbao.error { background: var(--hs-loi-nen); color: var(--hs-loi); border-color: var(--hs-loi); }
+.hs-thongbao.success { background: var(--hs-ok-nen); color: var(--hs-ok); border-color: var(--hs-ok); }
+
+.hs-luoi {
+    margin-top: 26px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 26px;
+    align-items: start;
+}
+
+.hs-the-khoi {
+    background: var(--hs-the);
+    border: 1px solid var(--hs-vien);
+    border-radius: 18px;
+    padding: 30px 32px 34px;
+    box-shadow: 0 8px 30px rgba(60, 45, 20, .06);
+}
+
+.hs-tieu-de {
+    margin: 0 0 22px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--hs-vien);
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 500;
+}
+.hs-tieu-de i { color: var(--hs-nhan-dam); }
+
+.hs-the-khoi label {
+    display: block;
+    margin: 16px 0 7px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--hs-chu-phu);
+}
+
+.hs-the-khoi input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--hs-chu);
+    background: #fff;
+    border: 1px solid var(--hs-vien);
+    border-radius: 10px;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.hs-the-khoi input:focus {
+    outline: none;
+    border-color: var(--hs-nhan);
+    box-shadow: 0 0 0 3px rgba(176, 141, 87, .2);
+}
+
+.hs-the-khoi input:disabled {
+    background: var(--hs-nen);
+    color: var(--hs-chu-phu);
+    cursor: not-allowed;
+}
+
+.hs-o-mat-khau { position: relative; }
+.hs-o-mat-khau input { padding-right: 64px; }
+
+.hs-hien {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 6px 10px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--hs-nhan-dam);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.hs-hien:hover { text-decoration: underline; }
+
+.hs-the-khoi form > button[type="submit"] {
+    width: 100%;
+    margin-top: 26px;
+    padding: 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #fff;
+    background: var(--hs-chu);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+}
+.hs-the-khoi form > button[type="submit"]:hover { background: var(--hs-nhan-dam); }
+.hs-the-khoi form > button[type="submit"]:active { transform: scale(.99); }
+
+@media (max-width: 800px) {
+    .hs-trang { padding-top: 100px; }
+    .hs-luoi { grid-template-columns: 1fr; }
+    .hs-dau { flex-direction: column; text-align: center; padding: 28px 22px; }
+    .hs-the { justify-content: center; }
+    .hs-ten { font-size: 28px; }
+}

@@ -33,21 +33,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } else {
 
-        $sql = "SELECT id, name, email, password, role, trang_thai
-                FROM users
-                WHERE email = ?";
+        $sql = "SELECT nd.ND_Ma, nd.ND_Ten, nd.ND_Email, nd.ND_MatKhau, nd.ND_TrangThai, nd.LND_Ma,
+                       nv.NV_TrangThai
+                FROM nguoidung nd
+                LEFT JOIN nhanvien nv ON nv.ND_Ma = nd.ND_Ma
+                WHERE nd.ND_Email = ?";
 
         $stmt = $conn->prepare($sql);
         $stmt->execute([$email]);
 
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$user || !password_verify($password, $user['password'])) {
+        if (!$user || !password_verify($password, $user['ND_MatKhau'])) {
 
             $message = 'Email hoặc mật khẩu không chính xác.';
             $message_type = 'error';
 
-        } elseif ($user['trang_thai'] === 'bi_khoa') {
+        } elseif ((int) $user['ND_TrangThai'] !== 1
+                  || ((int) $user['LND_Ma'] === VAI_TRO_NHAN_VIEN && (int) $user['NV_TrangThai'] !== 1)) {
 
             $message = 'Tài khoản của bạn đã bị khóa.';
             $message_type = 'error';
@@ -56,10 +59,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             session_regenerate_id(true);
 
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['name'];
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['role'] = $user['role'];
+            $_SESSION['user_id'] = (int) $user['ND_Ma'];
+            $_SESSION['user_name'] = $user['ND_Ten'];
+            $_SESSION['user_email'] = $user['ND_Email'];
+            $_SESSION['role'] = (int) $user['LND_Ma'];
 
             $ve_trang = $_GET['tu'] ?? '';
 

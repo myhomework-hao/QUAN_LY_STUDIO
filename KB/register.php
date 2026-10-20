@@ -1,6 +1,7 @@
 <?php
 
 require_once '../config/db.php';
+require_once '../config/auth.php';
 
 $message = '';
 $message_type = '';
@@ -34,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } else {
 
-        $sql = "SELECT id FROM users WHERE email = ?";
+        $sql = "SELECT ND_Ma FROM nguoidung WHERE ND_Email = ?";
         $stmt = $conn->prepare($sql);
         $stmt->execute([$email]);
 
@@ -47,11 +48,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-            $sql = "INSERT INTO users (name, email, password, role, trang_thai)
-                    VALUES (?, ?, ?, 0, 'hoat_dong')";
+            $sql = "INSERT INTO nguoidung (ND_Ten, ND_Email, ND_MatKhau, ND_TrangThai, LND_Ma)
+                    VALUES (?, ?, ?, 1, ?)";
 
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$name, $email, $hashed_password]);
+            $stmt->execute([$name, $email, $hashed_password, VAI_TRO_KHACH_HANG]);
 
             header('Location: login.php?dangky=ok');
             exit;
