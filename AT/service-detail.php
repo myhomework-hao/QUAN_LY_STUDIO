@@ -4,30 +4,27 @@ require_once '../config/auth.php';
 require_once '../config/db.php';
 require_once '../includes/dich_vu.php';
 
-// Hàm chuẩn hóa loại sản phẩm đồng bộ với trang danh sách
-function chuan_hoa_loai($loai_goc) {
-    $loai_goc = strtolower(trim((string)$loai_goc));
-    
-    if (in_array($loai_goc, ['studio', 'cho_chup', 'diadiem', 'dia_diem', 'khong_gian'], true)) {
-        return 'studio';
-    }
-    if (in_array($loai_goc, ['trang_phuc', 'do_bo', 'quan_ao', 'trangphuc', 'dobo'], true)) {
-        return 'trang_phuc';
-    }
-    if (in_array($loai_goc, ['may_anh', 'mayanh', 'camera'], true)) {
-        return 'may_anh';
-    }
-
-    return $loai_goc;
-}
+$ten_danh_muc_theo_loai = [
+    'thiet_bi'   => 'Máy ảnh - thiết bị',
+    'phong_chup' => 'Chỗ chụp ảnh',
+    'trang_phuc' => 'Bộ đồ',
+    'phu_kien'   => 'Phụ kiện - đạo cụ',
+];
 
 $ma_dich_vu = (int) ($_GET['id'] ?? 0);
 
-// Truy vấn chuẩn xác theo các tên cột trong bảng dich_vu của bạn
 $stmt = $conn->prepare(
-    "SELECT DV_Ma as id, DV_Ten as ten, DV_Loai as loai, DV_GiaThue as gia, DV_DonViTinh as don_vi, DV_SoLuong as so_luong, DV_MoTa as mo_ta, DV_MoTaChiTiet as mo_ta_chi_tiet, DV_HinhAnh as anh
-     FROM dich_vu
-     WHERE DV_Ma = ? AND (DV_DangBan = 'hien' OR DV_DangBan = '1')"
+    "SELECT dv.DV_Ma AS id, dv.DV_Ten AS ten, dv.DV_Loai AS loai, dv.DV_GiaThue AS gia,
+            dv.DV_DonViTinh AS don_vi, dv.DV_SoLuong AS so_luong, dv.DV_MoTa AS mo_ta,
+            dv.DV_MoTaChiTiet AS mo_ta_chi_tiet, dv.DV_HinhAnh AS anh,
+            pc.PC_SucChua AS suc_chua, tb.TB_Loai AS loai_thiet_bi,
+            tp.TP_KichCo AS kich_co, pk.PK_Loai AS loai_phu_kien
+     FROM dichvu dv
+     LEFT JOIN phongchup pc ON pc.DV_Ma = dv.DV_Ma
+     LEFT JOIN thietbi tb ON tb.DV_Ma = dv.DV_Ma
+     LEFT JOIN trangphuc tp ON tp.DV_Ma = dv.DV_Ma
+     LEFT JOIN phukien pk ON pk.DV_Ma = dv.DV_Ma
+     WHERE dv.DV_Ma = ? AND dv.DV_DangBan = 1"
 );
 $stmt->execute([$ma_dich_vu]);
 $dv = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -41,11 +38,11 @@ $diem_trung_binh = 0;
 if ($dv) {
     try {
         $stmt = $conn->prepare(
-            "SELECT r.so_sao, r.binh_luan, r.ngay_tao, u.name
-             FROM reviews r
-             JOIN users u ON u.id = r.user_id
-             WHERE r.service_id = ?
-             ORDER BY r.id DESC"
+            "SELECT dg.DG_SoSao AS so_sao, dg.DG_NoiDung AS binh_luan, dg.DG_NgayTao AS ngay_tao, nd.ND_Ten AS name
+             FROM danhgia dg
+             JOIN nguoidung nd ON nd.ND_Ma = dg.ND_Ma
+             WHERE dg.DV_Ma = ?
+             ORDER BY dg.DG_Ma DESC"
         );
         $stmt->execute([$dv['id']]);
         $ds_danh_gia = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -57,14 +54,27 @@ if ($dv) {
         $diem_trung_binh = array_sum(array_column($ds_danh_gia, 'so_sao')) / count($ds_danh_gia);
     }
 
-    $loai_chuan = chuan_hoa_loai($dv['loai']);
-    $tt_loai = function_exists('thong_tin_loai') ? thong_tin_loai($loai_chuan) : [];
-    $ten_danh_muc = $tt_loai['ten'] ?? ucfirst(str_replace('_', ' ', $loai_chuan));
+    $loai_chuan = $dv['loai'];
+    $ten_danh_muc = $ten_danh_muc_theo_loai[$loai_chuan] ?? $loai_chuan;
 
     $tt_don_vi = function_exists('thong_tin_don_vi') ? thong_tin_don_vi($dv['don_vi']) : ['hinh_thuc' => 'Cho thuê'];
     $theo_gio = $dv['don_vi'] === 'gio';
     $kieu_nhap = $theo_gio ? 'datetime-local' : 'date';
     $nho_nhat = date($theo_gio ? 'Y-m-d\TH:i' : 'Y-m-d');
+
+    $thuoc_tinh_rieng = [];
+    if ($dv['suc_chua'] !== null) {
+        $thuoc_tinh_rieng['Sức chứa'] = $dv['suc_chua'] . ' người';
+    }
+    if ($dv['loai_thiet_bi']) {
+        $thuoc_tinh_rieng['Loại thiết bị'] = $dv['loai_thiet_bi'];
+    }
+    if ($dv['kich_co']) {
+        $thuoc_tinh_rieng['Kích cỡ'] = $dv['kich_co'];
+    }
+    if ($dv['loai_phu_kien']) {
+        $thuoc_tinh_rieng['Loại phụ kiện'] = $dv['loai_phu_kien'];
+    }
 }
 
 $tieu_de_trang = ($dv ? $dv['ten'] : 'Không tìm thấy') . ' - VIBE STUDIO';
@@ -142,6 +152,12 @@ require_once '../includes/header.php';
                     <span>Hình thức</span>
                     <strong><?= h($tt_don_vi['hinh_thuc'] ?? 'Cho thuê') ?></strong>
                 </div>
+                <?php foreach ($thuoc_tinh_rieng as $nhan => $gia_tri): ?>
+                    <div class="information-item">
+                        <span><?= h($nhan) ?></span>
+                        <strong><?= h($gia_tri) ?></strong>
+                    </div>
+                <?php endforeach; ?>
             </div>
 
             <form method="post" action="<?= BASE_URL ?>HH/cart.php">
@@ -188,7 +204,7 @@ require_once '../includes/header.php';
         <p class="small-title">INFORMATION</p>
         <h2>Thông tin <i>sản phẩm</i></h2>
         <div class="detail-description-content">
-            <p><?= nl2br(h($dv['mo_ta_chi_tiet'] ?? '')) ?></p>
+            <p><?= nl2br(h($dv['mo_ta_chi_tiet'] ?: $dv['mo_ta'])) ?></p>
         </div>
     </section>
 

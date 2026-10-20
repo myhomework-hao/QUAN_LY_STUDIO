@@ -1,184 +1,309 @@
 <?php
 require_once '../config/app.php';
+require_once '../config/auth.php';
 require_once '../config/db.php';
+require_once '../includes/donhang.php';
 
-// Đảm bảo session đã được khởi tạo
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+yeu_cau_dang_nhap();
+
+$ma_don = (int) ($_GET['id'] ?? 0);
+$vai_tro = vai_tro_hien_tai();
+$ma_nguoi_dung = ma_nguoi_dung_hien_tai();
+$xem_tat_ca = in_array($vai_tro, ['admin', 'nhanvien'], true);
+
+$thong_bao = '';
+$loai_thong_bao = '';
+
+function lay_don(PDO $conn, int $ma_don, int $ma_nguoi_dung, bool $xem_tat_ca)
+{
+    $sql = "SELECT d.*, nd.ND_Ten, nd.ND_Email
+            FROM dondatlich d
+            JOIN nguoidung nd ON nd.ND_Ma = d.ND_Ma
+            WHERE d.DDL_Ma = ?";
+    $tham_so = [$ma_don];
+    if (!$xem_tat_ca) {
+        $sql .= " AND d.ND_Ma = ?";
+        $tham_so[] = $ma_nguoi_dung;
+    }
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($tham_so);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-$code = trim($_GET['code'] ?? '');
-$order = null;
-$items = [];
+$don = lay_don($conn, $ma_don, $ma_nguoi_dung, $xem_tat_ca);
+$la_chu_don = $don && (int) $don['ND_Ma'] === $ma_nguoi_dung && $vai_tro === 'khachhang';
 
-$user_id = $_SESSION['user_id'] ?? null;
-$sdt_session = $_SESSION['last_phone'] ?? '';
-$vai_tro = function_exists('vai_tro_hien_tai') ? vai_tro_hien_tai() : ($_SESSION['role'] ?? '');
+if ($don && $la_chu_don && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
-if ($code) {
-    // 1. Kiểm tra cấu trúc các cột thực tế của bảng dondatlich để tránh lỗi truy vấn
-    $columns_don = [];
-    try {
-        $stmt_cols = $conn->query("SHOW COLUMNS FROM dondatlich");
-        $columns_don = $stmt_cols->fetchAll(PDO::FETCH_COLUMN);
-    } catch (Exception $e) {}
+    $hanh_dong = $_POST['hanh_dong'] ?? '';
 
-    $has_ma_don = in_array('ma_don', $columns_don);
+    if ($hanh_dong === 'huy_don') {
 
-    // Truy vấn lấy thông tin đơn hàng chính
-    if ($has_ma_don) {
-        $stmt = $conn->prepare("SELECT * FROM dondatlich WHERE ma_don = ? OR id = ?");
-        $stmt->execute([$code, $code]);
-    } else {
-        $stmt = $conn->prepare("SELECT * FROM dondatlich WHERE id = ?");
-        $stmt->execute([$code]);
-    }
-    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+        $ly_do = trim($_POST['ly_do'] ?? '');
 
-    if ($order) {
-        // Kiểm tra quyền xem đơn nếu là khách hàng
-        if ($vai_tro === 'khachhang' || empty($vai_tro)) {
-            $order_user_id = $order['user_id'] ?? ($order['id_khach_hang'] ?? ($order['khach_hang_id'] ?? null));
-            $order_phone = $order['so_dien_thoai'] ?? ($order['customer_phone'] ?? '');
+        if (mb_strlen($ly_do) > 255) {
 
-            $khop_user = ($user_id && $order_user_id == $user_id);
-            $khop_sdt = (!empty($sdt_session) && $order_phone == $sdt_session);
-            
-            if (!$khop_user && !$khop_sdt) {
-                $order = null; // Không có quyền xem
+            $thong_bao = 'Lý do hủy không được dài quá 255 ký tự.';
+            $loai_thong_bao = 'error';
+
+        } else {
+
+            $stmt = $conn->prepare("UPDATE dondatlich
+                                    SET DDL_TrangThai = ?, DDL_ThoiDiemHuy = ?, DDL_LyDoHuy = ?
+                                    WHERE DDL_Ma = ? AND ND_Ma = ? AND DDL_TrangThai = ?");
+            $stmt->execute([
+                TRANG_THAI_DA_HUY, date('Y-m-d H:i:s'), $ly_do !== '' ? $ly_do : null,
+                $ma_don, $ma_nguoi_dung, TRANG_THAI_CHO_DUYET,
+            ]);
+
+            if ($stmt->rowCount() > 0) {
+                $thong_bao = 'Đã hủy đơn thuê.';
+                $loai_thong_bao = 'success';
+            } else {
+                $thong_bao = 'Chỉ có thể hủy đơn đang chờ duyệt.';
+                $loai_thong_bao = 'error';
             }
         }
 
-        if ($order) {
-            // 2. Lấy danh sách item từ bảng chitietdon kết nối linh hoạt với bảng dichvu
-            try {
-                $stmt_items = $conn->prepare("
-                    SELECT ct.*, 
-                           COALESCE(dv.ten_dich_vu, dv.name, 'Dịch vụ') as ten_dv, 
-                           COALESCE(dv.gia, dv.gia_tien, dv.price, ct.gia, 0) as don_gia 
-                    FROM chitietdon ct 
-                    LEFT JOIN dichvu dv ON (ct.id_dich_vu = dv.id OR ct.service_id = dv.id)
-                    WHERE ct.id_don_dat_lich = ? OR ct.order_id = ?
-                ");
-                $stmt_items->execute([$order['id'], $order['id']]);
-                $items = $stmt_items->fetchAll(PDO::FETCH_ASSOC);
-            } catch (Exception $e) {
-                // Trường hợp tên cột chi tiết đơn khác biệt hoàn toàn
-                $items = [];
-            }
+    } elseif ($hanh_dong === 'gui_danh_gia') {
+
+        $ma_dich_vu = (int) ($_POST['ma_dich_vu'] ?? 0);
+        $so_sao = (int) ($_POST['so_sao'] ?? 0);
+        $noi_dung = trim($_POST['noi_dung'] ?? '');
+
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM chitietdon WHERE DDL_Ma = ? AND DV_Ma = ?");
+        $stmt->execute([$ma_don, $ma_dich_vu]);
+        $co_trong_don = (int) $stmt->fetchColumn() > 0;
+
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM danhgia WHERE DDL_Ma = ? AND DV_Ma = ?");
+        $stmt->execute([$ma_don, $ma_dich_vu]);
+        $da_danh_gia = (int) $stmt->fetchColumn() > 0;
+
+        if ($don['DDL_TrangThai'] !== TRANG_THAI_HOAN_THANH || !$co_trong_don) {
+
+            $thong_bao = 'Chỉ đánh giá được dịch vụ thuộc đơn đã hoàn thành.';
+            $loai_thong_bao = 'error';
+
+        } elseif ($da_danh_gia) {
+
+            $thong_bao = 'Mỗi dịch vụ trong đơn chỉ được đánh giá một lần.';
+            $loai_thong_bao = 'error';
+
+        } elseif ($so_sao < 1 || $so_sao > 5) {
+
+            $thong_bao = 'Vui lòng chọn số sao từ 1 đến 5.';
+            $loai_thong_bao = 'error';
+
+        } else {
+
+            $stmt = $conn->prepare("INSERT INTO danhgia (ND_Ma, DDL_Ma, DV_Ma, DG_SoSao, DG_NoiDung, DG_NgayTao)
+                                    VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([
+                $ma_nguoi_dung, $ma_don, $ma_dich_vu, $so_sao,
+                $noi_dung !== '' ? $noi_dung : null, date('Y-m-d H:i:s'),
+            ]);
+
+            $thong_bao = 'Cảm ơn bạn đã gửi đánh giá.';
+            $loai_thong_bao = 'success';
         }
+    }
+
+    $don = lay_don($conn, $ma_don, $ma_nguoi_dung, $xem_tat_ca);
+}
+
+$cac_muc = [];
+$cac_thanh_toan = [];
+$cac_danh_gia = [];
+
+if ($don) {
+    $stmt = $conn->prepare("SELECT c.*, dv.DV_Ten, dv.DV_Loai, dv.DV_HinhAnh
+                            FROM chitietdon c
+                            JOIN dichvu dv ON dv.DV_Ma = c.DV_Ma
+                            WHERE c.DDL_Ma = ?
+                            ORDER BY c.CTD_Ma");
+    $stmt->execute([$ma_don]);
+    $cac_muc = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmt = $conn->prepare("SELECT * FROM thanhtoan WHERE DDL_Ma = ? ORDER BY TT_Ma");
+    $stmt->execute([$ma_don]);
+    $cac_thanh_toan = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmt = $conn->prepare("SELECT * FROM danhgia WHERE DDL_Ma = ?");
+    $stmt->execute([$ma_don]);
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $dg) {
+        $cac_danh_gia[(int) $dg['DV_Ma']] = $dg;
     }
 }
 
-$ma_hien_thi = $order['ma_don'] ?? ($order['id'] ?? $code);
-$tieu_de_trang = $order ? 'Chi tiết đơn hàng ' . $ma_hien_thi : 'Không tìm thấy đơn hàng';
-$css_rieng = ['cart.css'];
+$cac_dich_vu_don = [];
+foreach ($cac_muc as $muc) {
+    $cac_dich_vu_don[(int) $muc['DV_Ma']] = $muc['DV_Ten'];
+}
+
+$tieu_de_trang = $don ? 'Chi tiết đơn ' . ma_don_hien_thi($ma_don) : 'Không tìm thấy đơn thuê';
+$css_rieng = ['cart.css', 'KB.css'];
 require_once '../includes/header.php';
 ?>
 
 <section class="page-head" id="pageHead">
     <p class="page-label">ORDER DETAILS</p>
-    <h1>CHI TIẾT <i>ĐƠN HÀNG.</i></h1>
+    <h1>CHI TIẾT <i>ĐƠN THUÊ.</i></h1>
 </section>
 
-<section class="shop-area" id="shopArea" style="max-width: 900px; margin: 0 auto; padding: 20px;">
-    <?php if (!$order) : ?>
-        <div class="card" style="text-align: center; padding: 40px;">
-            <p>Không tìm thấy thông tin đơn hàng hoặc bạn không có quyền xem đơn hàng này.</p>
-            <br>
-            <a href="my-orders.php" class="btn-dark">QUAY LẠI ĐƠN HÀNG CỦA TÔI</a>
+<section class="dh-khung">
+    <?php if (!$don) : ?>
+        <div class="dh-trong">
+            <p>Không tìm thấy đơn thuê hoặc bạn không có quyền xem đơn này.</p>
+            <a href="../KB/my-orders.php" class="dh-nut">QUAY LẠI ĐƠN HÀNG CỦA TÔI</a>
         </div>
     <?php else : ?>
-        <div style="margin-bottom: 20px;">
-            <a href="my-orders.php" style="color: #333; text-decoration: underline; font-weight: 500;">← Quay lại danh sách đơn hàng</a>
-        </div>
 
-        <div class="card" style="border: 1px solid #ddd; padding: 25px; border-radius: 8px; background: #fff;">
-            <!-- Header đơn hàng -->
-            <div style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <a href="../KB/my-orders.php" class="dh-quay-lai">← Quay lại danh sách đơn</a>
+
+        <?php if ($thong_bao !== '') : ?>
+            <p class="dh-thongbao <?= htmlspecialchars($loai_thong_bao) ?>" role="alert"><?= htmlspecialchars($thong_bao) ?></p>
+        <?php endif; ?>
+
+        <article class="dh-the">
+            <div class="dh-the-dau">
                 <div>
-                    <h2 style="margin: 0 0 5px 0;">MÃ ĐƠN: <?= htmlspecialchars($ma_hien_thi) ?></h2>
-                    <span style="color: #666; font-size: 0.9rem;">Ngày đặt: <?= isset($order['ngay_tao']) ? date('d/m/Y H:i:s', strtotime($order['ngay_tao'])) : (isset($order['created_at']) ? date('d/m/Y H:i:s', strtotime($order['created_at'])) : '') ?></span>
+                    <p class="dh-ma"><?= htmlspecialchars(ma_don_hien_thi($ma_don)) ?></p>
+                    <p class="dh-phu">Đặt lúc <?= htmlspecialchars(dinh_dang_ngay_gio($don['DDL_NgayTao'])) ?></p>
+                </div>
+                <span class="dh-nhan dh-<?= lop_trang_thai($don['DDL_TrangThai']) ?>">
+                    <?= htmlspecialchars($don['DDL_TrangThai']) ?>
+                </span>
+            </div>
+
+            <?php if ($don['DDL_TrangThai'] === TRANG_THAI_TU_CHOI && $don['DDL_LyDoTuChoi']) : ?>
+                <p class="dh-ghi dh-ghi-loi"><b>Lý do từ chối:</b> <?= htmlspecialchars($don['DDL_LyDoTuChoi']) ?></p>
+            <?php elseif ($don['DDL_TrangThai'] === TRANG_THAI_DA_HUY) : ?>
+                <p class="dh-ghi dh-ghi-loi">
+                    <b>Đã hủy</b> lúc <?= htmlspecialchars(dinh_dang_ngay_gio($don['DDL_ThoiDiemHuy'])) ?>
+                    <?php if ($don['DDL_LyDoHuy']) : ?> - <?= htmlspecialchars($don['DDL_LyDoHuy']) ?><?php endif; ?>
+                </p>
+            <?php endif; ?>
+
+            <div class="dh-thong-tin">
+                <div>
+                    <h3>Khách hàng</h3>
+                    <p><b>Họ tên:</b> <?= htmlspecialchars($don['ND_Ten']) ?></p>
+                    <p><b>Email:</b> <?= htmlspecialchars($don['ND_Email']) ?></p>
                 </div>
                 <div>
-                    Trạng thái: 
-                    <strong style="color: #d97706; font-size: 1.1rem;">
-                        <?php
-                        $status_map = [
-                            'cho_xuly' => 'Đang chờ xử lý',
-                            'da_xac_nhan' => 'Đã xác nhận',
-                            'hoan_tat' => 'Hoàn tất',
-                            'da_huy' => 'Đã hủy'
-                        ];
-                        $status_key = $order['trang_thai'] ?? ($order['status'] ?? 'cho_xuly');
-                        echo $status_map[$status_key] ?? htmlspecialchars($status_key);
-                        ?>
-                    </strong>
+                    <h3>Ghi chú</h3>
+                    <p><?= $don['DDL_GhiChu'] ? nl2br(htmlspecialchars($don['DDL_GhiChu'])) : 'Không có ghi chú.' ?></p>
                 </div>
             </div>
 
-            <!-- Thông tin khách hàng & Giao hàng -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px; background: #f9f9f9; padding: 15px; border-radius: 6px;">
-                <div>
-                    <h4 style="margin-top: 0;">THÔNG TIN KHÁCH HÀNG</h4>
-                    <p style="margin: 5px 0;"><b>Họ tên:</b> <?= htmlspecialchars($order['ho_ten'] ?? ($order['customer_name'] ?? '')) ?></p>
-                    <p style="margin: 5px 0;"><b>Số điện thoại:</b> <?= htmlspecialchars($order['so_dien_thoai'] ?? ($order['customer_phone'] ?? '')) ?></p>
-                    <p style="margin: 5px 0;"><b>Email:</b> <?= htmlspecialchars($order['email'] ?? ($order['customer_email'] ?? '')) ?></p>
-                </div>
-                <div>
-                    <h4 style="margin-top: 0;">THÔNG TIN ĐẶT LỊCH / THANH TOÁN</h4>
-                    <p style="margin: 5px 0;"><b>Hình thức:</b> <?= htmlspecialchars($order['hinh_thuc'] ?? 'Tại Studio') ?></p>
-                    <p style="margin: 5px 0;"><b>Thanh toán:</b> <?= htmlspecialchars($order['phuong_thuc_thanh_toan'] ?? ($order['payment_method'] ?? 'Tiền mặt')) ?></p>
-                    <?php 
-                    $ghi_chu = $order['ghi_chu'] ?? ($order['note'] ?? '');
-                    if (!empty($ghi_chu)) : ?>
-                        <p style="margin: 5px 0;"><b>Ghi chú:</b> <?= htmlspecialchars($ghi_chu) ?></p>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <!-- Danh sách dịch vụ trong đơn -->
-            <h4 style="margin-bottom: 15px;">DANH SÁCH DỊCH VỤ ĐÃ ĐẶT</h4>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                <thead>
-                    <tr style="border-bottom: 2px solid #ddd; text-align: left; background: #f4f4f4;">
-                        <th style="padding: 10px;">Dịch vụ</th>
-                        <th style="padding: 10px; text-align: center;">Số lượng</th>
-                        <th style="padding: 10px; text-align: right;">Đơn giá</th>
-                        <th style="padding: 10px; text-align: right;">Thành tiền</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($items)) : ?>
+            <h3 class="dh-muc-tieu-de">Dịch vụ đã thuê</h3>
+            <div class="dh-bang-boc">
+                <table class="dh-bang">
+                    <thead>
                         <tr>
-                            <td colspan="4" style="text-align: center; padding: 15px; color: #777;">Không có dịch vụ nào trong đơn hàng này.</td>
+                            <th>Dịch vụ</th>
+                            <th>Thời gian thuê</th>
+                            <th class="so">SL</th>
+                            <th class="so">Đơn giá</th>
+                            <th class="so">Thành tiền</th>
                         </tr>
-                    <?php else : ?>
-                        <?php foreach ($items as $item) : ?>
-                            <?php 
-                                $ten_dv = $item['ten_dv'] ?? ('Dịch vụ #' . ($item['id_dich_vu'] ?? ''));
-                                $quantity = $item['so_luong'] ?? ($item['quantity'] ?? 1);
-                                $price = $item['don_gia'] ?? 0;
-                                $subtotal = $price * $quantity; 
-                            ?>
-                            <tr style="border-bottom: 1px solid #eee;">
-                                <td style="padding: 12px 10px;">
-                                    <strong><?= htmlspecialchars($ten_dv) ?></strong>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($cac_muc as $muc) : ?>
+                            <tr>
+                                <td>
+                                    <div class="dh-dich-vu">
+                                        <?php if ($muc['DV_HinhAnh']) : ?>
+                                            <img src="<?= htmlspecialchars(duong_dan_anh($muc['DV_HinhAnh'])) ?>" alt="">
+                                        <?php endif; ?>
+                                        <div>
+                                            <b><?= htmlspecialchars($muc['DV_Ten']) ?></b>
+                                            <span class="dh-phu">
+                                                <?= htmlspecialchars(ten_loai_dich_vu($muc['DV_Loai'])) ?>
+                                                <?php if ($muc['CTD_KichCo']) : ?> - Size <?= htmlspecialchars($muc['CTD_KichCo']) ?><?php endif; ?>
+                                            </span>
+                                        </div>
+                                    </div>
                                 </td>
-                                <td style="padding: 12px 10px; text-align: center;"><?= $quantity ?></td>
-                                <td style="padding: 12px 10px; text-align: right;"><?= number_format($price, 0, ',', '.') ?>₫</td>
-                                <td style="padding: 12px 10px; text-align: right;"><?= number_format($subtotal, 0, ',', '.') ?>₫</td>
+                                <td>
+                                    <?= htmlspecialchars(dinh_dang_ngay_gio($muc['CTD_BatDau'])) ?><br>
+                                    <span class="dh-phu">đến <?= htmlspecialchars(dinh_dang_ngay_gio($muc['CTD_KetThuc'])) ?></span>
+                                </td>
+                                <td class="so"><?= (int) $muc['CTD_SoLuong'] ?></td>
+                                <td class="so"><?= dinh_dang_tien($muc['CTD_DonGia']) ?></td>
+                                <td class="so"><b><?= dinh_dang_tien($muc['CTD_ThanhTien']) ?></b></td>
                             </tr>
                         <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-
-            <!-- Tổng kết -->
-            <div style="text-align: right; border-top: 2px solid #ddd; padding-top: 15px;">
-                <p style="font-size: 1.2rem; margin: 0;">Tổng thanh toán: <strong style="color: #000; font-size: 1.4rem;"><?= number_format($order['tong_tien'] ?? ($order['total_price'] ?? 0), 0, ',', '.') ?>₫</strong></p>
+                    </tbody>
+                </table>
             </div>
-        </div>
+
+            <div class="dh-tong">
+                <?php if ((float) $don['DDL_TienCoc'] > 0) : ?>
+                    <p>Tiền đặt cọc: <b><?= dinh_dang_tien($don['DDL_TienCoc']) ?></b></p>
+                <?php endif; ?>
+                <p>Tổng tiền: <strong><?= dinh_dang_tien($don['DDL_TongTien']) ?></strong></p>
+            </div>
+
+            <?php if (!empty($cac_thanh_toan)) : ?>
+                <h3 class="dh-muc-tieu-de">Thanh toán</h3>
+                <ul class="dh-thanh-toan">
+                    <?php foreach ($cac_thanh_toan as $tt) : ?>
+                        <li>
+                            <span><b><?= htmlspecialchars($tt['TT_Loai']) ?></b> - <?= htmlspecialchars($tt['TT_PhuongThuc']) ?></span>
+                            <span><?= dinh_dang_tien($tt['TT_SoTien']) ?> · <?= htmlspecialchars($tt['TT_TrangThai']) ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+
+            <?php if ($la_chu_don && $don['DDL_TrangThai'] === TRANG_THAI_CHO_DUYET) : ?>
+                <form method="POST" action="" class="dh-huy" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn thuê này?');">
+                    <input type="hidden" name="hanh_dong" value="huy_don">
+                    <label for="ly_do">Lý do hủy (không bắt buộc)</label>
+                    <input type="text" id="ly_do" name="ly_do" maxlength="255">
+                    <button type="submit" class="dh-nut dh-nut-vien">HỦY ĐƠN THUÊ</button>
+                </form>
+            <?php endif; ?>
+        </article>
+
+        <?php if ($la_chu_don && $don['DDL_TrangThai'] === TRANG_THAI_HOAN_THANH) : ?>
+            <article class="dh-the">
+                <h3 class="dh-muc-tieu-de dh-khong-lien">Đánh giá dịch vụ</h3>
+
+                <?php foreach ($cac_dich_vu_don as $ma_dv => $ten_dv) : ?>
+                    <div class="dh-danh-gia">
+                        <p class="dh-dv-ten"><?= htmlspecialchars($ten_dv) ?></p>
+
+                        <?php if (isset($cac_danh_gia[$ma_dv])) : $dg = $cac_danh_gia[$ma_dv]; ?>
+                            <p class="dh-sao-hien" aria-label="<?= (int) $dg['DG_SoSao'] ?> sao">
+                                <?= str_repeat('★', (int) $dg['DG_SoSao']) ?><span><?= str_repeat('★', 5 - (int) $dg['DG_SoSao']) ?></span>
+                            </p>
+                            <?php if ($dg['DG_NoiDung']) : ?>
+                                <p><?= nl2br(htmlspecialchars($dg['DG_NoiDung'])) ?></p>
+                            <?php endif; ?>
+                            <p class="dh-phu">Đã đánh giá lúc <?= htmlspecialchars(dinh_dang_ngay_gio($dg['DG_NgayTao'])) ?></p>
+                        <?php else : ?>
+                            <form method="POST" action="">
+                                <input type="hidden" name="hanh_dong" value="gui_danh_gia">
+                                <input type="hidden" name="ma_dich_vu" value="<?= (int) $ma_dv ?>">
+
+                                <div class="dh-sao-chon">
+                                    <?php for ($i = 5; $i >= 1; $i--) : ?>
+                                        <input type="radio" id="sao<?= $ma_dv ?>_<?= $i ?>" name="so_sao" value="<?= $i ?>" required>
+                                        <label for="sao<?= $ma_dv ?>_<?= $i ?>" title="<?= $i ?> sao">★</label>
+                                    <?php endfor; ?>
+                                </div>
+
+                                <textarea name="noi_dung" rows="3" maxlength="1000" placeholder="Chia sẻ trải nghiệm của bạn (không bắt buộc)"></textarea>
+                                <button type="submit" class="dh-nut">GỬI ĐÁNH GIÁ</button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            </article>
+        <?php endif; ?>
+
     <?php endif; ?>
 </section>
 

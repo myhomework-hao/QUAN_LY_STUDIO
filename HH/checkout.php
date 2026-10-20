@@ -1,94 +1,120 @@
 <?php
 require_once '../config/app.php';
+require_once '../config/auth.php';
 require_once '../config/db.php';
 require_once '../includes/cart_helper.php';
+require_once '../includes/donhang.php';
+
+yeu_cau_vai_tro('khachhang');
+
+$ma_nguoi_dung = ma_nguoi_dung_hien_tai();
+
+$stmt = $conn->prepare("SELECT ND_Ten, ND_Email, ND_SDT FROM nguoidung WHERE ND_Ma = ?");
+$stmt->execute([$ma_nguoi_dung]);
+$khach = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $cart_items = lay_gio_hang($conn);
 $totals = tinh_tong_gio_hang($cart_items);
 $empty = empty($cart_items);
 
+$cac_phuong_thuc = [
+    'tien_mat' => 'Tiền mặt',
+    'qr' => 'Chuyển khoản QR giả lập',
+];
+
 $dat_hang_thanh_cong = false;
-$ma_don_hang = '';
-$thong_tin_don = [];
+$ma_don = 0;
+$phuong_thuc_da_chon = '';
 $loi_form = '';
 
-// Xử lý Đặt hàng
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
-    $ho_ten = trim($_POST['name'] ?? '');
-    $sdt = trim($_POST['phone'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $dia_chi = trim($_POST['address'] ?? '');
-    $phuong_xa = trim($_POST['ward'] ?? '');
-    $quan_huyen = trim($_POST['district'] ?? '');
-    $tinh_tp = trim($_POST['city'] ?? '');
-    $ghi_chu = trim($_POST['note'] ?? '');
-    $phuong_thuc = $_POST['payment'] ?? 'COD';
 
-    if (!$ho_ten || !$sdt || !$email) {
-        $loi_form = 'Vui lòng điền đầy đủ các thông tin bắt buộc (Họ tên, SĐT, Email).';
-    } elseif ($totals['need_ship'] && (!$dia_chi || !$phuong_xa || !$quan_huyen)) {
-        $loi_form = 'Vui lòng nhập đầy đủ địa chỉ giao hàng.';
+    $ma_phuong_thuc = $_POST['payment'] ?? 'tien_mat';
+    $ghi_chu = trim($_POST['note'] ?? '');
+
+    $cac_dong = [];
+
+    if (!isset($cac_phuong_thuc[$ma_phuong_thuc])) {
+        $loi_form = 'Phương thức thanh toán không hợp lệ.';
+    } elseif (mb_strlen($ghi_chu) > 1000) {
+        $loi_form = 'Ghi chú không được dài quá 1000 ký tự.';
     } else {
+        foreach ($cart_items as $item) {
+            $tg = thoi_gian_thue((string) $item['don_vi'], (string) $item['bat_dau'], (string) $item['ket_thuc']);
+
+            if ($tg === null) {
+                $loi_form = 'Vui lòng chọn lại thời gian thuê hợp lệ cho "' . $item['ten'] . '".';
+                break;
+            }
+            if (strtotime($tg['ket_thuc']) <= time()) {
+                $loi_form = 'Thời gian thuê của "' . $item['ten'] . '" đã qua, vui lòng chọn lại.';
+                break;
+            }
+
+            $cac_dong[] = ['item' => $item, 'tg' => $tg];
+        }
+    }
+
+    if ($loi_form === '') {
         try {
             $conn->beginTransaction();
 
-            $ma_don_hang = 'VB' . substr(time(), -7);
-            $dia_chi_giao = $totals['need_ship'] ? trim("$dia_chi, $phuong_xa, $quan_huyen, $tinh_tp", ', ') : 'Nhận tại Studio/Digital';
-            $user_id = !empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : NULL;
-
-            // 1. Tạo đơn hàng chính vào bảng orders
-            $col_total = 'total_price';
-            try {
-                $conn->query("SELECT price_total FROM orders LIMIT 1");
-                $col_total = 'price_total';
-            } catch (Exception $chk_ex) {
-                // Mặc định là total_price
+            foreach ($cac_dong as $dong) {
+                kiem_tra_con_cho(
+                    $conn, (int) $dong['item']['id'], $dong['item']['ten'],
+                    $dong['tg']['bat_dau'], $dong['tg']['ket_thuc'], (int) $dong['item']['qty']
+                );
             }
 
-            $sql_order = "
-                INSERT INTO orders (code, user_id, customer_name, customer_phone, customer_email, shipping_address, payment_method, note, {$col_total}, status, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'cho_xuly', NOW())
-            ";
-
-            $stmt = $conn->prepare($sql_order);
+            $stmt = $conn->prepare(
+                "INSERT INTO dondatlich (ND_Ma, DDL_TongTien, DDL_TienCoc, DDL_TrangThai, DDL_NgayTao, DDL_GhiChu)
+                 VALUES (?, ?, 0, ?, ?, ?)"
+            );
             $stmt->execute([
-                $ma_don_hang, 
-                $user_id, 
-                $ho_ten, 
-                $sdt, 
-                $email, 
-                $dia_chi_giao, 
-                $phuong_thuc, 
-                $ghi_chu, 
-                $totals['total']
+                $ma_nguoi_dung, $totals['total'], TRANG_THAI_CHO_DUYET,
+                date('Y-m-d H:i:s'), $ghi_chu !== '' ? $ghi_chu : null,
             ]);
-            $order_id = $conn->lastInsertId();
+            $ma_don = (int) $conn->lastInsertId();
 
-            // 2. Thêm từng chi tiết sản phẩm vào bảng order_items
-            $stmt_item = $conn->prepare("
-                INSERT INTO order_items (order_id, service_id, quantity, price)
-                VALUES (?, ?, ?, ?)
-            ");
-
-            foreach ($cart_items as $item) {
-                $stmt_item->execute([$order_id, $item['id'], $item['qty'], $item['gia']]);
+            $stmt_ct = $conn->prepare(
+                "INSERT INTO chitietdon (DDL_Ma, DV_Ma, CTD_SoLuong, CTD_KichCo, CTD_BatDau, CTD_KetThuc, CTD_DonGia, CTD_ThanhTien)
+                 VALUES (?, ?, ?, NULL, ?, ?, ?, ?)"
+            );
+            foreach ($cac_dong as $dong) {
+                $stmt_ct->execute([
+                    $ma_don, $dong['item']['id'], $dong['item']['qty'],
+                    $dong['tg']['bat_dau'], $dong['tg']['ket_thuc'],
+                    $dong['item']['gia'], $dong['item']['subtotal'],
+                ]);
             }
+
+            $da_thanh_toan = $ma_phuong_thuc === 'qr';
+            $stmt_tt = $conn->prepare(
+                "INSERT INTO thanhtoan (DDL_Ma, TT_Loai, TT_SoTien, TT_PhuongThuc, TT_MaThamChieu, TT_TrangThai, TT_ThoiDiem)
+                 VALUES (?, 'Thanh toán đủ', ?, ?, ?, ?, ?)"
+            );
+            $stmt_tt->execute([
+                $ma_don, $totals['total'], $cac_phuong_thuc[$ma_phuong_thuc],
+                $da_thanh_toan ? 'QR-' . date('ymdHis') . '-' . $ma_don : null,
+                $da_thanh_toan ? 'Thành công' : 'Chờ',
+                date('Y-m-d H:i:s'),
+            ]);
 
             $conn->commit();
 
-            // Xóa giỏ hàng sau khi đặt thành công & lưu SĐT tạm thời
             unset($_SESSION['cart'], $_SESSION['coupon']);
-            $_SESSION['last_phone'] = $sdt;
-            
+
             $dat_hang_thanh_cong = true;
-            $thong_tin_don = [
-                'ho_ten' => $ho_ten,
-                'sdt' => $sdt,
-                'phuong_thuc' => $phuong_thuc
-            ];
-        } catch (Exception $e) {
+            $phuong_thuc_da_chon = $cac_phuong_thuc[$ma_phuong_thuc];
+
+        } catch (DomainException $e) {
             $conn->rollBack();
-            $loi_form = 'Lỗi lưu đơn hàng: ' . $e->getMessage();
+            $loi_form = $e->getMessage();
+        } catch (Exception $e) {
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
+            $loi_form = 'Không thể lưu đơn thuê, vui lòng thử lại.';
         }
     }
 }
@@ -99,8 +125,8 @@ require_once '../includes/header.php';
 ?>
 
 <section class="page-head" id="pageHead">
+    <p class="page-label">CHECKOUT</p>
     <?php if ($dat_hang_thanh_cong) : ?>
-        <p class="page-label">CHECKOUT</p>
         <h1>HOÀN <i>TẤT.</i></h1>
         <ol class="steps">
             <li class="done">1. GIỎ HÀNG</li>
@@ -108,7 +134,6 @@ require_once '../includes/header.php';
             <li class="current">3. HOÀN TẤT</li>
         </ol>
     <?php else : ?>
-        <p class="page-label">CHECKOUT</p>
         <h1>THANH <i>TOÁN.</i></h1>
         <ol class="steps">
             <li class="done">1. GIỎ HÀNG</li>
@@ -121,14 +146,14 @@ require_once '../includes/header.php';
 <section class="shop-area" id="shopArea">
     <?php if ($dat_hang_thanh_cong) : ?>
         <div class="card success" style="text-align: center; padding: 40px 20px;">
-            <h1>ĐẶT HÀNG<br><i>THÀNH CÔNG.</i></h1>
-            <p>Cảm ơn <?= htmlspecialchars($thong_tin_don['ho_ten']) ?>! VIBE Studio sẽ liên hệ qua số <?= htmlspecialchars($thong_tin_don['sdt']) ?> để xác nhận đơn trong vòng 24 giờ.</p>
-            <div class="order-code" style="margin: 15px 0; font-weight: bold; font-size: 1.2rem;">MÃ ĐƠN: <?= htmlspecialchars($ma_don_hang) ?></div>
-            <p>Phương thức thanh toán: <?= htmlspecialchars($thong_tin_don['phuong_thuc']) ?></p>
-            
+            <h1>ĐẶT THUÊ<br><i>THÀNH CÔNG.</i></h1>
+            <p>Cảm ơn <?= htmlspecialchars($khach['ND_Ten']) ?>! Đơn thuê của bạn đang chờ VIBE Studio xét duyệt. Bạn có thể theo dõi trạng thái trong mục đơn hàng của tôi.</p>
+            <div class="order-code" style="margin: 15px 0; font-weight: bold; font-size: 1.2rem;">MÃ ĐƠN: <?= htmlspecialchars(ma_don_hien_thi($ma_don)) ?></div>
+            <p>Phương thức thanh toán: <?= htmlspecialchars($phuong_thuc_da_chon) ?></p>
+
             <div style="margin-top: 25px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                 <a href="../TP/index.php" class="btn-dark" style="text-decoration: none; padding: 10px 20px;">VỀ TRANG CHỦ</a>
-                <a href="../KB/my-orders.php" class="btn-dark" style="text-decoration: none; padding: 10px 20px; background-color: #333; color: #fff;">XEM ĐƠN HÀNG CỦA TÔI</a>
+                <a href="../KB/order-detail.php?id=<?= $ma_don ?>" class="btn-dark" style="text-decoration: none; padding: 10px 20px; background-color: #333; color: #fff;">XEM ĐƠN THUÊ</a>
             </div>
         </div>
     <?php else : ?>
@@ -137,13 +162,13 @@ require_once '../includes/header.php';
 
                 <?php if ($empty) : ?>
                     <div class="notice">
-                        <span>Giỏ hàng của bạn đang trống nên chưa thể đặt hàng.</span>
+                        <span>Giỏ hàng của bạn đang trống nên chưa thể đặt thuê.</span>
                         <a href="../AT/services.php" class="btn-dark">XEM SẢN PHẨM</a>
                     </div>
                 <?php endif; ?>
 
                 <?php if (!empty($loi_form)) : ?>
-                    <div class="card" style="border: 1px solid red; background: #fff2f2; color: red; padding: 15px;">
+                    <div class="card" style="border: 1px solid red; background: #fff2f2; color: red; padding: 15px;" role="alert">
                         <strong>Thông báo lỗi:</strong> <?= htmlspecialchars($loi_form) ?>
                     </div>
                 <?php endif; ?>
@@ -151,50 +176,20 @@ require_once '../includes/header.php';
                 <fieldset id="formFields" class="stack" <?= $empty ? 'disabled' : '' ?>>
 
                     <div class="card">
-                        <div class="card-head"><h2>Thông tin liên hệ</h2></div>
+                        <div class="card-head"><h2>Thông tin người đặt</h2></div>
                         <div class="card-body">
-                            <div class="field-grid">
-                                <label class="field full">Họ tên
-                                    <input type="text" name="name" autocomplete="name" required value="<?= htmlspecialchars($_POST['name'] ?? '') ?>">
-                                </label>
-                                <label class="field">Số điện thoại
-                                    <input type="tel" name="phone" autocomplete="tel" pattern="0[0-9]{9}" title="Nhập 10 số, bắt đầu bằng 0" required value="<?= htmlspecialchars($_POST['phone'] ?? '') ?>">
-                                </label>
-                                <label class="field">Email
-                                    <input type="email" name="email" autocomplete="email" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
-                                </label>
-                            </div>
+                            <p><b>Họ tên:</b> <?= htmlspecialchars($khach['ND_Ten']) ?></p>
+                            <p><b>Email:</b> <?= htmlspecialchars($khach['ND_Email']) ?></p>
+                            <p style="color:#777; font-size:.9rem;">Thông tin lấy từ tài khoản của bạn. Có thể sửa tên trong mục hồ sơ.</p>
                         </div>
                     </div>
 
                     <div class="card">
-                        <div class="card-head"><h2><?= $totals['need_ship'] ? 'Địa chỉ nhận hàng' : 'Ghi chú đơn hàng' ?></h2></div>
+                        <div class="card-head"><h2>Ghi chú đơn thuê</h2></div>
                         <div class="card-body">
-                            <div class="field-grid">
-                                <?php if ($totals['need_ship']) : ?>
-                                    <label class="field full">Địa chỉ
-                                        <input type="text" name="address" autocomplete="street-address" placeholder="Số nhà, tên đường" required value="<?= htmlspecialchars($_POST['address'] ?? '') ?>">
-                                    </label>
-                                    <label class="field">Phường / Xã
-                                        <input type="text" name="ward" required value="<?= htmlspecialchars($_POST['ward'] ?? '') ?>">
-                                    </label>
-                                    <label class="field">Quận / Huyện
-                                        <input type="text" name="district" required value="<?= htmlspecialchars($_POST['district'] ?? '') ?>">
-                                    </label>
-                                    <label class="field full">Tỉnh / Thành phố
-                                        <select name="city">
-                                            <option value="Cần Thơ">Cần Thơ</option>
-                                            <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
-                                            <option value="Hà Nội">Hà Nội</option>
-                                            <option value="Đà Nẵng">Đà Nẵng</option>
-                                            <option value="Khác">Tỉnh / thành khác</option>
-                                        </select>
-                                    </label>
-                                <?php endif; ?>
-                                <label class="field full">Ghi chú
-                                    <textarea name="note" rows="3" placeholder="Ví dụ: ngày giờ muốn chụp, giao ngoài giờ hành chính…"><?= htmlspecialchars($_POST['note'] ?? '') ?></textarea>
-                                </label>
-                            </div>
+                            <label class="field full">Ghi chú
+                                <textarea name="note" rows="3" maxlength="1000" placeholder="Ví dụ: concept muốn chụp, số người tham gia…"><?= htmlspecialchars($_POST['note'] ?? '') ?></textarea>
+                            </label>
                         </div>
                     </div>
 
@@ -203,32 +198,18 @@ require_once '../includes/header.php';
                         <div class="card-body">
 
                             <label class="pay-option">
-                                <input type="radio" name="payment" value="Thanh toán khi nhận hàng (COD)" checked>
+                                <input type="radio" name="payment" value="tien_mat" checked>
                                 <div>
-                                    <strong>Thanh toán khi nhận hàng (COD)</strong>
-                                    <span>Trả tiền mặt cho nhân viên giao hàng, hoặc trả tại studio khi đến chụp.</span>
+                                    <strong>Tiền mặt</strong>
+                                    <span>Thanh toán trực tiếp tại studio khi đến nhận dịch vụ.</span>
                                 </div>
                             </label>
 
                             <label class="pay-option">
-                                <input type="radio" name="payment" value="Chuyển khoản ngân hàng">
+                                <input type="radio" name="payment" value="qr">
                                 <div>
-                                    <strong>Chuyển khoản ngân hàng</strong>
-                                    <span>Chuyển khoản trước, studio xác nhận đơn trong giờ làm việc.</span>
-                                    <div class="bank-box">
-                                        Ngân hàng: <b>Vietcombank</b><br>
-                                        Số tài khoản: <b>0123 456 789</b><br>
-                                        Chủ tài khoản: <b>VIBE STUDIO</b><br>
-                                        Nội dung: <b>Mã đơn hàng + số điện thoại</b>
-                                    </div>
-                                </div>
-                            </label>
-
-                            <label class="pay-option">
-                                <input type="radio" name="payment" value="Ví điện tử (MoMo / ZaloPay)">
-                                <div>
-                                    <strong>Ví điện tử (MoMo / ZaloPay)</strong>
-                                    <span>Studio sẽ gửi mã QR qua Zalo hoặc email sau khi nhận đơn.</span>
+                                    <strong>Chuyển khoản QR (giả lập)</strong>
+                                    <span>Quét mã QR để thanh toán. Đây là bước mô phỏng, không trừ tiền thật.</span>
                                 </div>
                             </label>
 
@@ -238,43 +219,32 @@ require_once '../includes/header.php';
                 </fieldset>
 
                 <div class="submit-row">
-                    <button type="submit" class="btn-dark" <?= $empty ? 'disabled' : '' ?>>ĐẶT HÀNG</button>
-                    <p class="form-error" role="alert"><?= htmlspecialchars($loi_form) ?></p>
+                    <button type="submit" class="btn-dark" <?= $empty ? 'disabled' : '' ?>>ĐẶT THUÊ</button>
                 </div>
             </form>
 
             <aside class="summary">
-                <p class="panel-title">Đơn hàng của bạn</p>
+                <p class="panel-title">Đơn thuê của bạn</p>
                 <div class="summary-items">
                     <?php if ($empty) : ?>
                         <p class="none">Chưa có sản phẩm nào.</p>
                     <?php else : ?>
                         <?php foreach ($cart_items as $item) : ?>
                             <div class="summary-row">
-                                <span><?= htmlspecialchars($item['ten']) ?> × <?= $item['qty'] ?></span>
-                                <span><?= number_format($item['subtotal'] ?? ($item['gia'] * $item['qty']), 0, ',', '.') ?>₫</span>
+                                <span>
+                                    <?= htmlspecialchars($item['ten']) ?> × <?= (int) $item['qty'] ?><br>
+                                    <small style="color:#777;">
+                                        <?= htmlspecialchars(dinh_dang_ngay_gio($item['bat_dau'])) ?>
+                                        → <?= htmlspecialchars(dinh_dang_ngay_gio($item['ket_thuc'])) ?>
+                                        (<?= (int) $item['so_don_vi'] ?> <?= ['gio' => 'giờ', 'ngay' => 'ngày', 'bo' => 'lần'][$item['don_vi']] ?? '' ?>)
+                                    </small>
+                                </span>
+                                <span><?= dinh_dang_tien($item['subtotal']) ?></span>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
-                <div class="summary-row"><span>Tạm tính</span><span><?= number_format($totals['subtotal'], 0, ',', '.') ?>₫</span></div>
-                <?php if ($totals['discount'] > 0) : ?>
-                    <div class="summary-row">
-                        <span>Giảm giá (<?= htmlspecialchars($totals['code']) ?>)</span>
-                        <span>−<?= number_format($totals['discount'], 0, ',', '.') ?>₫</span>
-                    </div>
-                <?php endif; ?>
-                <div class="summary-row">
-                    <span>Vận chuyển</span>
-                    <span>
-                        <?php 
-                        if ($empty) echo '—';
-                        elseif (!$totals['need_ship']) echo 'Không cần';
-                        else echo $totals['shipping'] > 0 ? number_format($totals['shipping'], 0, ',', '.') . '₫' : 'Miễn phí';
-                        ?>
-                    </span>
-                </div>
-                <div class="summary-row total"><span>Tổng cộng</span><span><?= number_format($totals['total'], 0, ',', '.') ?>₫</span></div>
+                <div class="summary-row total"><span>Tổng cộng</span><span><?= dinh_dang_tien($totals['total']) ?></span></div>
                 <p class="ship-note"><a href="cart.php" style="border-bottom:1px solid #888">Chỉnh sửa giỏ hàng</a></p>
             </aside>
         </div>

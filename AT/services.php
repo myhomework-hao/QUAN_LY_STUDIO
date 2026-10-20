@@ -3,35 +3,20 @@ require_once '../config/app.php';
 require_once '../config/db.php';
 require_once '../includes/dich_vu.php';
 
-// Danh sách 3 danh mục chuẩn
 $danh_muc_chinh = [
-    'may_anh'   => 'Máy ảnh',
-    'studio'    => 'Chỗ chụp ảnh',
-    'trang_phuc' => 'Bộ đồ'
+    'thiet_bi'   => 'Máy ảnh - thiết bị',
+    'phong_chup' => 'Chỗ chụp ảnh',
+    'trang_phuc' => 'Bộ đồ',
+    'phu_kien'   => 'Phụ kiện - đạo cụ',
 ];
 
-// Hàm chuyển đổi tất cả kiểu đặt tên trong CSDL về 3 mã chuẩn
-function chuan_hoa_loai($loai_goc) {
-    $loai = strtolower(trim((string)$loai_goc));
-
-    if (in_array($loai, ['studio', 'cho_chup', 'cho_chup_anh', 'diadiem', 'dia_diem', 'khong_gian', 'phong_chup', 'location'], true)) {
-        return 'studio';
-    }
-    if (in_array($loai, ['trang_phuc', 'trangphuc', 'do_bo', 'dobo', 'quan_ao', 'quanao', 'co_truong', 'vay', 'dam', 'costume'], true)) {
-        return 'trang_phuc';
-    }
-    if (in_array($loai, ['may_anh', 'mayanh', 'camera', 'lens', 'ong_kinh'], true)) {
-        return 'may_anh';
-    }
-
-    return 'may_anh';
-}
-
-// Truy vấn trực tiếp chính xác theo cấu trúc bảng dich_vu của bạn
-$sql = "SELECT DV_Ma as id, DV_Ten as ten, DV_Loai as loai, DV_GiaThue as gia, DV_DonViTinh as don_vi, DV_MoTa as mo_ta, DV_HinhAnh as anh 
-        FROM dich_vu 
-        WHERE DV_DangBan = 'hien' OR DV_DangBan = '1' 
-        ORDER BY DV_Ma DESC";
+$sql = "SELECT dv.DV_Ma AS id, dv.DV_Ten AS ten, dv.DV_Loai AS loai, dv.DV_GiaThue AS gia,
+               dv.DV_DonViTinh AS don_vi, dv.DV_MoTa AS mo_ta, dv.DV_HinhAnh AS anh,
+               (SELECT AVG(dg.DG_SoSao) FROM danhgia dg WHERE dg.DV_Ma = dv.DV_Ma) AS diem_tb,
+               (SELECT COUNT(*) FROM danhgia dg WHERE dg.DV_Ma = dv.DV_Ma) AS so_danh_gia
+        FROM dichvu dv
+        WHERE dv.DV_DangBan = 1
+        ORDER BY dv.DV_Ma DESC";
 
 $ds_dich_vu = [];
 try {
@@ -40,16 +25,12 @@ try {
     $ds_dich_vu = [];
 }
 
-$danh_sach_theo_loai = [
-    'may_anh'   => [],
-    'studio'    => [],
-    'trang_phuc' => []
-];
+$danh_sach_theo_loai = array_fill_keys(array_keys($danh_muc_chinh), []);
 
 foreach ($ds_dich_vu as $dv) {
-    $loai_chuan = chuan_hoa_loai($dv['loai'] ?? '');
-    $dv['loai_chuan'] = $loai_chuan;
-    $danh_sach_theo_loai[$loai_chuan][] = $dv;
+    if (isset($danh_sach_theo_loai[$dv['loai']])) {
+        $danh_sach_theo_loai[$dv['loai']][] = $dv;
+    }
 }
 
 $loai_chon = $_GET['loai'] ?? 'all';
@@ -121,7 +102,7 @@ require_once '../includes/header.php';
                         <?php foreach ($items as $dv): ?>
                             <?php $link = BASE_URL . 'AT/service-detail.php?id=' . (int) $dv['id']; ?>
 
-                            <article class="product-card" data-category="<?= h($dv['loai_chuan']) ?>">
+                            <article class="product-card" data-category="<?= h($ma_loai) ?>">
                                 <div class="product-image">
                                     <?php if (!empty($dv['anh'])): ?>
                                         <img src="<?= BASE_URL ?>assets/uploads/<?= h($dv['anh']) ?>" alt="<?= h($dv['ten']) ?>" loading="lazy">
@@ -143,7 +124,11 @@ require_once '../includes/header.php';
                                     <p class="product-description" style="display: none;"><?= h($dv['mo_ta']) ?></p>
 
                                     <div class="product-meta">
-                                        <span>Chưa có đánh giá</span>
+                                        <?php if ((int) $dv['so_danh_gia'] > 0): ?>
+                                            <span>★ <?= number_format((float) $dv['diem_tb'], 1) ?> (<?= (int) $dv['so_danh_gia'] ?>)</span>
+                                        <?php else: ?>
+                                            <span>Chưa có đánh giá</span>
+                                        <?php endif; ?>
                                         <span>TP.HCM</span>
                                     </div>
 
