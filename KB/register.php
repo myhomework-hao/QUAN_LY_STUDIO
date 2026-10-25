@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $tieu_de_trang = 'Đăng ký - VIBE STUDIO';
-$css_rieng = ['kb.css'];
+$css_rieng = ['KB.css'];
 require_once '../includes/header.php';
 ?>
 
