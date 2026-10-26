@@ -1,436 +1,1111 @@
+Claude
+
+
+
+
+
+
+
+
+
+
+
+Homepage · CSS
 /* =========================
    TRANG CHỦ (index.html)
 ========================= */
-
+ 
 /* ---------- HERO ---------- */
-
+ 
 .hero {
     min-height: calc(100vh - 80px);
-
+ 
     display: grid;
     grid-template-columns: 45% 55%;
-
+ 
     padding: 50px 6%;
     gap: 50px;
-
+ 
     align-items: center;
 }
-
+ 
 .hero-content {
     padding-left: 5%;
 }
-
+ 
 .hero h1 {
     font-size: clamp(60px, 8vw, 125px);
-
+ 
     line-height: 0.9;
-
+ 
     font-weight: 600;
-
+ 
     letter-spacing: -5px;
 }
-
+ 
 .hero-description {
     max-width: 400px;
-
+ 
     margin-top: 35px;
     margin-bottom: 35px;
-
+ 
     font-size: 14px;
     line-height: 1.8;
-
+ 
     color: #555555;
 }
-
+ 
 .hero-image {
     height: 75vh;
     overflow: hidden;
 }
-
+ 
 .hero-image img {
     width: 100%;
     height: 100%;
-
+ 
     object-fit: cover;
-
+ 
     filter: grayscale(100%);
-
+ 
     transition: 0.6s;
 }
-
+ 
 .hero-image:hover img {
     transform: scale(1.03);
 }
-
-
-/* ---------- ABOUT ---------- */
-
-.about {
+ 
+ 
+/* ---------- ABOUT + SERVICES (gộp) ---------- */
+ 
+.about-services {
     background: #111111;
     color: white;
-
-    min-height: 600px;
-
-    padding: 120px 10%;
-
+ 
+    padding: 120px 8%;
+ 
     display: grid;
-
     grid-template-columns: 20% 80%;
 }
-
+ 
 .section-number {
     font-size: 12px;
     color: #888888;
 }
-
-.about .section-number {
+ 
+.about-services .section-number {
     color: #999999;
 }
-
-.about-content {
-    max-width: 900px;
+ 
+.about-services-content {
+    max-width: 1000px;
 }
-
-.about h2 {
+ 
+.about-services h2 {
     font-size: clamp(45px, 6vw, 85px);
-
     line-height: 0.95;
-
     margin-bottom: 45px;
 }
-
-.about-content > p:not(.section-title) {
+ 
+.about-text {
     max-width: 600px;
-
     font-size: 15px;
-
     line-height: 1.9;
-
     color: #bbbbbb;
-
-    margin-bottom: 35px;
-}
-
-.text-button {
-    font-size: 11px;
-
-    letter-spacing: 2px;
-
-    border-bottom: 1px solid white;
-
-    padding-bottom: 8px;
-}
-
-
-/* ---------- SERVICES ---------- */
-
-.services {
-    padding: 120px 8%;
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-
     margin-bottom: 70px;
 }
-
-.section-header h2 {
-    font-size: clamp(45px, 6vw, 80px);
-
-    line-height: 1;
+ 
+.text-button {
+    font-size: 11px;
+    letter-spacing: 2px;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 8px;
 }
-
-.service-list {
-    border-top: 1px solid #cccccc;
+ 
+.about-services .service-list {
+    border-top: 1px solid #333333;
 }
-
-.service-item {
+ 
+.about-services .service-item {
     display: grid;
-
     grid-template-columns: 10% 1fr 5%;
-
     align-items: center;
-
+ 
     padding: 35px 0;
-
-    border-bottom: 1px solid #cccccc;
-
+    border-bottom: 1px solid #333333;
+ 
+    color: white;
     transition: 0.3s;
 }
-
-.service-item:hover {
+ 
+.about-services .service-item:hover {
     padding-left: 20px;
-    background: #f7f7f7;
+    background: #1c1c1c;
 }
-
-.service-item span {
+ 
+.about-services .service-item span {
     font-size: 12px;
     color: #888888;
 }
-
-.service-item h3 {
+ 
+.about-services .service-item h3 {
     font-size: 25px;
-
     margin-bottom: 10px;
 }
-
-.service-item p {
+ 
+.about-services .service-item p {
     font-size: 13px;
-    color: #777777;
+    color: #999999;
 }
-
-.service-item strong {
+ 
+.about-services .service-item strong {
     font-size: 25px;
 }
-
-
+ 
+ 
+/* ---------- SECTION HEADER (dùng chung) ---------- */
+ 
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 70px;
+}
+ 
+.section-header h2 {
+    font-size: clamp(45px, 6vw, 80px);
+    line-height: 1;
+}
+ 
+ 
+/* ---------- FEATURED PRODUCTS ---------- */
+ 
+.featured {
+    padding: 120px 8%;
+}
+ 
+.featured-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+}
+ 
+.featured-card {
+    display: block;
+    color: #111111;
+}
+ 
+.featured-image {
+    height: 320px;
+    overflow: hidden;
+    margin-bottom: 18px;
+    background: #eeeeee;
+}
+ 
+.featured-image img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    filter: grayscale(100%);
+    transition: 0.6s;
+}
+ 
+.featured-card:hover .featured-image img {
+    transform: scale(1.04);
+    filter: grayscale(0%);
+}
+ 
+.featured-tag {
+    font-size: 12px;
+    color: #888888;
+    margin-bottom: 6px;
+}
+ 
+.featured-card h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+ 
+.featured-price {
+    font-size: 15px;
+    font-weight: 600;
+}
+ 
+.featured-empty {
+    color: #777777;
+    font-size: 14px;
+}
+ 
+.featured-more {
+    display: inline-block;
+    margin-top: 60px;
+}
+ 
+ 
 /* ---------- GALLERY ---------- */
-
+ 
 .gallery {
     padding: 120px 8%;
-
+ 
     background: #f5f5f5;
 }
-
+ 
 .gallery-grid {
     display: grid;
-
+ 
     grid-template-columns: repeat(2, 1fr);
-
+ 
     gap: 20px;
 }
-
+ 
 .gallery-item {
     height: 450px;
-
+ 
     overflow: hidden;
 }
-
+ 
 .gallery-item.large {
     height: 600px;
 }
-
+ 
 .gallery-item img {
     height: 100%;
-
+ 
     object-fit: cover;
-
+ 
     filter: grayscale(100%);
-
+ 
     transition: 0.6s;
 }
-
+ 
 .gallery-item:hover img {
     transform: scale(1.04);
     filter: grayscale(0%);
 }
-
-
+ 
+ 
 /* ---------- BOOKING (khối kêu gọi đặt lịch) ---------- */
-
+ 
 .booking {
     background: #111111;
-
+ 
     color: white;
-
+ 
     min-height: 650px;
-
+ 
     display: flex;
-
+ 
     align-items: center;
     justify-content: center;
-
+ 
     text-align: center;
-
+ 
     padding: 80px 20px;
 }
-
+ 
 .booking h2 {
     font-size: clamp(50px, 7vw, 100px);
-
+ 
     line-height: 0.95;
-
+ 
     margin-bottom: 35px;
 }
-
+ 
 .booking p:not(.section-title) {
     max-width: 500px;
-
+ 
     margin: auto;
-
+ 
     color: #aaaaaa;
-
+ 
     font-size: 14px;
-
+ 
     line-height: 1.8;
-
+ 
     margin-bottom: 40px;
 }
-
-
+ 
+ 
 /* ---------- CONTACT ---------- */
-
+ 
 .contact {
     padding: 120px 8%;
-
+ 
     display: grid;
-
+ 
     grid-template-columns: 50% 50%;
-
+ 
     border-bottom: 1px solid #dddddd;
 }
-
+ 
 .contact-left h2 {
     font-size: clamp(60px, 8vw, 120px);
-
+ 
     line-height: 0.85;
 }
-
+ 
 .contact-right {
     padding-top: 20px;
 }
-
+ 
 .contact-info {
     margin-bottom: 35px;
 }
-
+ 
 .contact-info span {
     font-size: 10px;
-
+ 
     letter-spacing: 2px;
-
+ 
     color: #888888;
 }
-
+ 
 .contact-info p {
     margin-top: 8px;
-
+ 
     font-size: 15px;
 }
-
+ 
 .social {
     display: flex;
-
+ 
     gap: 25px;
-
+ 
     margin-top: 50px;
 }
-
+ 
 .social a {
     font-size: 10px;
-
+ 
     font-weight: 600;
-
+ 
     letter-spacing: 1px;
-
+ 
     border-bottom: 1px solid #111111;
-
+ 
     padding-bottom: 5px;
 }
-
-
+ 
+ 
+/* ---------- BACK TO TOP (luôn hiện, cố định góc phải dưới) ---------- */
+ 
+.back-to-top {
+    position: fixed;
+    right: 28px;
+    bottom: 28px;
+    z-index: 9999;
+ 
+    width: 52px;
+    height: 52px;
+    padding: 0;
+ 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+ 
+    border: 1px solid #111111;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #111111;
+ 
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+ 
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    transition: background 0.3s, color 0.3s, transform 0.3s;
+}
+ 
+.back-to-top:hover {
+    background: #111111;
+    color: #ffffff;
+    transform: translateY(-3px);
+}
+ 
+.back-to-top:focus-visible {
+    outline: 2px solid #111111;
+    outline-offset: 3px;
+}
+ 
+ 
 /* ---------- Responsive ---------- */
-
+ 
 @media (max-width: 900px) {
-
+ 
     .hero {
         grid-template-columns: 1fr;
-
+ 
         padding: 60px 5%;
     }
-
+ 
     .hero-content {
         padding-left: 0;
     }
-
+ 
     .hero-image {
         height: 550px;
     }
-
-    .about {
+ 
+    .about-services {
         grid-template-columns: 1fr;
-
         padding: 80px 8%;
     }
-
-    .about .section-number {
+ 
+    .about-services .section-number {
         margin-bottom: 40px;
     }
-
-    .service-item {
+ 
+    .about-services .service-item {
         grid-template-columns: 12% 1fr 8%;
     }
-
+ 
+    .featured {
+        padding: 80px 5%;
+    }
+ 
+    .featured-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+ 
     .gallery {
         padding: 80px 5%;
     }
-
+ 
     .gallery-grid {
         grid-template-columns: 1fr;
     }
-
+ 
     .gallery-item,
     .gallery-item.large {
         height: 500px;
     }
-
+ 
     .contact {
         grid-template-columns: 1fr;
-
+ 
         gap: 70px;
-
+ 
         padding: 80px 8%;
     }
 }
-
+ 
 @media (max-width: 600px) {
-
+ 
     .hero {
         padding-top: 40px;
     }
-
+ 
     .hero h1 {
         font-size: 60px;
-
+ 
         letter-spacing: -3px;
     }
-
+ 
     .hero-image {
         height: 450px;
     }
-
-    .about h2,
+ 
+    .about-services h2,
     .section-header h2 {
         font-size: 48px;
     }
-
-    .service-item {
+ 
+    .about-services .service-item {
         grid-template-columns: 15% 1fr;
     }
+ 
+    .aboClaude
 
-    .service-item strong {
+
+
+
+
+
+
+
+
+
+
+
+
+Homepage · CSS
+/* =========================
+   TRANG CHỦ (index.html)
+========================= */
+ 
+/* ---------- HERO ---------- */
+ 
+.hero {
+    min-height: calc(100vh - 80px);
+ 
+    display: grid;
+    grid-template-columns: 45% 55%;
+ 
+    padding: 50px 6%;
+    gap: 50px;
+ 
+    align-items: center;
+}
+ 
+.hero-content {
+    padding-left: 5%;
+}
+ 
+.hero h1 {
+    font-size: clamp(60px, 8vw, 125px);
+ 
+    line-height: 0.9;
+ 
+    font-weight: 600;
+ 
+    letter-spacing: -5px;
+}
+ 
+.hero-description {
+    max-width: 400px;
+ 
+    margin-top: 35px;
+    margin-bottom: 35px;
+ 
+    font-size: 14px;
+    line-height: 1.8;
+ 
+    color: #555555;
+}
+ 
+.hero-image {
+    height: 75vh;
+    overflow: hidden;
+}
+ 
+.hero-image img {
+    width: 100%;
+    height: 100%;
+ 
+    object-fit: cover;
+ 
+    filter: grayscale(100%);
+ 
+    transition: 0.6s;
+}
+ 
+.hero-image:hover img {
+    transform: scale(1.03);
+}
+ 
+ 
+/* ---------- ABOUT + SERVICES (gộp) ---------- */
+ 
+.about-services {
+    background: #111111;
+    color: white;
+ 
+    padding: 120px 8%;
+ 
+    display: grid;
+    grid-template-columns: 20% 80%;
+}
+ 
+.section-number {
+    font-size: 12px;
+    color: #888888;
+}
+ 
+.about-services .section-number {
+    color: #999999;
+}
+ 
+.about-services-content {
+    max-width: 1000px;
+}
+ 
+.about-services h2 {
+    font-size: clamp(45px, 6vw, 85px);
+    line-height: 0.95;
+    margin-bottom: 45px;
+}
+ 
+.about-text {
+    max-width: 600px;
+    font-size: 15px;
+    line-height: 1.9;
+    color: #bbbbbb;
+    margin-bottom: 70px;
+}
+ 
+.text-button {
+    font-size: 11px;
+    letter-spacing: 2px;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 8px;
+}
+ 
+.about-services .service-list {
+    border-top: 1px solid #333333;
+}
+ 
+.about-services .service-item {
+    display: grid;
+    grid-template-columns: 10% 1fr 5%;
+    align-items: center;
+ 
+    padding: 35px 0;
+    border-bottom: 1px solid #333333;
+ 
+    color: white;
+    transition: 0.3s;
+}
+ 
+.about-services .service-item:hover {
+    padding-left: 20px;
+    background: #1c1c1c;
+}
+ 
+.about-services .service-item span {
+    font-size: 12px;
+    color: #888888;
+}
+ 
+.about-services .service-item h3 {
+    font-size: 25px;
+    margin-bottom: 10px;
+}
+ 
+.about-services .service-item p {
+    font-size: 13px;
+    color: #999999;
+}
+ 
+.about-services .service-item strong {
+    font-size: 25px;
+}
+ 
+ 
+/* ---------- SECTION HEADER (dùng chung) ---------- */
+ 
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 70px;
+}
+ 
+.section-header h2 {
+    font-size: clamp(45px, 6vw, 80px);
+    line-height: 1;
+}
+ 
+ 
+/* ---------- FEATURED PRODUCTS ---------- */
+ 
+.featured {
+    padding: 120px 8%;
+}
+ 
+.featured-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+}
+ 
+.featured-card {
+    display: block;
+    color: #111111;
+}
+ 
+.featured-image {
+    height: 320px;
+    overflow: hidden;
+    margin-bottom: 18px;
+    background: #eeeeee;
+}
+ 
+.featured-image img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    filter: grayscale(100%);
+    transition: 0.6s;
+}
+ 
+.featured-card:hover .featured-image img {
+    transform: scale(1.04);
+    filter: grayscale(0%);
+}
+ 
+.featured-tag {
+    font-size: 12px;
+    color: #888888;
+    margin-bottom: 6px;
+}
+ 
+.featured-card h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+ 
+.featured-price {
+    font-size: 15px;
+    font-weight: 600;
+}
+ 
+.featured-empty {
+    color: #777777;
+    font-size: 14px;
+}
+ 
+.featured-more {
+    display: inline-block;
+    margin-top: 60px;
+}
+ 
+ 
+/* ---------- GALLERY ---------- */
+ 
+.gallery {
+    padding: 120px 8%;
+ 
+    background: #f5f5f5;
+}
+ 
+.gallery-grid {
+    display: grid;
+ 
+    grid-template-columns: repeat(2, 1fr);
+ 
+    gap: 20px;
+}
+ 
+.gallery-item {
+    height: 450px;
+ 
+    overflow: hidden;
+}
+ 
+.gallery-item.large {
+    height: 600px;
+}
+ 
+.gallery-item img {
+    height: 100%;
+ 
+    object-fit: cover;
+ 
+    filter: grayscale(100%);
+ 
+    transition: 0.6s;
+}
+ 
+.gallery-item:hover img {
+    transform: scale(1.04);
+    filter: grayscale(0%);
+}
+ 
+ 
+/* ---------- BOOKING (khối kêu gọi đặt lịch) ---------- */
+ 
+.booking {
+    background: #111111;
+ 
+    color: white;
+ 
+    min-height: 650px;
+ 
+    display: flex;
+ 
+    align-items: center;
+    justify-content: center;
+ 
+    text-align: center;
+ 
+    padding: 80px 20px;
+}
+ 
+.booking h2 {
+    font-size: clamp(50px, 7vw, 100px);
+ 
+    line-height: 0.95;
+ 
+    margin-bottom: 35px;
+}
+ 
+.booking p:not(.section-title) {
+    max-width: 500px;
+ 
+    margin: auto;
+ 
+    color: #aaaaaa;
+ 
+    font-size: 14px;
+ 
+    line-height: 1.8;
+ 
+    margin-bottom: 40px;
+}
+ 
+ 
+/* ---------- CONTACT ---------- */
+ 
+.contact {
+    padding: 120px 8%;
+ 
+    display: grid;
+ 
+    grid-template-columns: 50% 50%;
+ 
+    border-bottom: 1px solid #dddddd;
+}
+ 
+.contact-left h2 {
+    font-size: clamp(60px, 8vw, 120px);
+ 
+    line-height: 0.85;
+}
+ 
+.contact-right {
+    padding-top: 20px;
+}
+ 
+.contact-info {
+    margin-bottom: 35px;
+}
+ 
+.contact-info span {
+    font-size: 10px;
+ 
+    letter-spacing: 2px;
+ 
+    color: #888888;
+}
+ 
+.contact-info p {
+    margin-top: 8px;
+ 
+    font-size: 15px;
+}
+ 
+.social {
+    display: flex;
+ 
+    gap: 25px;
+ 
+    margin-top: 50px;
+}
+ 
+.social a {
+    font-size: 10px;
+ 
+    font-weight: 600;
+ 
+    letter-spacing: 1px;
+ 
+    border-bottom: 1px solid #111111;
+ 
+    padding-bottom: 5px;
+}
+ 
+ 
+/* ---------- BACK TO TOP (luôn hiện, cố định góc phải dưới) ---------- */
+ 
+.back-to-top {
+    position: fixed;
+    right: 28px;
+    bottom: 28px;
+    z-index: 9999;
+ 
+    width: 52px;
+    height: 52px;
+    padding: 0;
+ 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+ 
+    border: 1px solid #111111;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #111111;
+ 
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+ 
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    transition: background 0.3s, color 0.3s, transform 0.3s;
+}
+ 
+.back-to-top:hover {
+    background: #111111;
+    color: #ffffff;
+    transform: translateY(-3px);
+}
+ 
+.back-to-top:focus-visible {
+    outline: 2px solid #111111;
+    outline-offset: 3px;
+}
+ 
+ 
+/* ---------- Responsive ---------- */
+ 
+@media (max-width: 900px) {
+ 
+    .hero {
+        grid-template-columns: 1fr;
+ 
+        padding: 60px 5%;
+    }
+ 
+    .hero-content {
+        padding-left: 0;
+    }
+ 
+    .hero-image {
+        height: 550px;
+    }
+ 
+    .about-services {
+        grid-template-columns: 1fr;
+        padding: 80px 8%;
+    }
+ 
+    .about-services .section-number {
+        margin-bottom: 40px;
+    }
+ 
+    .about-services .service-item {
+        grid-template-columns: 12% 1fr 8%;
+    }
+ 
+    .featured {
+        padding: 80px 5%;
+    }
+ 
+    .featured-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+ 
+    .gallery {
+        padding: 80px 5%;
+    }
+ 
+    .gallery-grid {
+        grid-template-columns: 1fr;
+    }
+ 
+    .gallery-item,
+    .gallery-item.large {
+        height: 500px;
+    }
+ 
+    .contact {
+        grid-template-columns: 1fr;
+ 
+        gap: 70px;
+ 
+        padding: 80px 8%;
+    }
+}
+ 
+@media (max-width: 600px) {
+ 
+    .hero {
+        padding-top: 40px;
+    }
+ 
+    .hero h1 {
+        font-size: 60px;
+ 
+        letter-spacing: -3px;
+    }
+ 
+    .hero-image {
+        height: 450px;
+    }
+ 
+    .about-services h2,
+    .section-header h2 {
+        font-size: 48px;
+    }
+ 
+    .about-services .service-item {
+        grid-template-columns: 15% 1fr;
+    }
+ 
+    .about-services .service-item strong {
         display: none;
     }
-
-    .service-item h3 {
+ 
+    .about-services .service-item h3 {
         font-size: 20px;
     }
-
+ 
+    .featured-grid {
+        grid-template-columns: 1fr;
+    }
+ 
+    .featured-image {
+        height: 380px;
+    }
+ 
+    .back-to-top {
+        right: 16px;
+        bottom: 16px;
+    }
+ 
     .gallery-item,
     .gallery-item.large {
         height: 400px;
     }
-
+ 
     .booking h2 {
         font-size: 55px;
     }
-
+ 
     .contact-left h2 {
         font-size: 65px;
     }
-
+ 
     .social {
         flex-wrap: wrap;
     }
 }
+ut-services .service-item strong {
+        display: none;
+    }
+ 
+    .about-services .service-item h3 {
+        font-size: 20px;
+    }
+ 
+    .featured-grid {
+        grid-template-columns: 1fr;
+    }
+ 
+    .featured-image {
+        height: 380px;
+    }
+ 
+    .back-to-top {
+        right: 16px;
+        bottom: 16px;
+    }
+ 
+    .gallery-item,
+    .gallery-item.large {
+        height: 400px;
+    }
+ 
+    .booking h2 {
+        font-size: 55px;
+    }
+ 
+    .contact-left h2 {
+        font-size: 65px;
+    }
+ 
+    .social {
+        flex-wrap: wrap;
+    }
+}
+
