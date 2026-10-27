@@ -81,7 +81,7 @@ $gioi_han = SO_DONG_MOI_TRANG;
 
 $ds = lay_nhieu(
     $conn,
-    "SELECT d.DDL_Ma, d.DDL_TrangThai, d.DDL_TongTien, d.DDL_NgayTao, d.DDL_LyDoTuChoi, nd.ND_Ten,
+    "SELECT d.DDL_Ma, d.DDL_TrangThai, d.DDL_TongTien, d.DDL_NgayTao, d.DDL_LyDoTuChoi, nd.ND_Ten, d.DDL_TenNguoiThue, d.DDL_SDTNguoiThue,
             (SELECT MIN(c.CTD_BatDau) FROM chitietdon c WHERE c.DDL_Ma = d.DDL_Ma) AS bat_dau,
             (SELECT dv.DV_Ten FROM chitietdon c JOIN dichvu dv ON dv.DV_Ma = c.DV_Ma WHERE c.DDL_Ma = d.DDL_Ma ORDER BY c.CTD_Ma LIMIT 1) AS ten_dau,
             (SELECT COUNT(*) FROM chitietdon c WHERE c.DDL_Ma = d.DDL_Ma) AS so_dich_vu
@@ -117,7 +117,7 @@ nv_dau('Đơn thuê', 'don');
                         <?php foreach ($ds as $d) : ?>
                             <tr>
                                 <td><?= h(ma_don_hien_thi((int) $d['DDL_Ma'])) ?></td>
-                                <td><?= h($d['ND_Ten']) ?></td>
+                                <td><?= h($d['DDL_TenNguoiThue'] ?: $d['ND_Ten']) ?><?php if ($d['DDL_SDTNguoiThue']) : ?><br><span class="muted"><?= h($d['DDL_SDTNguoiThue']) ?></span><?php endif; ?></td>
                                 <td><?= h($d['ten_dau']) ?><?php if ((int) $d['so_dich_vu'] > 1) : ?> <span class="muted">+<?= (int) $d['so_dich_vu'] - 1 ?></span><?php endif; ?></td>
                                 <td><?= h(dinh_dang_ngay_gio($d['bat_dau'])) ?></td>
                                 <td><?= h(dinh_dang_tien($d['DDL_TongTien'])) ?></td>

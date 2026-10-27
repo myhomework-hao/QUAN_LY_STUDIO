@@ -141,7 +141,7 @@ foreach ($cac_muc as $muc) {
 }
 
 $tieu_de_trang = $don ? 'Chi tiết đơn ' . ma_don_hien_thi($ma_don) : 'Không tìm thấy đơn thuê';
-$css_rieng = ['cart.css', 'KB.css'];
+$css_rieng = ['cart.css', 'kb.css'];
 require_once '../includes/header.php';
 ?>
 
@@ -154,11 +154,11 @@ require_once '../includes/header.php';
     <?php if (!$don) : ?>
         <div class="dh-trong">
             <p>Không tìm thấy đơn thuê hoặc bạn không có quyền xem đơn này.</p>
-            <a href="../KB/my-orders.php" class="dh-nut">QUAY LẠI ĐƠN HÀNG CỦA TÔI</a>
+            <a href="my-orders.php" class="dh-nut">QUAY LẠI ĐƠN HÀNG CỦA TÔI</a>
         </div>
     <?php else : ?>
 
-        <a href="../KB/my-orders.php" class="dh-quay-lai">← Quay lại danh sách đơn</a>
+        <a href="my-orders.php" class="dh-quay-lai">← Quay lại danh sách đơn</a>
 
         <?php if ($thong_bao !== '') : ?>
             <p class="dh-thongbao <?= htmlspecialchars($loai_thong_bao) ?>" role="alert"><?= htmlspecialchars($thong_bao) ?></p>
@@ -186,9 +186,11 @@ require_once '../includes/header.php';
 
             <div class="dh-thong-tin">
                 <div>
-                    <h3>Khách hàng</h3>
-                    <p><b>Họ tên:</b> <?= htmlspecialchars($don['ND_Ten']) ?></p>
-                    <p><b>Email:</b> <?= htmlspecialchars($don['ND_Email']) ?></p>
+                    <h3>Người thuê</h3>
+                    <p><b>Họ tên:</b> <?= htmlspecialchars($don['DDL_TenNguoiThue'] ?: $don['ND_Ten']) ?></p>
+                    <?php if ($don['DDL_SDTNguoiThue']) : ?><p><b>Điện thoại:</b> <?= htmlspecialchars($don['DDL_SDTNguoiThue']) ?></p><?php endif; ?>
+                    <?php if ($don['DDL_DiaChi']) : ?><p><b>Địa chỉ:</b> <?= htmlspecialchars($don['DDL_DiaChi']) ?></p><?php endif; ?>
+                    <p><b>Tài khoản đặt:</b> <?= htmlspecialchars($don['ND_Ten']) ?> (<?= htmlspecialchars($don['ND_Email']) ?>)</p>
                 </div>
                 <div>
                     <h3>Ghi chú</h3>

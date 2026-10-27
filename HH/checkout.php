@@ -26,6 +26,9 @@ $dat_hang_thanh_cong = false;
 $ma_don = 0;
 $phuong_thuc_da_chon = '';
 $loi_form = '';
+$ten_nguoi_thue = trim($_POST['ten'] ?? $khach['ND_Ten']);
+$sdt_nguoi_thue = trim($_POST['sdt'] ?? ($khach['ND_SDT'] ?? ''));
+$dia_chi = trim($_POST['dia_chi'] ?? '');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
 
@@ -34,7 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
 
     $cac_dong = [];
 
-    if (!isset($cac_phuong_thuc[$ma_phuong_thuc])) {
+    if ($ten_nguoi_thue === '' || mb_strlen($ten_nguoi_thue) > 100) {
+        $loi_form = 'Vui lòng nhập họ tên người thuê (tối đa 100 ký tự).';
+    } elseif (!preg_match('/^0[0-9]{9,10}$/', $sdt_nguoi_thue)) {
+        $loi_form = 'Số điện thoại không hợp lệ (bắt đầu bằng 0, gồm 10 hoặc 11 chữ số).';
+    } elseif ($dia_chi === '' || mb_strlen($dia_chi) > 255) {
+        $loi_form = 'Vui lòng nhập địa chỉ (tối đa 255 ký tự).';
+    } elseif (!isset($cac_phuong_thuc[$ma_phuong_thuc])) {
         $loi_form = 'Phương thức thanh toán không hợp lệ.';
     } elseif (mb_strlen($ghi_chu) > 1000) {
         $loi_form = 'Ghi chú không được dài quá 1000 ký tự.';
@@ -67,12 +76,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
             }
 
             $stmt = $conn->prepare(
-                "INSERT INTO dondatlich (ND_Ma, DDL_TongTien, DDL_TienCoc, DDL_TrangThai, DDL_NgayTao, DDL_GhiChu)
-                 VALUES (?, ?, 0, ?, ?, ?)"
+                "INSERT INTO dondatlich (ND_Ma, DDL_TongTien, DDL_TienCoc, DDL_TrangThai, DDL_NgayTao, DDL_GhiChu, DDL_TenNguoiThue, DDL_SDTNguoiThue, DDL_DiaChi)
+                 VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?)"
             );
             $stmt->execute([
                 $ma_nguoi_dung, $totals['total'], TRANG_THAI_CHO_DUYET,
                 date('Y-m-d H:i:s'), $ghi_chu !== '' ? $ghi_chu : null,
+                $ten_nguoi_thue, $sdt_nguoi_thue, $dia_chi,
             ]);
             $ma_don = (int) $conn->lastInsertId();
 
@@ -102,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
 
             $conn->commit();
 
-            unset($_SESSION['cart'], $_SESSION['coupon']);
+            unset($_SESSION['cart']);
 
             $dat_hang_thanh_cong = true;
             $phuong_thuc_da_chon = $cac_phuong_thuc[$ma_phuong_thuc];
@@ -147,7 +157,7 @@ require_once '../includes/header.php';
     <?php if ($dat_hang_thanh_cong) : ?>
         <div class="card success" style="text-align: center; padding: 40px 20px;">
             <h1>ĐẶT THUÊ<br><i>THÀNH CÔNG.</i></h1>
-            <p>Cảm ơn <?= htmlspecialchars($khach['ND_Ten']) ?>! Đơn thuê của bạn đang chờ VIBE Studio xét duyệt. Bạn có thể theo dõi trạng thái trong mục đơn hàng của tôi.</p>
+            <p>Cảm ơn <?= htmlspecialchars($ten_nguoi_thue) ?>! Đơn thuê của bạn đang chờ VIBE Studio xét duyệt. Bạn có thể theo dõi trạng thái trong mục đơn hàng của tôi.</p>
             <div class="order-code" style="margin: 15px 0; font-weight: bold; font-size: 1.2rem;">MÃ ĐƠN: <?= htmlspecialchars(ma_don_hien_thi($ma_don)) ?></div>
             <p>Phương thức thanh toán: <?= htmlspecialchars($phuong_thuc_da_chon) ?></p>
 
@@ -176,11 +186,18 @@ require_once '../includes/header.php';
                 <fieldset id="formFields" class="stack" <?= $empty ? 'disabled' : '' ?>>
 
                     <div class="card">
-                        <div class="card-head"><h2>Thông tin người đặt</h2></div>
+                        <div class="card-head"><h2>Thông tin người thuê</h2></div>
                         <div class="card-body">
-                            <p><b>Họ tên:</b> <?= htmlspecialchars($khach['ND_Ten']) ?></p>
-                            <p><b>Email:</b> <?= htmlspecialchars($khach['ND_Email']) ?></p>
-                            <p style="color:#777; font-size:.9rem;">Thông tin lấy từ tài khoản của bạn. Có thể sửa tên trong mục hồ sơ.</p>
+                            <label class="field full">Họ tên người thuê
+                                <input type="text" name="ten" maxlength="100" required value="<?= htmlspecialchars($ten_nguoi_thue) ?>">
+                            </label>
+                            <label class="field full">Số điện thoại
+                                <input type="tel" name="sdt" maxlength="11" inputmode="numeric" required value="<?= htmlspecialchars($sdt_nguoi_thue) ?>" placeholder="Ví dụ: 0901234567">
+                            </label>
+                            <label class="field full">Địa chỉ
+                                <input type="text" name="dia_chi" maxlength="255" required value="<?= htmlspecialchars($dia_chi) ?>" placeholder="Số nhà, đường, phường/xã, tỉnh/thành">
+                            </label>
+                            <p style="color:#777; font-size:.9rem;">Đặt giúp người khác? Hãy điền thông tin của người trực tiếp đến thuê. Đơn vẫn nằm trong tài khoản <?= htmlspecialchars($khach['ND_Email']) ?>.</p>
                         </div>
                     </div>
 
