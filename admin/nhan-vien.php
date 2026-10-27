@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/khung.php';
+require_once __DIR__ . '/khung_admin.php';
 
 $loi = [];
 $du_lieu = ['ten' => '', 'email' => '', 'sdt' => '', 'ma_nv' => '', 'chuc_vu' => '', 'ngay_vao' => date('Y-m-d'), 'mat_khau' => ''];
@@ -251,4 +251,4 @@ admin_dau('Nhân viên', 'nhan-vien');
             </div>
             <?php hien_phan_trang($tong_trang, $trang); ?>
         </section>
-<?php admin_cuoi();
+<?php admin_cuoi(); ?>

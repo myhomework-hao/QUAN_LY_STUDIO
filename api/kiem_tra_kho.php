@@ -1,5 +1,5 @@
 <?php
-// AT/kiem_tra_kho.php
+// api/kiem_tra_kho.php
 require_once '../config/app.php';
 require_once '../config/db.php';
 require_once '../includes/dich_vu.php';

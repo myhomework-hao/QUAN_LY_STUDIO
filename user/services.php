@@ -44,14 +44,14 @@ $loai_chon = $_GET['loai'] ?? 'all';
 
 $tieu_de_trang = 'Sản phẩm cho thuê - VIBE STUDIO';
 $trang_hien_tai = 'san-pham';
-
 $css_rieng = [
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css',
-    'at.css'
+    BASE_URL . 'assets/css/at.css' // Phải có BASE_URL để trỏ đúng về gốc
 ];
 
-$js_rieng = ['at.js?v=' . time()];
-
+$js_rieng = [
+    BASE_URL . 'assets/js/at.js?v=' . time() // Phải có BASE_URL ở đây nữa
+];
 require_once '../includes/header.php';
 ?>
 
@@ -108,9 +108,8 @@ require_once '../includes/header.php';
                     <div class="product-grid">
                         <?php foreach ($items as $dv): ?>
                             <?php 
-                                $link = BASE_URL . 'AT/service-detail.php?id=' . (int) $dv['id'];
-                                // Đường dẫn tới trang chat với Studio (kèm theo id sản phẩm để nhân viên biết khách đang hỏi món nào)
-                                $link_chat = BASE_URL . 'AT/chat.php?product_id=' . (int) $dv['id'];
+                                $link = 'service-detail.php?id=' . (int) $dv['id'];
+                                $link_chat = 'chat.php?product_id=' . (int) $dv['id'];
                                 $con_lai = max(0, (int) $dv['tong_kho'] - (int) $dv['da_dat']);
                             ?>
 
@@ -158,7 +157,6 @@ require_once '../includes/header.php';
 
                                     <div class="product-actions">
                                         <a href="<?= $link ?>" class="btn-action btn-rent <?= $con_lai == 0 ? 'disabled' : '' ?>">Thuê ngay</a>
-                                        <!-- Đã đổi từ Chi tiết thành Chat với Studio -->
                                         <a href="<?= $link_chat ?>" class="btn-action btn-chat">
                                             <i class="fa-regular fa-comment"></i> Chat
                                         </a>

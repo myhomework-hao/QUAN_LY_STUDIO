@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/khung.php';
+require_once __DIR__ . '/khung_admin.php';
 
 $hom_nay = date('Y-m-d');
 $ngay_mai = date('Y-m-d', strtotime('+1 day'));
@@ -162,7 +162,8 @@ admin_dau('Quản lý Studio', 'tong-quan');
                                 <td><?= h(dinh_dang_tien($don['DDL_TongTien'])) ?></td>
                                 <td><span class="badge <?= lop_badge_don($don['DDL_TrangThai']) ?>"><?= h($don['DDL_TrangThai']) ?></span></td>
                                 <td class="row-actions">
-                                    <a href="<?= BASE_URL ?>KB/order-detail.php?id=<?= (int) $don['DDL_Ma'] ?>">Chi tiết</a>
+                                    <!-- Trỏ đường dẫn chi tiết đơn hàng chuẩn chỉnh -->
+                                    <a href="<?= BASE_URL ?>user/order-detail.php?id=<?= (int) $don['DDL_Ma'] ?>">Chi tiết</a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/khung.php';
+require_once __DIR__ . '/khung_nv.php';
 
 const LOAI_HOP_LE = ['phong_chup', 'thiet_bi', 'trang_phuc', 'phu_kien'];
 const DON_VI_HOP_LE = ['gio', 'ngay', 'bo'];
@@ -195,4 +195,4 @@ document.getElementById('loai').addEventListener('change', function () {
 });
 </script>
 <?php endif; ?>
-<?php nv_cuoi();
+<?php nv_cuoi(); ?>

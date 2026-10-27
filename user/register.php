@@ -1,7 +1,12 @@
 <?php
-
-require_once '../config/db.php';
+require_once '../config/app.php';
 require_once '../config/auth.php';
+require_once '../config/db.php';
+
+if (da_dang_nhap()) {
+    header('Location: ' . trang_chu_theo_vai_tro(vai_tro_hien_tai()));
+    exit;
+}
 
 $message = '';
 $message_type = '';
@@ -61,7 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $tieu_de_trang = 'Đăng ký - VIBE STUDIO';
-$css_rieng = ['KB.css'];
+$css_rieng = [
+   BASE_URL . 'assets/css/kb.css']; // Trỏ đúng vào thư mục assets/css chung
 require_once '../includes/header.php';
 ?>
 

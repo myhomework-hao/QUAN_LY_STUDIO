@@ -30,18 +30,19 @@ $so_luong_gio = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
 <body>
 
     <header class="header">
-        <a href="<?= BASE_URL ?>TP/index.php" class="logo">VIBE<span>STUDIO</span></a>
+        <a href="<?= BASE_URL ?>index.php" class="logo">VIBE<span>STUDIO</span></a>
 
         <nav class="navbar">
-            <a href="<?= BASE_URL ?>TP/index.php" class="<?= $trang_hien_tai === 'trang-chu' ? 'active' : '' ?>">TRANG CHỦ</a>
-            <a href="<?= BASE_URL ?>TP/index.php#about">GIỚI THIỆU</a>
-            <a href="<?= BASE_URL ?>TP/index.php#services">DỊCH VỤ</a>
-            <a href="<?= BASE_URL ?>AT/services.php" class="<?= $trang_hien_tai === 'san-pham' ? 'active' : '' ?>">SẢN PHẨM</a>
-            <a href="<?= BASE_URL ?>TP/index.php#contact">LIÊN HỆ</a>
+            <a href="<?= BASE_URL ?>index.php" class="<?= $trang_hien_tai === 'trang-chu' ? 'active' : '' ?>">TRANG CHỦ</a>
+            <a href="<?= BASE_URL ?>index.php#about">GIỚI THIỆU</a>
+            <a href="<?= BASE_URL ?>index.php#services">DỊCH VỤ</a>
+            <!-- Trỏ đúng vào thư mục user/services.php -->
+            <a href="<?= BASE_URL ?>user/services.php" class="<?= $trang_hien_tai === 'san-pham' ? 'active' : '' ?>">SẢN PHẨM</a>
+            <a href="<?= BASE_URL ?>index.php#contact">LIÊN HỆ</a>
         </nav>
 
         <div class="header-right">
-            <a href="<?= BASE_URL ?>TP/search.php" class="header-icon" aria-label="Tìm kiếm">
+            <a href="<?= BASE_URL ?>search.php" class="header-icon" aria-label="Tìm kiếm">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"/>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -50,7 +51,8 @@ $so_luong_gio = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
 
             <?php require __DIR__ . '/taikhoanmenu.php'; ?>
 
-            <a href="<?= BASE_URL ?>HH/cart.php" class="header-icon cart-icon" aria-label="Giỏ hàng">
+            <!-- Trỏ đúng vào thư mục user/cart.php -->
+            <a href="<?= BASE_URL ?>user/cart.php" class="header-icon cart-icon" aria-label="Giỏ hàng">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M6 7h12l1 13H5L6 7z"/>
                     <path d="M9 7V6a3 3 0 0 1 6 0v1"/>

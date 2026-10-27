@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/khung.php';
+require_once __DIR__ . '/khung_admin.php';
 
 $tu = (string) ($_GET['tu'] ?? date('Y-m-01'));
 $den = (string) ($_GET['den'] ?? date('Y-m-d'));
@@ -145,4 +145,4 @@ admin_dau('Thống kê', 'thong-ke');
         </div>
         <?php endif; ?>
 <?php endif; ?>
-<?php admin_cuoi();
+<?php admin_cuoi(); ?>

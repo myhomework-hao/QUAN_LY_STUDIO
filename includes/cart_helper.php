@@ -24,15 +24,25 @@ function tinh_so_don_vi(string $don_vi, string $bat_dau, string $ket_thuc): int
 }
 
 function lay_gio_hang($conn) {
-    if (empty($_SESSION['cart'])) {
+    if (empty($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
         return [];
     }
 
     $cart_items = [];
-    foreach ($_SESSION['cart'] as $id => $item) {
-        $qty = is_array($item) ? ($item['qty'] ?? 1) : (int)$item;
-        $bat_dau = is_array($item) ? ($item['bat_dau'] ?? '') : '';
-        $ket_thuc = is_array($item) ? ($item['ket_thuc'] ?? '') : '';
+    foreach ($_SESSION['cart'] as $cart_key => $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+
+        $id = (int) ($item['id'] ?? 0);
+        $qty = (int) ($item['qty'] ?? 1);
+        $bat_dau = (string) ($item['bat_dau'] ?? '');
+        $ket_thuc = (string) ($item['ket_thuc'] ?? '');
+        $kich_co = (string) ($item['kich_co'] ?? '');
+
+        if ($id <= 0) {
+            continue;
+        }
 
         $stmt = $conn->prepare(
             "SELECT DV_Ma AS id, DV_Ten AS ten, DV_Loai AS loai, DV_GiaThue AS gia,
@@ -41,15 +51,17 @@ function lay_gio_hang($conn) {
              FROM dichvu
              WHERE DV_Ma = ? AND DV_DangBan = 1"
         );
-        $stmt->execute([(int)$id]);
+        $stmt->execute([$id]);
         $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($product) {
+            $product['cart_key'] = $cart_key; // Gắn cart_key để view giỏ hàng nhận diện chính xác
             $product['qty'] = $qty;
             $product['bat_dau'] = $bat_dau;
             $product['ket_thuc'] = $ket_thuc;
+            $product['kich_co'] = $kich_co;
             $product['so_don_vi'] = tinh_so_don_vi((string) $product['don_vi'], (string) $bat_dau, (string) $ket_thuc);
-            $product['subtotal'] = (int)$product['gia'] * $product['so_don_vi'] * $qty;
+            $product['subtotal'] = (int) $product['gia'] * $product['so_don_vi'] * $qty;
 
             $cart_items[] = $product;
         }

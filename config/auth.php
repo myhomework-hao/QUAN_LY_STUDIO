@@ -57,7 +57,7 @@ function chuan_hoa_vai_tro(string $vai_tro): string
 function yeu_cau_dang_nhap(): void
 {
     if (!da_dang_nhap()) {
-        header('Location: ' . BASE_URL . 'KB/login.php?tu=' . urlencode($_SERVER['REQUEST_URI']));
+        header('Location: ' . BASE_URL . 'user/login.php?tu=' . urlencode($_SERVER['REQUEST_URI']));
         exit;
     }
 }
@@ -76,10 +76,10 @@ function trang_chu_theo_vai_tro(string $vai_tro): string
 {
     switch (chuan_hoa_vai_tro($vai_tro)) {
         case 'admin':
-            return BASE_URL . 'TP/admin/dashboard.php';
+            return BASE_URL . 'admin/dashboard.php';
         case 'nhanvien':
-            return BASE_URL . 'AT/vendor/my-services.php';
+            return BASE_URL . 'vendor/my-services.php';
         default:
-            return BASE_URL . 'TP/index.php';
+            return BASE_URL . 'index.php';
     }
 }

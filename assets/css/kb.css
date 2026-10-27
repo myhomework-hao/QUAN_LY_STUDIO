@@ -1,0 +1,564 @@
+/* =========================================================
+   VIBE STUDIO — STYLESHEET TỔNG HỢP CHO TÀI KHOẢN & ĐƠN HÀNG (kb.css)
+   ========================================================= */
+
+:root {
+    --ink: #111111;
+    --muted: #666666;
+    --line: #eaeaea;
+    --soft: #f8f9fa;
+    --error: #b3261e;
+    --success: #137333;
+    --accent: #b08d57;
+    --accent-dark: #8f6f3f;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   1. TRANG ĐĂNG NHẬP / ĐĂNG KÝ (Auth Pages)
+   ========================================================= */
+.auth-trang {
+    min-height: calc(100vh - 160px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 50px 20px;
+    background: #ffffff;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 440px;
+    padding: 40px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.auth-container .small-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.auth-container h1 {
+    font-size: clamp(32px, 5vw, 44px);
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 24px;
+    color: var(--ink);
+}
+
+.auth-container label,
+.khung-danh-gia form > label {
+    display: block;
+    margin: 20px 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #444444;
+}
+
+.auth-container input,
+.auth-container select,
+.khung-danh-gia textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.auth-container input:focus,
+.auth-container select:focus,
+.khung-danh-gia textarea:focus {
+    border-color: var(--ink);
+}
+
+.auth-container input:disabled {
+    background: var(--soft);
+    color: var(--muted);
+}
+
+.auth-container button,
+.khung-danh-gia button {
+    display: block;
+    width: 100%;
+    margin-top: 24px;
+    padding: 14px;
+    border: none;
+    background: var(--ink);
+    color: #ffffff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.auth-container button:hover,
+.khung-danh-gia button:hover {
+    background: #333333;
+}
+
+.message {
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    border: 1px solid transparent;
+}
+
+.message.error {
+    background: #fce8e6;
+    color: var(--error);
+    border-color: #fad2d0;
+}
+
+.message.success {
+    background: #e6f4ea;
+    color: var(--success);
+    border-color: #ceead6;
+}
+
+.auth-container > p:last-child {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.auth-container > p a {
+    margin-left: 4px;
+    color: var(--ink);
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   2. TRANG HỒ SƠ CÁ NHÂN (Profile)
+   ========================================================= */
+.hs-trang {
+    background: #ffffff;
+    color: var(--ink);
+    padding: 40px 8% 80px 8%;
+    min-height: 70vh;
+}
+
+.hs-khung { 
+    max-width: 1100px; 
+    margin: 0 auto; 
+}
+
+.hs-dau {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 30px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    margin-bottom: 30px;
+}
+
+.hs-avatar {
+    flex: 0 0 auto;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+}
+
+.hs-nhan-nho {
+    margin: 0 0 4px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent-dark);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.hs-ten {
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--ink);
+}
+
+.hs-email { 
+    margin: 4px 0 10px; 
+    color: var(--muted); 
+    font-size: 13px; 
+}
+
+.hs-the { 
+    margin: 0; 
+    display: flex; 
+    flex-wrap: wrap; 
+    align-items: center; 
+    gap: 10px; 
+}
+
+.hs-vai-tro {
+    padding: 4px 12px;
+    border-radius: 6px;
+    background: #f1f3f4;
+    border: 1px solid #dcdcdc;
+    color: var(--ink);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.hs-ngay { 
+    font-size: 12px; 
+    color: var(--muted); 
+}
+
+.hs-thongbao {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    border: 1px solid;
+}
+.hs-thongbao.error { background: #fce8e6; color: var(--error); border-color: #fad2d0; }
+.hs-thongbao.success { background: #e6f4ea; color: var(--success); border-color: #ceead6; }
+
+.hs-luoi {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+.hs-the-khoi {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.hs-tieu-de {
+    margin: 0 0 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+}
+.hs-tieu-de i { color: var(--accent-dark); margin-right: 8px; }
+
+.hs-the-khoi label {
+    display: block;
+    margin: 16px 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #444444;
+}
+
+.hs-the-khoi input {
+    width: 100%;
+    padding: 11px 14px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    background: #ffffff;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.hs-the-khoi input:focus {
+    border-color: var(--ink);
+}
+
+.hs-o-mat-khau { position: relative; }
+.hs-o-mat-khau input { padding-right: 60px; }
+
+.hs-hien {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.hs-hien:hover { color: var(--ink); }
+
+.hs-the-khoi form > button[type="submit"] {
+    width: 100%;
+    margin-top: 24px;
+    padding: 13px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #fff;
+    background: var(--ink);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.hs-the-khoi form > button[type="submit"]:hover { background: #333333; }
+
+
+/* =========================================================
+   3. TRANG DANH SÁCH & CHI TIẾT ĐƠN HÀNG (Orders)
+   ========================================================= */
+.dh-khung {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 8% 80px 8%;
+    font-family: inherit;
+    color: var(--ink);
+}
+
+.dh-danh-sach { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px; 
+}
+
+.dh-the {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 24px 28px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.dh-the-dau {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.dh-ma { 
+    margin: 0; 
+    font-size: 16px; 
+    font-weight: 700; 
+    color: var(--ink); 
+}
+.dh-phu { 
+    color: var(--muted); 
+    font-size: 12px; 
+    margin: 3px 0 0; 
+}
+
+.dh-nhan {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+.dh-cho { background: #fef3c7; color: #92400e; }
+.dh-duyet { background: #e0f2fe; color: #0369a1; }
+.dh-xong { background: #e6f4ea; color: #137333; }
+.dh-huy { background: #fce8e6; color: #c5221f; }
+
+.dh-the-than {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.dh-dong { margin: 0; font-size: 14px; color: var(--ink); }
+
+.dh-tien { 
+    text-align: right; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 2px; 
+}
+.dh-tien strong { font-size: 18px; color: var(--ink); }
+
+.dh-the-chan { 
+    margin-top: 20px; 
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.dh-nut {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-decoration: none;
+    color: #fff;
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.dh-nut:hover { background: #333333; }
+
+.dh-nut-vien { 
+    background: #ffffff; 
+    color: var(--error); 
+    border-color: #dcdcdc; 
+}
+.dh-nut-vien:hover { 
+    background: #fce8e6; 
+    border-color: var(--error); 
+    color: var(--error); 
+}
+
+.dh-trong {
+    text-align: center;
+    padding: 60px 24px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+}
+.dh-trong p { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+
+.dh-quay-lai {
+    display: inline-block;
+    margin-bottom: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+}
+.dh-quay-lai:hover { color: var(--ink); }
+
+.dh-thongbao {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    border: 1px solid;
+}
+.dh-thongbao.error { background: #fce8e6; color: var(--error); border-color: #fad2d0; }
+.dh-thongbao.success { background: #e6f4ea; color: var(--success); border-color: #ceead6; }
+
+.dh-thong-tin {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    margin-bottom: 24px;
+    background: var(--soft);
+    border-radius: 12px;
+    border: 1px solid var(--line);
+}
+.dh-thong-tin h3, .dh-muc-tieu-de {
+    margin: 0 0 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+.dh-thong-tin p { margin: 4px 0; font-size: 13px; color: var(--ink); }
+
+.dh-bang-boc { overflow-x: auto; margin-bottom: 20px; }
+.dh-bang { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dh-bang th {
+    text-align: left;
+    padding: 12px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 2px solid var(--line);
+}
+.dh-bang td { padding: 14px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.dh-bang .so { text-align: right; white-space: nowrap; }
+
+.dh-dich-vu { display: flex; align-items: center; gap: 12px; }
+.dh-dich-vu img { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; background: var(--soft); }
+.dh-dich-vu b { display: block; font-size: 14px; color: var(--ink); }
+
+.dh-tong { margin-top: 20px; text-align: right; }
+.dh-tong p { margin: 4px 0; font-size: 13px; color: var(--muted); }
+.dh-tong strong { font-size: 20px; color: var(--ink); }
+
+.dh-thanh-toan { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.dh-thanh-toan li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--line);
+}
+
+.dh-huy {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+}
+.dh-huy label { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+.dh-huy input[type="text"] {
+    width: 100%;
+    padding: 11px 14px;
+    margin-bottom: 12px;
+    font: inherit;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    outline: none;
+}
+.dh-huy input[type="text"]:focus { border-color: var(--ink); }
+
+
+/* =========================================================
+   4. RESPONSIVE
+   ========================================================= */
+@media (max-width: 800px) {
+    .hs-luoi { grid-template-columns: 1fr; }
+    .hs-dau { flex-direction: column; text-align: center; }
+    .dh-the { padding: 18px; }
+    .dh-tien { text-align: left; }
+}

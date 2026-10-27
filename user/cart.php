@@ -27,7 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ma = (int) ($_POST['service_id'] ?? $_POST['id'] ?? 0);
     $so_luong = (int) ($_POST['so_luong'] ?? $_POST['qty'] ?? 1);
     
-    // Lấy thêm khóa định danh giỏ hàng (key) hoặc size nếu có gửi lên từ form giỏ hàng
     $key_item = $_POST['cart_key'] ?? ''; 
 
     if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
@@ -44,8 +43,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$ma]);
             $dv = $stmt->fetch(PDO::FETCH_ASSOC);
         }
-        $bat_dau = (string) ($_POST['bat_dau'] ?? $_POST['ngay_dat'] ?? '');
-        $ket_thuc = (string) ($_POST['ket_thuc'] ?? $_POST['gio_dat'] ?? '');
+        
+        // Bắt chuẩn xác các kiểu tên biến thời gian gửi lên từ form (có gạch ngang hoặc gạch dưới)
+        $bat_dau = trim((string) ($_POST['bat-dau'] ?? $_POST['bat_dau'] ?? $_POST['ngay_dat'] ?? ''));
+        $ket_thuc = trim((string) ($_POST['ket-thuc'] ?? $_POST['ket_thuc'] ?? $_POST['gio_dat'] ?? ''));
         $kich_co = trim((string) ($_POST['kich_co'] ?? ''));
 
         $tg = $dv ? thoi_gian_thue((string) $dv['DV_DonViTinh'], $bat_dau, $ket_thuc) : null;
@@ -57,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (strtotime($tg['ket_thuc']) <= time()) {
             $_SESSION['thong_bao_dat'] = 'Thời gian thuê đã qua, vui lòng chọn lại.';
         } else {
-            // Tạo khóa riêng cho từng sản phẩm + size (Ví dụ: 5_M hoặc 5 nếu không có size)
+            // Tạo khóa riêng cho từng sản phẩm + size
             $cart_key = $ma . ($kich_co !== '' ? '_' . $kich_co : '');
 
             $da_co = is_array($_SESSION['cart'][$cart_key] ?? null) ? (int) ($_SESSION['cart'][$cart_key]['qty'] ?? 0) : 0;
@@ -114,7 +115,9 @@ foreach ($cart_items as $k => $item) {
 }
 
 $tieu_de_trang = 'Giỏ hàng - VIBE Studio';
-$css_rieng = ['cart.css'];
+$css_rieng = [
+    BASE_URL . 'assets/css/cart.css'
+];
 require_once '../includes/header.php';
 ?>
 
@@ -147,7 +150,7 @@ require_once '../includes/header.php';
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l1 13H5L6 7z"/><path d="M9 7V6a3 3 0 0 1 6 0v1"/></svg>
                         <h3>Giỏ hàng đang trống</h3>
                         <p>Chọn phòng chụp, thiết bị hoặc trang phục, dịch vụ sẽ xuất hiện tại đây.</p>
-                        <a href="../AT/services.php" class="btn-dark">XEM DỊCH VỤ</a>
+                        <a href="services.php" class="btn-dark">XEM DỊCH VỤ</a>
                     </div>
                 <?php else : ?>
                     <?php foreach ($cart_items as $item) : $toi_da = max(1, min(SO_LUONG_TOI_DA_MOI_DICH_VU, (int) $item['so_luong'])); ?>
@@ -156,7 +159,6 @@ require_once '../includes/header.php';
                             <div>
                                 <h3><?= htmlspecialchars($item['ten']) ?></h3>
                                 
-                                <!-- Hiển thị Size nếu có -->
                                 <?php if (!empty($item['kich_co'])) : ?>
                                     <p class="unit" style="font-weight: 600; color: #d9534f; margin-bottom: 2px;">Kích cỡ (Size): <?= htmlspecialchars($item['kich_co']) ?></p>
                                 <?php endif; ?>
@@ -175,7 +177,6 @@ require_once '../includes/header.php';
                                     <p class="unit" style="font-size:12px; color:#c00;" role="alert"><?= htmlspecialchars($item['canh_bao']) ?></p>
                                 <?php endif; ?>
 
-                                <!-- Form cập nhật số lượng (Đã có cart_key) -->
                                 <form method="POST" style="display:inline-block;">
                                     <input type="hidden" name="action" value="update">
                                     <input type="hidden" name="cart_key" value="<?= htmlspecialchars($item['cart_key'] ?? '') ?>">
@@ -189,7 +190,6 @@ require_once '../includes/header.php';
                             <div class="cart-side">
                                 <span class="line-total"><?= dinh_dang_tien($item['subtotal']) ?></span>
                                 
-                                <!-- Form xóa sản phẩm (Đã thêm cart_key để nhận diện chính xác mục cần xóa) -->
                                 <form method="POST">
                                     <input type="hidden" name="action" value="remove">
                                     <input type="hidden" name="cart_key" value="<?= htmlspecialchars($item['cart_key'] ?? '') ?>">
@@ -202,7 +202,7 @@ require_once '../includes/header.php';
             </div>
 
             <div class="card-foot">
-                <a href="../AT/services.php" class="continue">← TIẾP TỤC CHỌN DỊCH VỤ</a>
+                <a href="services.php" class="continue">← TIẾP TỤC CHỌN DỊCH VỤ</a>
                 <?php if (!empty($cart_items)) : ?>
                     <form method="POST" style="margin:0;">
                         <input type="hidden" name="action" value="clear">

@@ -23,7 +23,7 @@ $user = lay_nguoi_dung($conn, $user_id);
 if (!$user) {
     session_unset();
     session_destroy();
-    header('Location: ' . BASE_URL . 'KB/login.php');
+    header('Location: ' . BASE_URL . 'login.php');
     exit;
 }
 
@@ -120,7 +120,8 @@ $chu_cai_dau = mb_strtoupper(mb_substr($user['ND_Ten'], 0, 1));
 $ngay_tham_gia = $user['ND_NgayTao'] ? date('d/m/Y', strtotime($user['ND_NgayTao'])) : '';
 
 $tieu_de_trang = 'Hồ sơ cá nhân - VIBE STUDIO';
-$css_rieng = ['KB.css'];
+$css_rieng = [
+   BASE_URL . 'assets/css/kb.css']; // Trỏ đúng vào thư mục assets/css chung
 require_once '../includes/header.php';
 ?>
 

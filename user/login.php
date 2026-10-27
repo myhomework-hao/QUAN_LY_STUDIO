@@ -77,7 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $tieu_de_trang = 'Đăng nhập - VIBE STUDIO';
-$css_rieng = ['KB.css'];
+$css_rieng = [
+    BASE_URL .'assets/css/kb.css']; // Đã trỏ đúng vào thư mục assets/css chung
 require_once '../includes/header.php';
 ?>
 

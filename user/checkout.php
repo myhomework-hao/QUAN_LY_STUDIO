@@ -137,7 +137,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
 }
 
 $tieu_de_trang = 'Thanh toán - VIBE Studio';
-$css_rieng = ['cart.css'];
+$css_rieng = [
+       BASE_URL . 'assets/css/cart.css']; // Trỏ chuẩn vào thư mục assets/css chung
 require_once '../includes/header.php';
 ?>
 
@@ -169,8 +170,8 @@ require_once '../includes/header.php';
             <p>Phương thức thanh toán: <?= htmlspecialchars($phuong_thuc_da_chon) ?></p>
 
             <div style="margin-top: 25px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                <a href="../TP/index.php" class="btn-dark" style="text-decoration: none; padding: 10px 20px;">VỀ TRANG CHỦ</a>
-                <a href="../KB/order-detail.php?id=<?= $ma_don ?>" class="btn-dark" style="text-decoration: none; padding: 10px 20px; background-color: #333; color: #fff;">XEM ĐƠN THUÊ</a>
+                <a href="index.php" class="btn-dark" style="text-decoration: none; padding: 10px 20px;">VỀ TRANG CHỦ</a>
+                <a href="order-detail.php?id=<?= $ma_don ?>" class="btn-dark" style="text-decoration: none; padding: 10px 20px; background-color: #333; color: #fff;">XEM ĐƠN THUÊ</a>
             </div>
         </div>
     <?php else : ?>
@@ -180,17 +181,17 @@ require_once '../includes/header.php';
                 <?php if ($empty) : ?>
                     <div class="notice">
                         <span>Giỏ hàng của bạn đang trống nên chưa thể đặt thuê.</span>
-                        <a href="../AT/services.php" class="btn-dark">XEM SẢN PHẨM</a>
+                        <a href="services.php" class="btn-dark">XEM SẢN PHẨM</a>
                     </div>
                 <?php endif; ?>
 
                 <?php if (!empty($loi_form)) : ?>
-    <div class="card" style="border: 1px solid #ff4d4f; background: #fff2f2; color: #cf1322; padding: 16px; margin-bottom: 20px; border-radius: 8px;" role="alert">
-        <strong><i class="fa-solid fa-triangle-exclamation"></i> Không thể hoàn tất đặt thuê:</strong> 
-        <p style="margin: 5px 0 0 0;"><?= htmlspecialchars($loi_form) ?></p>
-        <p style="margin: 10px 0 0 0; font-size: 13px;">Vui lòng <a href="cart.php" style="color: #cf1322; text-decoration: underline; font-weight: bold;">quay lại giỏ hàng</a> để điều chỉnh lại số lượng hoặc thời gian cho phù hợp.</p>
-    </div>
-<?php endif; ?>
+                    <div class="card" style="border: 1px solid #ff4d4f; background: #fff2f2; color: #cf1322; padding: 16px; margin-bottom: 20px; border-radius: 8px;" role="alert">
+                        <strong><i class="fa-solid fa-triangle-exclamation"></i> Không thể hoàn tất đặt thuê:</strong> 
+                        <p style="margin: 5px 0 0 0;"><?= htmlspecialchars($loi_form) ?></p>
+                        <p style="margin: 10px 0 0 0; font-size: 13px;">Vui lòng <a href="cart.php" style="color: #cf1322; text-decoration: underline; font-weight: bold;">quay lại giỏ hàng</a> để điều chỉnh lại số lượng hoặc thời gian cho phù hợp.</p>
+                    </div>
+                <?php endif; ?>
 
                 <fieldset id="formFields" class="stack" <?= $empty ? 'disabled' : '' ?>>
 

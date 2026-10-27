@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/khung.php';
+require_once __DIR__ . '/khung_nv.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dich = ve_trang_truoc('vendor-orders.php');
@@ -126,7 +126,8 @@ nv_dau('Đơn thuê', 'don');
                                     <?php if ($d['DDL_LyDoTuChoi']) : ?><br><span class="muted"><?= h($d['DDL_LyDoTuChoi']) ?></span><?php endif; ?>
                                 </td>
                                 <td class="row-actions">
-                                    <a href="<?= BASE_URL ?>KB/order-detail.php?id=<?= (int) $d['DDL_Ma'] ?>">Chi tiết</a>
+                                    <!-- Đã chỉnh sửa đường dẫn trỏ đúng vị trí file order-detail.php -->
+                                    <a href="<?= BASE_URL ?>user/order-detail.php?id=<?= (int) $d['DDL_Ma'] ?>">Chi tiết</a>
                                     <?php if ($d['DDL_TrangThai'] === TRANG_THAI_CHO_DUYET) : ?>
                                         <form method="post" onsubmit="return confirm('Duyệt đơn này?')">
                                             <?= csrf_input() ?>
@@ -160,4 +161,4 @@ nv_dau('Đơn thuê', 'don');
             </div>
             <?php hien_phan_trang($tong_trang, $trang); ?>
         </section>
-<?php nv_cuoi();
+<?php nv_cuoi(); ?>

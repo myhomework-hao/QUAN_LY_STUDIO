@@ -26,24 +26,28 @@ $chu_cai_dau = $ten_hien_thi !== '' ? mb_strtoupper(mb_substr($ten_hien_thi, 0, 
                 <p class="tai-khoan-ten"><?= htmlspecialchars($ten_hien_thi) ?></p>
             <?php endif; ?>
 
+            <!-- Khu vực Admin -->
             <?php if ($vai_tro === 'admin'): ?>
-                <a href="<?= BASE_URL ?>TP/admin/dashboard.php">QUẢN TRỊ</a>
+                <a href="<?= BASE_URL ?>admin/dashboard.php">QUẢN TRỊ</a>
+            
+            <!-- Khu vực Nhân viên / Vendor -->
             <?php elseif ($vai_tro === 'nhanvien'): ?>
-                <a href="<?= BASE_URL ?>AT/vendor/my-services.php">QUẢN LÝ DỊCH VỤ</a>
-                <a href="<?= BASE_URL ?>AT/vendor/vendor-orders.php">XỬ LÝ ĐƠN THUÊ</a>
+                <a href="<?= BASE_URL ?>vendor/my-services.php">QUẢN LÝ DỊCH VỤ</a>
+                <a href="<?= BASE_URL ?>vendor/vendor-orders.php">XỬ LÝ ĐƠN THUÊ</a>
             <?php endif; ?>
 
-            <a href="<?= BASE_URL ?>KB/profile.php">HỒ SƠ CỦA TÔI</a>
+            <!-- Khu vực Khách hàng / Chung (đặt trong thư mục user/) -->
+            <a href="<?= BASE_URL ?>user/profile.php">HỒ SƠ CỦA TÔI</a>
 
             <?php if ($vai_tro === 'khachhang'): ?>
-                <a href="<?= BASE_URL ?>KB/my-orders.php">ĐƠN HÀNG CỦA TÔI</a>
+                <a href="<?= BASE_URL ?>user/my-orders.php">ĐƠN HÀNG CỦA TÔI</a>
             <?php endif; ?>
 
-            <a href="<?= BASE_URL ?>KB/logout.php" class="dang-xuat">ĐĂNG XUẤT</a>
+            <a href="<?= BASE_URL ?>user/logout.php" class="dang-xuat">ĐĂNG XUẤT</a>
 
         <?php else: ?>
-            <a href="<?= BASE_URL ?>KB/login.php">ĐĂNG NHẬP</a>
-            <a href="<?= BASE_URL ?>KB/register.php">ĐĂNG KÝ</a>
+            <a href="<?= BASE_URL ?>user/login.php">ĐĂNG NHẬP</a>
+            <a href="<?= BASE_URL ?>user/register.php">ĐĂNG KÝ</a>
         <?php endif; ?>
     </div>
 </div>

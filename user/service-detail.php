@@ -91,9 +91,10 @@ $tieu_de_trang = ($dv ? $dv['ten'] : 'Không tìm thấy') . ' - VIBE STUDIO';
 $trang_hien_tai = 'san-pham';
 $css_rieng = [
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css',
-    'at.css'
+    BASE_URL . 'assets/css/at.css' // Trỏ chuẩn vào thư mục assets/css chung
 ];
-$js_rieng = $dv ? ['at-chitiet.js'] : [];
+$js_rieng = $dv ? [
+       BASE_URL . 'assets/js/at-chitiet.js'] : []; // Trỏ chuẩn vào thư mục assets/js chung
 
 require_once '../includes/header.php';
 ?>
@@ -176,7 +177,8 @@ require_once '../includes/header.php';
                 <?php endforeach; ?>
             </div>
 
-            <form method="post" action="<?= BASE_URL ?>HH/cart.php">
+            <!-- Form gửi dữ liệu đặt thuê trỏ thẳng vào cart.php ở root -->
+            <form method="post" action="cart.php">
                 <input type="hidden" name="service_id" value="<?= (int) $dv['id'] ?>">
                 <input type="hidden" name="so_luong" id="so-luong-gui" value="1" data-toi-da="<?= (int) $con_lai_ban_dau ?>">
 
@@ -197,11 +199,11 @@ require_once '../includes/header.php';
                 <div class="chon-thoi-gian">
                     <div>
                         <label for="bat-dau"><?= $theo_gio ? 'GIỜ NHẬN' : 'NGÀY NHẬN' ?></label>
-                        <input type="<?= $kieu_nhap ?>" id="bat-dau" name="bat_dau" min="<?= $nho_nhat ?>" required>
+                        <input type="<?= $kieu_nhap ?>" id="bat-dau" name="bat-dau" min="<?= $nho_nhat ?>" required>
                     </div>
                     <div>
                         <label for="ket-thuc"><?= $theo_gio ? 'GIỜ TRẢ' : 'NGÀY TRẢ' ?></label>
-                        <input type="<?= $kieu_nhap ?>" id="ket-thuc" name="ket_thuc" min="<?= $nho_nhat ?>" required>
+                        <input type="<?= $kieu_nhap ?>" id="ket-thuc" name="ket-thuc" min="<?= $nho_nhat ?>" required>
                     </div>
                 </div>
 

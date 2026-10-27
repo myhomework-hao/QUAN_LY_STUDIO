@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/khung.php';
+require_once __DIR__ . '/khung_admin.php';
 
 $ma_xem = (int) ($_GET['id'] ?? 0);
 
@@ -156,4 +156,4 @@ admin_dau('Dịch vụ', 'dich-vu');
             </div>
             <?php hien_phan_trang($tong_trang, $trang); ?>
         </section>
-<?php admin_cuoi();
+<?php admin_cuoi(); ?>

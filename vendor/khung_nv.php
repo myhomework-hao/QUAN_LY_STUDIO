@@ -1,13 +1,26 @@
 <?php
-require_once __DIR__ . '/../../config/app.php';
-require_once __DIR__ . '/../../config/auth.php';
-require_once __DIR__ . '/../../config/db.php';
-require_once __DIR__ . '/../../includes/donhang.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Thêm dấu gạch chéo / sau __DIR__ để lùi ra thư mục gốc chính xác
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/../config/auth.php';
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../includes/donhang.php';
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
-yeu_cau_vai_tro('admin');
+yeu_cau_vai_tro('nhanvien');
+
+$ma_nhan_vien = ma_nhan_vien_hien_tai($conn);
+if ($ma_nhan_vien === null) {
+    http_response_code(403);
+    die('Tài khoản nhân viên của bạn đang bị khóa.');
+}
 
 const SO_DONG_MOI_TRANG = 10;
+// Sửa đường dẫn thư mục ảnh trỏ đúng ra thư mục assets/uploads/ chung ở gốc
+define('THU_MUC_ANH', dirname(__DIR__) . '/assets/uploads/');
 
 function h($chuoi): string
 {
@@ -37,10 +50,10 @@ function lay_mot(PDO $conn, string $sql, array $tham_so = [])
 
 function csrf_token(): string
 {
-    if (empty($_SESSION['csrf_admin'])) {
-        $_SESSION['csrf_admin'] = bin2hex(random_bytes(16));
+    if (empty($_SESSION['csrf_nv'])) {
+        $_SESSION['csrf_nv'] = bin2hex(random_bytes(16));
     }
-    return $_SESSION['csrf_admin'];
+    return $_SESSION['csrf_nv'];
 }
 
 function csrf_input(): string
@@ -55,7 +68,7 @@ function csrf_hop_le(): bool
 
 function dat_thong_bao(string $noi_dung, string $loai = 'success'): void
 {
-    $_SESSION['admin_thong_bao'] = [$loai, $noi_dung];
+    $_SESSION['nv_thong_bao'] = [$loai, $noi_dung];
 }
 
 function chuyen_huong(string $duong_dan): void
@@ -83,24 +96,7 @@ function gia_hien_thi($gia, string $don_vi): string
 
 function lop_badge_don(string $trang_thai): string
 {
-    return [
-        'cho' => 'badge-cho',
-        'duyet' => 'badge-xac-nhan',
-        'xong' => 'badge-hoan-thanh',
-        'huy' => 'badge-huy',
-    ][lop_trang_thai($trang_thai)];
-}
-
-function doanh_thu_khoang(PDO $conn, string $tu, string $den): float
-{
-    return (float) gia_tri(
-        $conn,
-        "SELECT COALESCE(SUM(DDL_TongTien), 0) FROM dondatlich
-         WHERE DDL_TrangThai = ?
-           AND COALESCE(DDL_ThoiDiemHoanThanh, DDL_NgayTao) >= ?
-           AND COALESCE(DDL_ThoiDiemHoanThanh, DDL_NgayTao) < ?",
-        [TRANG_THAI_HOAN_THANH, $tu, $den]
-    );
+    return ['cho' => 'badge-cho', 'duyet' => 'badge-xac-nhan', 'xong' => 'badge-hoan-thanh', 'huy' => 'badge-huy'][lop_trang_thai($trang_thai)];
 }
 
 function lien_ket_trang(int $trang): string
@@ -144,17 +140,15 @@ function ngay_viet_nam(): string
     return $thu[(int) date('w')] . ', ' . date('d/m/Y');
 }
 
-function admin_dau(string $tieu_de, string $muc_chon): void
+function nv_dau(string $tieu_de, string $muc_chon): void
 {
     $menu = [
-        'tong-quan' => ['Tổng quan', 'dashboard.php'],
-        'nguoi-dung' => ['Người dùng', 'nguoi-dung.php'],
-        'nhan-vien' => ['Nhân viên', 'nhan-vien.php'],
-        'dich-vu' => ['Dịch vụ', 'dich-vu.php'],
-        'thong-ke' => ['Thống kê', 'thong-ke.php'],
+        'dich-vu' => ['Dịch vụ', 'my-services.php'],
+        'them' => ['Thêm dịch vụ', 'dich-vu-form.php'],
+        'don' => ['Đơn thuê', 'vendor-orders.php'],
     ];
-    $thong_bao = $_SESSION['admin_thong_bao'] ?? null;
-    unset($_SESSION['admin_thong_bao']);
+    $thong_bao = $_SESSION['nv_thong_bao'] ?? null;
+    unset($_SESSION['nv_thong_bao']);
     ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -162,22 +156,22 @@ function admin_dau(string $tieu_de, string $muc_chon): void
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= h($tieu_de) ?> | VIBE Studio</title>
-    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/dashboard.css">
 </head>
 <body>
 
 <div class="admin">
 
     <aside class="admin-sidebar">
-        <a href="<?= BASE_URL ?>TP/admin/dashboard.php" class="admin-logo">VIBE <i>Admin</i></a>
+        <a href="<?= BASE_URL ?>vendor/my-services.php" class="admin-logo">VIBE <i>Nhân viên</i></a>
 
-        <nav class="admin-menu" aria-label="Menu quản trị">
+        <nav class="admin-menu" aria-label="Menu nhân viên">
             <?php foreach ($menu as $ma => [$ten, $lien_ket]) : ?>
                 <a href="<?= h($lien_ket) ?>" class="<?= $ma === $muc_chon ? 'active' : '' ?>"><?= h($ten) ?></a>
             <?php endforeach; ?>
         </nav>
 
-        <a href="<?= BASE_URL ?>TP/index.php" class="admin-back">← Về trang chủ</a>
+        <a href="<?= BASE_URL ?>index.php" class="admin-back">← Về trang chủ</a>
     </aside>
 
     <div class="admin-main">
@@ -189,7 +183,9 @@ function admin_dau(string $tieu_de, string $muc_chon): void
             </div>
             <div class="admin-user">
                 <span><?= h(ten_nguoi_dung_hien_tai()) ?></span>
-                <a href="<?= BASE_URL ?>KB/logout.php" class="btn-line">Đăng xuất</a>
+                <!-- Nếu bạn đã đưa profile.php và logout.php ra root, hãy bỏ tiền tố KB/ đi -->
+                <a href="<?= BASE_URL ?>user/profile.php" class="btn-line">Hồ sơ</a>
+                <a href="<?= BASE_URL ?>user/logout.php" class="btn-line">Đăng xuất</a>
             </div>
         </header>
 
@@ -199,7 +195,7 @@ function admin_dau(string $tieu_de, string $muc_chon): void
 <?php
 }
 
-function admin_cuoi(): void
+function nv_cuoi(): void
 {
     ?>
     </div>
