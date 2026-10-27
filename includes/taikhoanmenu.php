@@ -30,7 +30,7 @@ $chu_cai_dau = $ten_hien_thi !== '' ? mb_strtoupper(mb_substr($ten_hien_thi, 0, 
                 <a href="<?= BASE_URL ?>TP/admin/dashboard.php">QUẢN TRỊ</a>
             <?php elseif ($vai_tro === 'nhanvien'): ?>
                 <a href="<?= BASE_URL ?>AT/vendor/my-services.php">QUẢN LÝ DỊCH VỤ</a>
-                <a href="<?= BASE_URL ?>HH/vendor-orders.php">XỬ LÝ ĐƠN THUÊ</a>
+                <a href="<?= BASE_URL ?>AT/vendor/vendor-orders.php">XỬ LÝ ĐƠN THUÊ</a>
             <?php endif; ?>
 
             <a href="<?= BASE_URL ?>KB/profile.php">HỒ SƠ CỦA TÔI</a>

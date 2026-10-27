@@ -141,7 +141,7 @@ foreach ($cac_muc as $muc) {
 }
 
 $tieu_de_trang = $don ? 'Chi tiết đơn ' . ma_don_hien_thi($ma_don) : 'Không tìm thấy đơn thuê';
-$css_rieng = ['cart.css', 'kb.css'];
+$css_rieng = ['cart.css', 'KB.css'];
 require_once '../includes/header.php';
 ?>
 
