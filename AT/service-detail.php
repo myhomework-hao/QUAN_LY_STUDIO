@@ -62,6 +62,16 @@ if ($dv) {
     $kieu_nhap = $theo_gio ? 'datetime-local' : 'date';
     $nho_nhat = date($theo_gio ? 'Y-m-d\TH:i' : 'Y-m-d');
 
+    $stmt_kho = $conn->prepare(
+        "SELECT (dv.DV_SoLuong - COALESCE((
+            SELECT SUM(c.CTD_SoLuong) FROM chitietdon c 
+            JOIN dondatlich d ON d.DDL_Ma = c.DDL_Ma 
+            WHERE c.DV_Ma = dv.DV_Ma AND d.DDL_TrangThai IN ('Chờ duyệt', 'Đã duyệt') AND c.CTD_KetThuc > NOW()
+        ), 0)) AS con_lai FROM dichvu dv WHERE dv.DV_Ma = ?"
+    );
+    $stmt_kho->execute([$dv['id']]);
+    $con_lai_ban_dau = (int) $stmt_kho->fetchColumn();
+
     $thuoc_tinh_rieng = [];
     if ($dv['suc_chua'] !== null) {
         $thuoc_tinh_rieng['Sức chứa'] = $dv['suc_chua'] . ' người';
@@ -93,7 +103,7 @@ require_once '../includes/header.php';
 <?php if (!$dv): ?>
 
     <section class="product-detail">
-        <div class="detail-info">
+        <div class="detail-info-card">
             <h1 class="detail-name">Không tìm thấy sản phẩm</h1>
             <p class="detail-description">Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã bị ẩn.</p>
             <a href="services.php" class="back-button">
@@ -114,18 +124,24 @@ require_once '../includes/header.php';
     </section>
 
     <section class="product-detail">
-        <div class="detail-image">
-            <?php if (!empty($dv['anh'])): ?>
-                <img src="<?= BASE_URL ?>assets/uploads/<?= h($dv['anh']) ?>" alt="<?= h($dv['ten']) ?>">
-            <?php else: ?>
-                <img src="<?= BASE_URL ?>assets/images/no-image.jpg" alt="<?= h($dv['ten']) ?>">
-            <?php endif; ?>
+        <!-- Cột trái: Khung chứa ảnh có viền -->
+        <div class="detail-image-box">
+            <div class="detail-image">
+                <?php if (!empty($dv['anh'])): ?>
+                    <img src="<?= BASE_URL ?>assets/uploads/<?= h($dv['anh']) ?>" alt="<?= h($dv['ten']) ?>">
+                <?php else: ?>
+                    <img src="<?= BASE_URL ?>assets/images/no-image.jpg" alt="<?= h($dv['ten']) ?>">
+                <?php endif; ?>
+            </div>
         </div>
 
-        <div class="detail-info">
+        <!-- Cột phải: Khung thông tin chính có viền bao bọc rõ ràng -->
+        <div class="detail-info-card">
             <div class="product-tags">
                 <span class="product-category-tag"><?= h($ten_danh_muc) ?></span>
-                <span class="product-status-tag">Có sẵn</span>
+                <span class="product-status-tag" id="nhan-trang-thai" style="<?= $con_lai_ban_dau == 0 ? 'background: #ff4d4f; color: #fff;' : '' ?>">
+                    <?= $con_lai_ban_dau > 0 ? 'Còn ' . $con_lai_ban_dau . ' sản phẩm' : 'Hết hàng' ?>
+                </span>
             </div>
 
             <h1 class="detail-name"><?= h($dv['ten']) ?></h1>
@@ -162,7 +178,21 @@ require_once '../includes/header.php';
 
             <form method="post" action="<?= BASE_URL ?>HH/cart.php">
                 <input type="hidden" name="service_id" value="<?= (int) $dv['id'] ?>">
-                <input type="hidden" name="so_luong" id="so-luong-gui" value="1" data-toi-da="<?= (int) $dv['so_luong'] ?>">
+                <input type="hidden" name="so_luong" id="so-luong-gui" value="1" data-toi-da="<?= (int) $con_lai_ban_dau ?>">
+
+                <!-- Phần chọn Size nếu sản phẩm là trang phục -->
+                <?php if (!empty($dv['kich_co'])): ?>
+                    <?php $danh_sach_size = array_map('trim', explode(',', $dv['kich_co'])); ?>
+                    <div class="field" style="margin-bottom: 16px;">
+                        <label for="kich_co_chon" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 12px; color: #333;">CHỌN KÍCH CỠ (SIZE)</label>
+                        <select id="kich_co_chon" name="kich_co" class="form-control" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #dcdcdc; background: #fff;">
+                            <option value="">-- Chọn kích cỡ --</option>
+                            <?php foreach ($danh_sach_size as $size): ?>
+                                <option value="<?= h($size) ?>"><?= h($size) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                <?php endif; ?>
 
                 <div class="chon-thoi-gian">
                     <div>
@@ -185,7 +215,7 @@ require_once '../includes/header.php';
                 </div>
 
                 <div class="detail-buttons">
-                    <button type="submit" class="main-button rental-button">
+                    <button type="submit" class="main-button rental-button" <?= $con_lai_ban_dau == 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '' ?>>
                         <i class="fa-solid fa-bag-shopping"></i> Đặt thuê
                     </button>
                     <a href="services.php" class="back-button">

@@ -12,6 +12,13 @@ $danh_muc_chinh = [
 
 $sql = "SELECT dv.DV_Ma AS id, dv.DV_Ten AS ten, dv.DV_Loai AS loai, dv.DV_GiaThue AS gia,
                dv.DV_DonViTinh AS don_vi, dv.DV_MoTa AS mo_ta, dv.DV_HinhAnh AS anh,
+               dv.DV_SoLuong AS tong_kho,
+               (SELECT COALESCE(SUM(c.CTD_SoLuong), 0) 
+                FROM chitietdon c 
+                JOIN dondatlich d ON d.DDL_Ma = c.DDL_Ma 
+                WHERE c.DV_Ma = dv.DV_Ma 
+                  AND d.DDL_TrangThai IN ('Chờ duyệt', 'Đã duyệt') 
+                  AND c.CTD_KetThuc > NOW()) AS da_dat,
                (SELECT AVG(dg.DG_SoSao) FROM danhgia dg WHERE dg.DV_Ma = dv.DV_Ma) AS diem_tb,
                (SELECT COUNT(*) FROM danhgia dg WHERE dg.DV_Ma = dv.DV_Ma) AS so_danh_gia
         FROM dichvu dv
@@ -100,7 +107,12 @@ require_once '../includes/header.php';
 
                     <div class="product-grid">
                         <?php foreach ($items as $dv): ?>
-                            <?php $link = BASE_URL . 'AT/service-detail.php?id=' . (int) $dv['id']; ?>
+                            <?php 
+                                $link = BASE_URL . 'AT/service-detail.php?id=' . (int) $dv['id'];
+                                // Đường dẫn tới trang chat với Studio (kèm theo id sản phẩm để nhân viên biết khách đang hỏi món nào)
+                                $link_chat = BASE_URL . 'AT/chat.php?product_id=' . (int) $dv['id'];
+                                $con_lai = max(0, (int) $dv['tong_kho'] - (int) $dv['da_dat']);
+                            ?>
 
                             <article class="product-card" data-category="<?= h($ma_loai) ?>">
                                 <div class="product-image">
@@ -117,7 +129,9 @@ require_once '../includes/header.php';
 
                                 <div class="product-info">
                                     <div class="product-tags">
-                                        <span class="product-status-tag">Có sẵn</span>
+                                        <span class="product-status-tag <?= $con_lai == 0 ? 'out-of-stock' : '' ?>">
+                                            <?= $con_lai > 0 ? 'Còn ' . $con_lai . ' sản phẩm' : 'Hết hàng' ?>
+                                        </span>
                                     </div>
 
                                     <h3 class="product-name"><?= h($dv['ten']) ?></h3>
@@ -143,9 +157,10 @@ require_once '../includes/header.php';
                                     </div>
 
                                     <div class="product-actions">
-                                        <a href="<?= $link ?>" class="btn-action btn-rent">Thuê ngay</a>
-                                        <a href="<?= $link ?>" class="btn-action btn-chat">
-                                            <i class="fa-regular fa-comment"></i> Chi tiết
+                                        <a href="<?= $link ?>" class="btn-action btn-rent <?= $con_lai == 0 ? 'disabled' : '' ?>">Thuê ngay</a>
+                                        <!-- Đã đổi từ Chi tiết thành Chat với Studio -->
+                                        <a href="<?= $link_chat ?>" class="btn-action btn-chat">
+                                            <i class="fa-regular fa-comment"></i> Chat
                                         </a>
                                     </div>
                                 </div>

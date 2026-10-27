@@ -26,6 +26,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $hanh_dong = $_POST['action'] ?? 'add';
     $ma = (int) ($_POST['service_id'] ?? $_POST['id'] ?? 0);
     $so_luong = (int) ($_POST['so_luong'] ?? $_POST['qty'] ?? 1);
+    
+    // Lấy thêm khóa định danh giỏ hàng (key) hoặc size nếu có gửi lên từ form giỏ hàng
+    $key_item = $_POST['cart_key'] ?? ''; 
 
     if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
         $_SESSION['cart'] = [];
@@ -33,44 +36,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($hanh_dong === 'clear') {
         unset($_SESSION['cart']);
-    } elseif ($ma > 0) {
-        if ($hanh_dong === 'add') {
-            $toi_da = so_luong_toi_da($conn, $ma);
-            $dv = null;
-            if ($toi_da > 0) {
-                $stmt = $conn->prepare("SELECT DV_DonViTinh FROM dichvu WHERE DV_Ma = ?");
-                $stmt->execute([$ma]);
-                $dv = $stmt->fetch(PDO::FETCH_ASSOC);
-            }
-            $bat_dau = (string) ($_POST['bat_dau'] ?? $_POST['ngay_dat'] ?? '');
-            $ket_thuc = (string) ($_POST['ket_thuc'] ?? $_POST['gio_dat'] ?? '');
-            $tg = $dv ? thoi_gian_thue((string) $dv['DV_DonViTinh'], $bat_dau, $ket_thuc) : null;
-
-            if ($toi_da === 0) {
-                $_SESSION['thong_bao_dat'] = 'Dịch vụ này hiện không còn nhận thuê.';
-            } elseif ($tg === null) {
-                $_SESSION['thong_bao_dat'] = 'Vui lòng chọn thời gian nhận và trả hợp lệ.';
-            } elseif (strtotime($tg['ket_thuc']) <= time()) {
-                $_SESSION['thong_bao_dat'] = 'Thời gian thuê đã qua, vui lòng chọn lại.';
-            } else {
-                $da_co = is_array($_SESSION['cart'][$ma] ?? null) ? (int) ($_SESSION['cart'][$ma]['qty'] ?? 0) : 0;
-                $_SESSION['cart'][$ma] = [
-                    'id' => $ma,
-                    'qty' => min($toi_da, max(1, $da_co + $so_luong)),
-                    'bat_dau' => $tg['bat_dau'],
-                    'ket_thuc' => $tg['ket_thuc'],
-                ];
-                $_SESSION['thong_bao_dat'] = 'Đã thêm dịch vụ vào giỏ hàng.';
-            }
-        } elseif ($hanh_dong === 'update' && isset($_SESSION['cart'][$ma]) && is_array($_SESSION['cart'][$ma])) {
-            if ($so_luong <= 0) {
-                unset($_SESSION['cart'][$ma]);
-            } else {
-                $_SESSION['cart'][$ma]['qty'] = min(max(1, so_luong_toi_da($conn, $ma)), $so_luong);
-            }
-        } elseif ($hanh_dong === 'remove') {
-            unset($_SESSION['cart'][$ma]);
+    } elseif ($hanh_dong === 'add' && $ma > 0) {
+        $toi_da = so_luong_toi_da($conn, $ma);
+        $dv = null;
+        if ($toi_da > 0) {
+            $stmt = $conn->prepare("SELECT DV_DonViTinh FROM dichvu WHERE DV_Ma = ?");
+            $stmt->execute([$ma]);
+            $dv = $stmt->fetch(PDO::FETCH_ASSOC);
         }
+        $bat_dau = (string) ($_POST['bat_dau'] ?? $_POST['ngay_dat'] ?? '');
+        $ket_thuc = (string) ($_POST['ket_thuc'] ?? $_POST['gio_dat'] ?? '');
+        $kich_co = trim((string) ($_POST['kich_co'] ?? ''));
+
+        $tg = $dv ? thoi_gian_thue((string) $dv['DV_DonViTinh'], $bat_dau, $ket_thuc) : null;
+
+        if ($toi_da === 0) {
+            $_SESSION['thong_bao_dat'] = 'Dịch vụ này hiện không còn nhận thuê.';
+        } elseif ($tg === null) {
+            $_SESSION['thong_bao_dat'] = 'Vui lòng chọn thời gian nhận và trả hợp lệ.';
+        } elseif (strtotime($tg['ket_thuc']) <= time()) {
+            $_SESSION['thong_bao_dat'] = 'Thời gian thuê đã qua, vui lòng chọn lại.';
+        } else {
+            // Tạo khóa riêng cho từng sản phẩm + size (Ví dụ: 5_M hoặc 5 nếu không có size)
+            $cart_key = $ma . ($kich_co !== '' ? '_' . $kich_co : '');
+
+            $da_co = is_array($_SESSION['cart'][$cart_key] ?? null) ? (int) ($_SESSION['cart'][$cart_key]['qty'] ?? 0) : 0;
+            
+            $_SESSION['cart'][$cart_key] = [
+                'id' => $ma,
+                'qty' => min($toi_da, max(1, $da_co + $so_luong)),
+                'bat_dau' => $tg['bat_dau'],
+                'ket_thuc' => $tg['ket_thuc'],
+                'kich_co' => $kich_co,
+            ];
+            $_SESSION['thong_bao_dat'] = 'Đã thêm dịch vụ vào giỏ hàng.';
+        }
+    } elseif ($hanh_dong === 'update' && $key_item !== '' && isset($_SESSION['cart'][$key_item])) {
+        if ($so_luong <= 0) {
+            unset($_SESSION['cart'][$key_item]);
+        } else {
+            $ma_dv = (int) $_SESSION['cart'][$key_item]['id'];
+            $_SESSION['cart'][$key_item]['qty'] = min(max(1, so_luong_toi_da($conn, $ma_dv)), $so_luong);
+        }
+    } elseif ($hanh_dong === 'remove' && $key_item !== '') {
+        unset($_SESSION['cart'][$key_item]);
     }
 
     header('Location: cart.php');
@@ -146,6 +155,12 @@ require_once '../includes/header.php';
                             <img src="<?= htmlspecialchars(duong_dan_anh($item['anh'] ?: 'default.png')) ?>" alt="<?= htmlspecialchars($item['ten']) ?>">
                             <div>
                                 <h3><?= htmlspecialchars($item['ten']) ?></h3>
+                                
+                                <!-- Hiển thị Size nếu có -->
+                                <?php if (!empty($item['kich_co'])) : ?>
+                                    <p class="unit" style="font-weight: 600; color: #d9534f; margin-bottom: 2px;">Kích cỡ (Size): <?= htmlspecialchars($item['kich_co']) ?></p>
+                                <?php endif; ?>
+
                                 <p class="unit"><?= dinh_dang_tien($item['gia']) ?> / <?= htmlspecialchars(ten_don_vi_gio_hang((string) $item['don_vi'])) ?></p>
 
                                 <?php if ($item['tg']) : ?>
@@ -160,9 +175,10 @@ require_once '../includes/header.php';
                                     <p class="unit" style="font-size:12px; color:#c00;" role="alert"><?= htmlspecialchars($item['canh_bao']) ?></p>
                                 <?php endif; ?>
 
+                                <!-- Form cập nhật số lượng (Đã có cart_key) -->
                                 <form method="POST" style="display:inline-block;">
                                     <input type="hidden" name="action" value="update">
-                                    <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
+                                    <input type="hidden" name="cart_key" value="<?= htmlspecialchars($item['cart_key'] ?? '') ?>">
                                     <div class="qty">
                                         <button type="submit" name="qty" value="<?= (int) $item['qty'] - 1 ?>" aria-label="Giảm số lượng">−</button>
                                         <span><?= (int) $item['qty'] ?></span>
@@ -172,9 +188,11 @@ require_once '../includes/header.php';
                             </div>
                             <div class="cart-side">
                                 <span class="line-total"><?= dinh_dang_tien($item['subtotal']) ?></span>
+                                
+                                <!-- Form xóa sản phẩm (Đã thêm cart_key để nhận diện chính xác mục cần xóa) -->
                                 <form method="POST">
                                     <input type="hidden" name="action" value="remove">
-                                    <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
+                                    <input type="hidden" name="cart_key" value="<?= htmlspecialchars($item['cart_key'] ?? '') ?>">
                                     <button type="submit" class="link-btn">XÓA</button>
                                 </form>
                             </div>

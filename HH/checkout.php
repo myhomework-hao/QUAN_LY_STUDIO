@@ -88,13 +88,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
 
             $stmt_ct = $conn->prepare(
                 "INSERT INTO chitietdon (DDL_Ma, DV_Ma, CTD_SoLuong, CTD_KichCo, CTD_BatDau, CTD_KetThuc, CTD_DonGia, CTD_ThanhTien)
-                 VALUES (?, ?, ?, NULL, ?, ?, ?, ?)"
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
             );
             foreach ($cac_dong as $dong) {
+                $kich_co = !empty($dong['item']['kich_co']) ? $dong['item']['kich_co'] : null;
+
                 $stmt_ct->execute([
-                    $ma_don, $dong['item']['id'], $dong['item']['qty'],
-                    $dong['tg']['bat_dau'], $dong['tg']['ket_thuc'],
-                    $dong['item']['gia'], $dong['item']['subtotal'],
+                    $ma_don, 
+                    $dong['item']['id'], 
+                    $dong['item']['qty'],
+                    $kich_co, // Lưu Size vào cơ sở dữ liệu
+                    $dong['tg']['bat_dau'], 
+                    $dong['tg']['ket_thuc'],
+                    $dong['item']['gia'], 
+                    $dong['item']['subtotal'],
                 ]);
             }
 
@@ -178,10 +185,12 @@ require_once '../includes/header.php';
                 <?php endif; ?>
 
                 <?php if (!empty($loi_form)) : ?>
-                    <div class="card" style="border: 1px solid red; background: #fff2f2; color: red; padding: 15px;" role="alert">
-                        <strong>Thông báo lỗi:</strong> <?= htmlspecialchars($loi_form) ?>
-                    </div>
-                <?php endif; ?>
+    <div class="card" style="border: 1px solid #ff4d4f; background: #fff2f2; color: #cf1322; padding: 16px; margin-bottom: 20px; border-radius: 8px;" role="alert">
+        <strong><i class="fa-solid fa-triangle-exclamation"></i> Không thể hoàn tất đặt thuê:</strong> 
+        <p style="margin: 5px 0 0 0;"><?= htmlspecialchars($loi_form) ?></p>
+        <p style="margin: 10px 0 0 0; font-size: 13px;">Vui lòng <a href="cart.php" style="color: #cf1322; text-decoration: underline; font-weight: bold;">quay lại giỏ hàng</a> để điều chỉnh lại số lượng hoặc thời gian cho phù hợp.</p>
+    </div>
+<?php endif; ?>
 
                 <fieldset id="formFields" class="stack" <?= $empty ? 'disabled' : '' ?>>
 
@@ -249,7 +258,11 @@ require_once '../includes/header.php';
                         <?php foreach ($cart_items as $item) : ?>
                             <div class="summary-row">
                                 <span>
-                                    <?= htmlspecialchars($item['ten']) ?> × <?= (int) $item['qty'] ?><br>
+                                    <?= htmlspecialchars($item['ten']) ?> × <?= (int) $item['qty'] ?>
+                                    <?php if (!empty($item['kich_co'])) : ?>
+                                        <br><small style="color:#d9534f; font-weight:600;">Size: <?= htmlspecialchars($item['kich_co']) ?></small>
+                                    <?php endif; ?>
+                                    <br>
                                     <small style="color:#777;">
                                         <?= htmlspecialchars(dinh_dang_ngay_gio($item['bat_dau'])) ?>
                                         → <?= htmlspecialchars(dinh_dang_ngay_gio($item['ket_thuc'])) ?>
