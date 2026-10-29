@@ -6,7 +6,7 @@ require_once '../includes/dich_vu.php';
 $danh_muc_chinh = [
     'thiet_bi'   => 'Máy ảnh - thiết bị',
     'phong_chup' => 'Chỗ chụp ảnh',
-    'trang_phuc' => 'Bộ đồ',
+    'trang_phuc' => 'Trang phục',
     'phu_kien'   => 'Phụ kiện - đạo cụ',
 ];
 
@@ -142,7 +142,7 @@ require_once '../includes/header.php';
                                         <?php else: ?>
                                             <span>Chưa có đánh giá</span>
                                         <?php endif; ?>
-                                        <span>TP.HCM</span>
+                                        <span>TP.Cần Thơ</span>
                                     </div>
 
                                     <div class="product-vendor">
