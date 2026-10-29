@@ -7,7 +7,7 @@ require_once '../includes/dich_vu.php';
 $ten_danh_muc_theo_loai = [
     'thiet_bi'   => 'Máy ảnh - thiết bị',
     'phong_chup' => 'Chỗ chụp ảnh',
-    'trang_phuc' => 'Bộ đồ',
+    'trang_phuc' => 'Trang phục',
     'phu_kien'   => 'Phụ kiện - đạo cụ',
 ];
 
@@ -163,7 +163,7 @@ require_once '../includes/header.php';
                 </div>
                 <div class="information-item">
                     <span>Địa điểm</span>
-                    <strong>TP.HCM</strong>
+                    <strong>TP.Cần Thơ</strong>
                 </div>
                 <div class="information-item">
                     <span>Hình thức</span>
