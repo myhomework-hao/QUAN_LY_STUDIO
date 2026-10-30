@@ -1,0 +1,350 @@
+
+/* ==============================
+   VIBE STUDIO CHAT WIDGET
+============================== */
+
+.vibe-chat-widget {
+    position: fixed;
+    right: 25px;
+    bottom: 25px;
+    z-index: 9999;
+    font-family: inherit;
+}
+
+/* Nút mở chat */
+
+.vibe-chat-toggle {
+    width: 62px;
+    height: 62px;
+    border: none;
+    border-radius: 50%;
+    background: #29231f;
+    color: #f5eadb;
+    font-size: 25px;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, .22);
+    transition: .25s ease;
+    position: relative;
+}
+
+.vibe-chat-toggle:hover {
+    transform: translateY(-4px);
+    background: #594532;
+}
+
+.vibe-chat-notification {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #a76b45;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    top: 4px;
+    right: 5px;
+}
+
+/* Khung popup */
+
+.vibe-chat-panel {
+    position: absolute;
+    right: 0;
+    bottom: 78px;
+    width: 370px;
+    height: 540px;
+    max-height: calc(100vh - 120px);
+    background: #faf7f2;
+    border-radius: 18px;
+    box-shadow: 0 12px 45px rgba(0, 0, 0, .2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e9dfd2;
+    animation: vibeChatOpen .25s ease;
+}
+
+.vibe-chat-panel[hidden] {
+    display: none;
+}
+
+@keyframes vibeChatOpen {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Header */
+
+.vibe-chat-header {
+    background: #29231f;
+    color: #fff;
+    padding: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.vibe-chat-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.vibe-chat-logo {
+    width: 43px;
+    height: 43px;
+    border-radius: 50%;
+    background: #f0e3d2;
+    color: #29231f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.vibe-chat-brand h3 {
+    margin: 0;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.vibe-chat-brand p {
+    margin: 5px 0 0;
+    font-size: 11px;
+    color: #d8c9b8;
+}
+
+.vibe-chat-header-actions {
+    display: flex;
+    gap: 7px;
+}
+
+.vibe-chat-header-actions button {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    background: rgba(255, 255, 255, .12);
+    cursor: pointer;
+}
+
+/* Nội dung */
+
+.vibe-chat-body {
+    flex: 1;
+    min-height: 0;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.vibe-chat-intro {
+    display: flex;
+    gap: 10px;
+    padding: 12px;
+    background: #f0e7db;
+    border-radius: 12px;
+    margin-bottom: 14px;
+}
+
+.vibe-chat-intro-icon {
+    color: #805c3c;
+    font-size: 20px;
+}
+
+.vibe-chat-intro h4 {
+    margin: 0 0 5px;
+    font-size: 14px;
+    color: #352b24;
+}
+
+.vibe-chat-intro p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #796957;
+}
+
+/* Tin nhắn */
+
+.vibe-chat-messages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    padding: 5px 2px 12px;
+    scroll-behavior: smooth;
+}
+
+.vibe-message {
+    display: flex;
+    gap: 8px;
+    max-width: 95%;
+}
+
+.vibe-message.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.vibe-message-avatar {
+    width: 29px;
+    height: 29px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #e8dac8;
+    color: #594532;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.vibe-message-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.vibe-message-bubble {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: white;
+    color: #352b24;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .04);
+}
+
+.vibe-message.user .vibe-message-bubble {
+    background: #e7d5c0;
+}
+
+.vibe-message-time {
+    font-size: 10px;
+    color: #a19383;
+}
+
+/* Gợi ý nhanh */
+
+.vibe-chat-suggestions {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    padding-top: 10px;
+}
+
+.vibe-chat-suggestions button {
+    background: white;
+    border: 1px solid #dfd0bd;
+    color: #70563e;
+    padding: 7px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.vibe-chat-suggestions button:hover {
+    background: #e9ddcd;
+}
+
+/* Form gửi tin */
+
+.vibe-chat-form {
+    margin: 0 14px;
+    padding: 9px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 1px solid #e7ddcf;
+    border-radius: 13px;
+}
+
+.vibe-chat-form textarea {
+    flex: 1;
+    min-width: 0;
+    resize: none;
+    border: none;
+    outline: none;
+    padding: 7px;
+    max-height: 90px;
+    font-family: inherit;
+    font-size: 13px;
+    color: #352b24;
+    background: transparent;
+}
+
+.vibe-chat-form button {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 50%;
+    background: #29231f;
+    color: white;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.vibe-chat-form button:hover {
+    background: #70563e;
+}
+
+.vibe-chat-form button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.vibe-chat-footer {
+    text-align: center;
+    padding: 9px;
+    color: #a09384;
+    font-size: 10px;
+}
+
+/* Thông báo chuyển nhân viên */
+
+.vibe-chat-handoff {
+    background: #f0e7db;
+    color: #70563b;
+    padding: 9px 11px;
+    margin: 5px 0;
+    border-radius: 9px;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* Responsive */
+
+@media (max-width: 480px) {
+    .vibe-chat-widget {
+        right: 15px;
+        bottom: 15px;
+    }
+
+    .vibe-chat-panel {
+        position: fixed;
+        inset: 10px;
+        width: auto;
+        height: auto;
+        max-height: none;
+        border-radius: 16px;
+    }
+
+    .vibe-chat-toggle {
+        width: 56px;
+        height: 56px;
+    }
+}

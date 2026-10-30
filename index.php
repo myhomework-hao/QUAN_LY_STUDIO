@@ -234,7 +234,4 @@ require_once __DIR__ . '/includes/header.php';
 
 </main>
 
-<!-- NÚT VỀ ĐẦU TRANG -->
-<button type="button" id="back-to-top" class="back-to-top" aria-label="Về đầu trang">↑</button>
-
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

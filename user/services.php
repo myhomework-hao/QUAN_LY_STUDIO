@@ -45,7 +45,6 @@ $loai_chon = $_GET['loai'] ?? 'all';
 $tieu_de_trang = 'Sản phẩm cho thuê - VIBE STUDIO';
 $trang_hien_tai = 'san-pham';
 $css_rieng = [
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css',
     BASE_URL . 'assets/css/at.css' // Phải có BASE_URL để trỏ đúng về gốc
 ];
 
@@ -175,4 +174,4 @@ require_once '../includes/header.php';
     </section>
 </main>
 
-<?php require_once '../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
