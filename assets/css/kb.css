@@ -94,8 +94,9 @@
     color: var(--muted);
 }
 
-.auth-container button,
-.khung-danh-gia button {
+.auth-container button[type="submit"],
+       .khung-danh-gia button {
+ 
     display: block;
     width: 100%;
     margin-top: 24px;
@@ -112,8 +113,8 @@
     transition: background 0.2s ease;
 }
 
-.auth-container button:hover,
-.khung-danh-gia button:hover {
+ .auth-container button[type="submit"]:hover,
+       .khung-danh-gia button:hover {
     background: #333333;
 }
 
@@ -151,7 +152,80 @@
     font-weight: 700;
     text-decoration: underline;
 }
-
+.o-mat-khau { position: relative; }
+.o-mat-khau input { padding-right: 48px; }
+ 
+.nut-mat {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 44px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: var(--muted);
+    background: none;
+    border: 0;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+}
+.nut-mat:hover { color: var(--ink); }
+.nut-mat svg { width: 20px; height: 20px; }
+.bieu-tuong-an { display: none; }
+.nut-mat[aria-pressed="true"] .bieu-tuong-hien { display: none; }
+.nut-mat[aria-pressed="true"] .bieu-tuong-an { display: block; }
+ 
+/* Báo lỗi ngay dưới từng ô */
+.loi-truong {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--error);
+}
+.co-loi { border-color: var(--error) !important; }
+ 
+.khop-mat-khau { display: block; min-height: 16px; margin-top: 6px; font-size: 12px; }
+.khop-mat-khau.dung { color: var(--success); }
+.khop-mat-khau.sai { color: var(--error); }
+ 
+/* Profile */
+.hs-the-khoi select {
+    width: 100%;
+    padding: 11px 14px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    background: #ffffff;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    outline: none;
+}
+.hs-the-khoi select:focus { border-color: var(--ink); }
+.hs-the-khoi input:disabled { background: var(--soft); color: var(--muted); }
+ 
+.hs-hai-cot { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.hs-ghi-chu { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+ 
+.hs-lien-ket { margin-left: auto; display: flex; flex-wrap: wrap; gap: 10px; }
+.hs-nut-phu {
+    padding: 10px 18px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--ink);
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    transition: border-color 0.2s;
+}
+.hs-nut-phu:hover { border-color: var(--ink); }
+ 
+@media (max-width: 800px) {
+    .hs-lien-ket { margin-left: 0; justify-content: center; }
+    .hs-hai-cot { grid-template-columns: 1fr; }
+}
+ 
 
 /* =========================================================
    2. TRANG HỒ SƠ CÁ NHÂN (Profile)

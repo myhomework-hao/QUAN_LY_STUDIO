@@ -2,6 +2,7 @@
 require_once '../config/app.php';
 require_once '../config/auth.php';
 require_once '../config/db.php';
+require_once '../includes/o-mat-khau.php';
 
 if (da_dang_nhap()) {
     header('Location: ' . trang_chu_theo_vai_tro(vai_tro_hien_tai()));
@@ -10,6 +11,7 @@ if (da_dang_nhap()) {
 
 $message = '';
 $message_type = '';
+$email = '';
 
 if (($_GET['dangky'] ?? '') === 'ok') {
     $message = 'Đăng ký thành công! Mời bạn đăng nhập.';
@@ -33,15 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } else {
 
-        $sql = "SELECT nd.ND_Ma, nd.ND_Ten, nd.ND_Email, nd.ND_MatKhau, nd.ND_TrangThai, nd.LND_Ma,
-                       nv.NV_TrangThai
-                FROM nguoidung nd
-                LEFT JOIN nhanvien nv ON nv.ND_Ma = nd.ND_Ma
-                WHERE nd.ND_Email = ?";
-
-        $stmt = $conn->prepare($sql);
+        $stmt = $conn->prepare(
+            "SELECT nd.ND_Ma, nd.ND_Ten, nd.ND_Email, nd.ND_MatKhau, nd.ND_TrangThai, nd.LND_Ma, nv.NV_TrangThai
+             FROM nguoidung nd
+             LEFT JOIN nhanvien nv ON nv.ND_Ma = nd.ND_Ma
+             WHERE nd.ND_Email = ?"
+        );
         $stmt->execute([$email]);
-
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user || !password_verify($password, $user['ND_MatKhau'])) {
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ((int) $user['ND_TrangThai'] !== 1
                   || ((int) $user['LND_Ma'] === VAI_TRO_NHAN_VIEN && (int) $user['NV_TrangThai'] !== 1)) {
 
-            $message = 'Tài khoản của bạn đã bị khóa.';
+            $message = 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ studio.';
             $message_type = 'error';
 
         } else {
@@ -64,21 +64,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_email'] = $user['ND_Email'];
             $_SESSION['role'] = (int) $user['LND_Ma'];
 
-            $ve_trang = $_GET['tu'] ?? '';
+            $ve_trang = (string) ($_GET['tu'] ?? '');
+            $duong_dan_an_toan = $ve_trang !== ''
+                && strpos($ve_trang, BASE_URL) === 0
+                && strpos($ve_trang, '//') !== 0
+                && strpos($ve_trang, '\\') === false;
 
-            if ($ve_trang !== '' && strpos($ve_trang, BASE_URL) === 0) {
-                header('Location: ' . $ve_trang);
-            } else {
-                header('Location: ' . trang_chu_theo_vai_tro(vai_tro_hien_tai()));
-            }
+            header('Location: ' . ($duong_dan_an_toan ? $ve_trang : trang_chu_theo_vai_tro(vai_tro_hien_tai())));
             exit;
         }
     }
 }
 
 $tieu_de_trang = 'Đăng nhập - VIBE STUDIO';
-$css_rieng = [
-    BASE_URL .'assets/css/kb.css']; // Đã trỏ đúng vào thư mục assets/css chung
+$css_rieng = [BASE_URL . 'assets/css/kb.css'];
 require_once '../includes/header.php';
 ?>
 
@@ -89,19 +88,22 @@ require_once '../includes/header.php';
         <h1>ĐĂNG <i>NHẬP</i></h1>
 
         <?php if ($message !== ''): ?>
-            <p class="message <?= htmlspecialchars($message_type) ?>">
+            <p class="message <?= htmlspecialchars($message_type) ?>" role="<?= $message_type === 'error' ? 'alert' : 'status' ?>">
                 <?= htmlspecialchars($message) ?>
             </p>
         <?php endif; ?>
 
-        <form method="POST" action="">
+        <form method="POST" action="" novalidate>
 
             <label for="email">Email</label>
-            <input type="email" id="email" name="email" placeholder="Nhập email"
-                   value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
+            <input type="email" id="email" name="email" placeholder="ten@email.com" autocomplete="email"
+                   value="<?= htmlspecialchars($email) ?>" <?= $email === '' ? 'autofocus' : '' ?> required>
 
-            <label for="password">Mật khẩu</label>
-            <input type="password" id="password" name="password" placeholder="Nhập mật khẩu" required>
+            <?php o_mat_khau('password', 'password', 'Mật khẩu', [
+                'goi_y' => 'Nhập mật khẩu',
+                'autocomplete' => 'current-password',
+                'autofocus' => $email !== '',
+            ]); ?>
 
             <button type="submit">ĐĂNG NHẬP</button>
 
