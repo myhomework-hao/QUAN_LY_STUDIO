@@ -3,6 +3,7 @@ require_once '../config/app.php';
 require_once '../config/auth.php';
 require_once '../config/db.php';
 require_once '../includes/cart_helper.php';
+require_once '../includes/coupon_helper.php'; 
 require_once '../includes/donhang.php';
 
 yeu_cau_vai_tro('khachhang');
@@ -34,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($hanh_dong === 'clear') {
-        unset($_SESSION['cart']);
+        unset($_SESSION['cart'], $_SESSION['coupon_code']);
     } elseif ($hanh_dong === 'add' && $ma > 0) {
         $toi_da = so_luong_toi_da($conn, $ma);
         $dv = null;
@@ -81,6 +82,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($hanh_dong === 'remove' && $key_item !== '') {
         unset($_SESSION['cart'][$key_item]);
+    } elseif ($hanh_dong === 'apply_coupon') {
+        $code = trim((string) ($_POST['coupon_code'] ?? ''));
+        if ($code === '') {
+            $_SESSION['thong_bao_dat'] = 'Vui lòng nhập mã giảm giá.';
+        } else {
+            $items_tmp = lay_gio_hang($conn);
+            $st_tmp    = tinh_tong_gio_hang($items_tmp);
+            $kq        = kiem_tra_ma_giam_gia($conn, $code, (float) $st_tmp['subtotal']);
+            if ($kq['ok']) {
+                $_SESSION['coupon_code']    = strtoupper($code);
+                $_SESSION['thong_bao_dat']  = 'Đã áp dụng mã ' . strtoupper($code) . '.';
+            } else {
+                $_SESSION['thong_bao_dat']  = $kq['message'];
+            }
+        }
+    } elseif ($hanh_dong === 'remove_coupon') {
+        unset($_SESSION['coupon_code']);
+        $_SESSION['thong_bao_dat'] = 'Đã hủy mã giảm giá.';
     }
 
     header('Location: cart.php');
@@ -92,6 +111,23 @@ unset($_SESSION['thong_bao_dat']);
 
 $cart_items = lay_gio_hang($conn);
 $totals = tinh_tong_gio_hang($cart_items);
+$coupon_code = $_SESSION['coupon_code'] ?? '';
+$coupon_info = null;
+$discount    = 0.0;
+
+if ($coupon_code !== '') {
+    $kq_coupon = kiem_tra_ma_giam_gia($conn, $coupon_code, (float) $totals['subtotal']);
+    if ($kq_coupon['ok']) {
+        $coupon_info = $kq_coupon['coupon'];
+        $discount    = (float) $kq_coupon['discount'];
+    } else {
+        unset($_SESSION['coupon_code']);
+        $coupon_code = '';
+    }
+}
+
+$totals['discount'] = $discount;
+$totals['total']    = max(0, (float) $totals['total'] - $discount);
 $tong_so_luong = array_sum(array_column($cart_items, 'qty'));
 
 $co_loi = false;
@@ -216,13 +252,45 @@ require_once '../includes/header.php';
             <p class="panel-title">Tóm tắt đơn thuê</p>
 
             <div class="summary-row"><span>Tạm tính</span><span><?= dinh_dang_tien($totals['subtotal']) ?></span></div>
+
+            <!-- ====================== COUPON ====================== -->
+            <div class="coupon-box">
+                <?php if ($coupon_info !== null) : ?>
+                    <form method="POST" class="coupon-applied">
+                        <div class="coupon-applied-info">
+                            <span class="coupon-tag">🎉 <?= htmlspecialchars($coupon_code) ?></span>
+                            <span class="coupon-desc"><?= htmlspecialchars((string) ($coupon_info['MG_MoTa'] ?? '')) ?></span>
+                        </div>
+                        <input type="hidden" name="action" value="remove_coupon">
+                        <button type="submit" class="link-btn">HỦY</button>
+                    </form>
+                <?php else : ?>
+                    <form method="POST" class="coupon-form">
+                        <input type="hidden" name="action" value="apply_coupon">
+                        <input type="text" name="coupon_code" placeholder="Nhập mã giảm giá"
+                            maxlength="50" autocomplete="off" spellcheck="false">
+                        <button type="submit">ÁP DỤNG</button>
+                    </form>
+                <?php endif; ?>
+            </div>
+            <!-- ===================================================== -->
+
+            <?php if ($discount > 0) : ?>
+                <div class="summary-row">
+                    <span>Giảm giá (<?= htmlspecialchars($coupon_code) ?>)</span>
+                    <span style="color: var(--success); font-weight: 700;">−<?= dinh_dang_tien($discount) ?></span>
+                </div>
+            <?php endif; ?>
+
             <div class="summary-row total"><span>Tổng cộng</span><span><?= dinh_dang_tien($totals['total']) ?></span></div>
 
             <?php if ($co_loi) : ?>
                 <p class="ship-note" style="color:#c00;">Có dịch vụ cần chỉnh lại trước khi thanh toán.</p>
             <?php endif; ?>
 
-            <a href="checkout.php" class="btn-dark <?= (empty($cart_items) || $co_loi) ? 'is-disabled' : '' ?>" <?= (empty($cart_items) || $co_loi) ? 'aria-disabled="true" tabindex="-1"' : '' ?>>THANH TOÁN</a>
+            <a href="checkout.php" class="btn-dark <?= (empty($cart_items) || $co_loi) ? 'is-disabled' : '' ?>"
+            <?= (empty($cart_items) || $co_loi) ? 'aria-disabled="true" tabindex="-1"' : '' ?>>THANH TOÁN</a>
+
             <p class="ship-note">Dịch vụ được nhận trực tiếp tại studio nên không có phí vận chuyển. Đơn sẽ chờ studio duyệt sau khi đặt.</p>
         </aside>
 

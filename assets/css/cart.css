@@ -470,6 +470,93 @@
 .submit-row {
     margin-top: 10px;
 }
+/* ---------- Coupon (Mã giảm giá) ---------- */
+.coupon-box {
+    margin: 18px 0;
+    padding: 14px;
+    border: 1px dashed #dcdcdc;
+    border-radius: 10px;
+    background: #fafafa;
+}
+
+.coupon-form {
+    display: flex;
+    gap: 8px;
+}
+
+.coupon-form input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: #ffffff;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.coupon-form input[type="text"]::placeholder {
+    text-transform: none;
+    letter-spacing: 0;
+    color: #999999;
+    font-weight: 400;
+}
+
+.coupon-form input[type="text"]:focus {
+    border-color: var(--ink);
+}
+
+.coupon-form button {
+    height: 40px;
+    padding: 0 18px;
+    background: var(--ink);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.coupon-form button:hover {
+    background: #333333;
+}
+
+.coupon-applied {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.coupon-applied-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.coupon-tag {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--success);
+    letter-spacing: 1px;
+}
+
+.coupon-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+}
 
 
 /* ---------- Responsive ---------- */

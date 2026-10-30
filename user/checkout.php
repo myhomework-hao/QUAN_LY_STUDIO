@@ -3,64 +3,101 @@ require_once '../config/app.php';
 require_once '../config/auth.php';
 require_once '../config/db.php';
 require_once '../includes/cart_helper.php';
+require_once '../includes/coupon_helper.php';
 require_once '../includes/donhang.php';
 
 yeu_cau_vai_tro('khachhang');
 
 $ma_nguoi_dung = ma_nguoi_dung_hien_tai();
 
+// Lấy thông tin khách hàng
 $stmt = $conn->prepare("SELECT ND_Ten, ND_Email, ND_SDT FROM nguoidung WHERE ND_Ma = ?");
 $stmt->execute([$ma_nguoi_dung]);
-$khach = $stmt->fetch(PDO::FETCH_ASSOC);
+$khach = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['ND_Ten' => '', 'ND_Email' => '', 'ND_SDT' => ''];
 
 $cart_items = lay_gio_hang($conn);
-$totals = tinh_tong_gio_hang($cart_items);
+$totals     = tinh_tong_gio_hang($cart_items);
+
+// ===== COUPON =====
+$coupon_code = $_SESSION['coupon_code'] ?? '';
+$coupon_info = null;
+$discount    = 0.0;
+
+if ($coupon_code !== '') {
+    $kq = kiem_tra_ma_giam_gia($conn, $coupon_code, (float) $totals['subtotal']);
+    if ($kq['ok']) {
+        $coupon_info = $kq['coupon'];
+        $discount    = (float) $kq['discount'];
+    } else {
+        unset($_SESSION['coupon_code']);
+        $coupon_code = '';
+    }
+}
+$totals['discount'] = $discount;
+$totals['total']    = max(0, (float) $totals['total'] - $discount);
+// ==================
+
 $empty = empty($cart_items);
 
 $cac_phuong_thuc = [
     'tien_mat' => 'Tiền mặt',
-    'qr' => 'Chuyển khoản QR giả lập',
+    'qr'       => 'Chuyển khoản QR giả lập',
 ];
 
 $dat_hang_thanh_cong = false;
-$ma_don = 0;
+$ma_don              = 0;
 $phuong_thuc_da_chon = '';
-$loi_form = '';
-$ten_nguoi_thue = trim($_POST['ten'] ?? $khach['ND_Ten']);
-$sdt_nguoi_thue = trim($_POST['sdt'] ?? ($khach['ND_SDT'] ?? ''));
-$dia_chi = trim($_POST['dia_chi'] ?? '');
+$loi_form            = '';
+$ten_nguoi_thue = trim($_POST['ten']     ?? ($khach['ND_Ten'] ?? ''));
+$sdt_nguoi_thue = trim($_POST['sdt']     ?? ($khach['ND_SDT'] ?? ''));
+$dia_chi        = trim($_POST['dia_chi'] ?? '');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
 
+    // ===== RE-VALIDATE COUPON NGAY TRƯỚC KHI XỬ LÝ =====
+    if ($coupon_code !== '') {
+        $kq_recheck = kiem_tra_ma_giam_gia($conn, $coupon_code, (float) $totals['subtotal']);
+        if (!$kq_recheck['ok']) {
+            $loi_form = 'Mã giảm giá không còn hiệu lực: ' . $kq_recheck['message']
+                      . ' Vui lòng bỏ mã hoặc thử mã khác.';
+        } else {
+            $discount           = (float) $kq_recheck['discount'];
+            $totals['discount'] = $discount;
+            $totals['total']    = max(0, (float) $totals['subtotal'] - $discount);
+        }
+    }
+    // ===================================================
+
     $ma_phuong_thuc = $_POST['payment'] ?? 'tien_mat';
-    $ghi_chu = trim($_POST['note'] ?? '');
+    $ghi_chu        = trim($_POST['note'] ?? '');
 
     $cac_dong = [];
 
-    if ($ten_nguoi_thue === '' || mb_strlen($ten_nguoi_thue) > 100) {
-        $loi_form = 'Vui lòng nhập họ tên người thuê (tối đa 100 ký tự).';
-    } elseif (!preg_match('/^0[0-9]{9,10}$/', $sdt_nguoi_thue)) {
-        $loi_form = 'Số điện thoại không hợp lệ (bắt đầu bằng 0, gồm 10 hoặc 11 chữ số).';
-    } elseif ($dia_chi === '' || mb_strlen($dia_chi) > 255) {
-        $loi_form = 'Vui lòng nhập địa chỉ (tối đa 255 ký tự).';
-    } elseif (!isset($cac_phuong_thuc[$ma_phuong_thuc])) {
-        $loi_form = 'Phương thức thanh toán không hợp lệ.';
-    } elseif (mb_strlen($ghi_chu) > 1000) {
-        $loi_form = 'Ghi chú không được dài quá 1000 ký tự.';
-    } else {
-        foreach ($cart_items as $item) {
-            $tg = thoi_gian_thue((string) $item['don_vi'], (string) $item['bat_dau'], (string) $item['ket_thuc']);
-
-            if ($tg === null) {
-                $loi_form = 'Vui lòng chọn lại thời gian thuê hợp lệ cho "' . $item['ten'] . '".';
-                break;
+    // Chỉ validate form nếu coupon đã pass
+    if ($loi_form === '') {
+        if ($ten_nguoi_thue === '' || mb_strlen($ten_nguoi_thue) > 100) {
+            $loi_form = 'Vui lòng nhập họ tên người thuê (tối đa 100 ký tự).';
+        } elseif (!preg_match('/^0[0-9]{9,10}$/', $sdt_nguoi_thue)) {
+            $loi_form = 'Số điện thoại không hợp lệ (bắt đầu bằng 0, gồm 10 hoặc 11 chữ số).';
+        } elseif ($dia_chi === '' || mb_strlen($dia_chi) > 255) {
+            $loi_form = 'Vui lòng nhập địa chỉ (tối đa 255 ký tự).';
+        } elseif (!isset($cac_phuong_thuc[$ma_phuong_thuc])) {
+            $loi_form = 'Phương thức thanh toán không hợp lệ.';
+        } elseif (mb_strlen($ghi_chu) > 1000) {
+            $loi_form = 'Ghi chú không được dài quá 1000 ký tự.';
+        } else {
+            foreach ($cart_items as $item) {
+                $tg = thoi_gian_thue((string) $item['don_vi'], (string) $item['bat_dau'], (string) $item['ket_thuc']);
+                if ($tg === null) {
+                    $loi_form = 'Vui lòng chọn lại thời gian thuê hợp lệ cho "' . $item['ten'] . '".';
+                    break;
+                }
+                if (strtotime($tg['ket_thuc']) <= time()) {
+                    $loi_form = 'Thời gian thuê của "' . $item['ten'] . '" đã qua, vui lòng chọn lại.';
+                    break;
+                }
+                $cac_dong[] = ['item' => $item, 'tg' => $tg];
             }
-            if (strtotime($tg['ket_thuc']) <= time()) {
-                $loi_form = 'Thời gian thuê của "' . $item['ten'] . '" đã qua, vui lòng chọn lại.';
-                break;
-            }
-
-            $cac_dong[] = ['item' => $item, 'tg' => $tg];
         }
     }
 
@@ -75,14 +112,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
                 );
             }
 
+            // INSERT đơn — CÓ mã giảm giá + số tiền giảm
             $stmt = $conn->prepare(
-                "INSERT INTO dondatlich (ND_Ma, DDL_TongTien, DDL_TienCoc, DDL_TrangThai, DDL_NgayTao, DDL_GhiChu, DDL_TenNguoiThue, DDL_SDTNguoiThue, DDL_DiaChi)
-                 VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?)"
+                "INSERT INTO dondatlich
+                    (ND_Ma, DDL_TongTien, DDL_MaGiamGia, DDL_SoTienGiam, DDL_TienCoc, DDL_TrangThai,
+                     DDL_NgayTao, DDL_GhiChu, DDL_TenNguoiThue, DDL_SDTNguoiThue, DDL_DiaChi)
+                 VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)"
             );
             $stmt->execute([
-                $ma_nguoi_dung, $totals['total'], TRANG_THAI_CHO_DUYET,
-                date('Y-m-d H:i:s'), $ghi_chu !== '' ? $ghi_chu : null,
-                $ten_nguoi_thue, $sdt_nguoi_thue, $dia_chi,
+                $ma_nguoi_dung,
+                $totals['total'],
+                $coupon_code !== '' ? $coupon_code : null,
+                $discount,
+                TRANG_THAI_CHO_DUYET,
+                date('Y-m-d H:i:s'),
+                $ghi_chu !== '' ? $ghi_chu : null,
+                $ten_nguoi_thue,
+                $sdt_nguoi_thue,
+                $dia_chi,
             ]);
             $ma_don = (int) $conn->lastInsertId();
 
@@ -92,15 +139,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
             );
             foreach ($cac_dong as $dong) {
                 $kich_co = !empty($dong['item']['kich_co']) ? $dong['item']['kich_co'] : null;
-
                 $stmt_ct->execute([
-                    $ma_don, 
-                    $dong['item']['id'], 
+                    $ma_don,
+                    $dong['item']['id'],
                     $dong['item']['qty'],
-                    $kich_co, // Lưu Size vào cơ sở dữ liệu
-                    $dong['tg']['bat_dau'], 
+                    $kich_co,
+                    $dong['tg']['bat_dau'],
                     $dong['tg']['ket_thuc'],
-                    $dong['item']['gia'], 
+                    $dong['item']['gia'],
                     $dong['item']['subtotal'],
                 ]);
             }
@@ -119,26 +165,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
 
             $conn->commit();
 
-            unset($_SESSION['cart']);
+            // Tăng lượt dùng mã (sau commit — không rollback đơn nếu lỗi)
+            if ($coupon_code !== '' && $discount > 0) {
+                try {
+                    tang_luot_dung_ma($conn, $coupon_code);
+                } catch (Exception $e) {
+                    error_log('Khong tang duoc luot dung ma ' . $coupon_code . ': ' . $e->getMessage());
+                }
+            }
+            unset($_SESSION['cart'], $_SESSION['coupon_code']);
 
             $dat_hang_thanh_cong = true;
             $phuong_thuc_da_chon = $cac_phuong_thuc[$ma_phuong_thuc];
 
         } catch (DomainException $e) {
-            $conn->rollBack();
+            if ($conn->inTransaction()) $conn->rollBack();
             $loi_form = $e->getMessage();
         } catch (Exception $e) {
-            if ($conn->inTransaction()) {
-                $conn->rollBack();
-            }
+            if ($conn->inTransaction()) $conn->rollBack();
             $loi_form = 'Không thể lưu đơn thuê, vui lòng thử lại.';
         }
     }
 }
 
 $tieu_de_trang = 'Thanh toán - VIBE Studio';
-$css_rieng = [
-       BASE_URL . 'assets/css/cart.css']; // Trỏ chuẩn vào thư mục assets/css chung
+$css_rieng = [BASE_URL . 'assets/css/cart.css'];
 require_once '../includes/header.php';
 ?>
 
@@ -187,7 +238,7 @@ require_once '../includes/header.php';
 
                 <?php if (!empty($loi_form)) : ?>
                     <div class="card" style="border: 1px solid #ff4d4f; background: #fff2f2; color: #cf1322; padding: 16px; margin-bottom: 20px; border-radius: 8px;" role="alert">
-                        <strong><i class="fa-solid fa-triangle-exclamation"></i> Không thể hoàn tất đặt thuê:</strong> 
+                        <strong><i class="fa-solid fa-triangle-exclamation"></i> Không thể hoàn tất đặt thuê:</strong>
                         <p style="margin: 5px 0 0 0;"><?= htmlspecialchars($loi_form) ?></p>
                         <p style="margin: 10px 0 0 0; font-size: 13px;">Vui lòng <a href="cart.php" style="color: #cf1322; text-decoration: underline; font-weight: bold;">quay lại giỏ hàng</a> để điều chỉnh lại số lượng hoặc thời gian cho phù hợp.</p>
                     </div>
@@ -275,6 +326,14 @@ require_once '../includes/header.php';
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
+
+                <?php if ($discount > 0) : ?>
+                    <div class="summary-row">
+                        <span>Giảm giá (<?= htmlspecialchars($coupon_code) ?>)</span>
+                        <span style="color: var(--success); font-weight: 700;">−<?= dinh_dang_tien($discount) ?></span>
+                    </div>
+                <?php endif; ?>
+
                 <div class="summary-row total"><span>Tổng cộng</span><span><?= dinh_dang_tien($totals['total']) ?></span></div>
                 <p class="ship-note"><a href="cart.php" style="border-bottom:1px solid #888">Chỉnh sửa giỏ hàng</a></p>
             </aside>
