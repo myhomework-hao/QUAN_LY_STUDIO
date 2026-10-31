@@ -5,7 +5,9 @@ if (session_status() === PHP_SESSION_NONE) {
 
 function tinh_so_don_vi(string $don_vi, string $bat_dau, string $ket_thuc): int
 {
-    if ($don_vi === 'bo') {
+    $don_vi = strtolower(trim($don_vi));
+
+    if ($don_vi === 'bo' || $don_vi === 'bộ' || $don_vi === 'luot' || $don_vi === 'lượt') {
         return 1;
     }
 
@@ -16,11 +18,15 @@ function tinh_so_don_vi(string $don_vi, string $bat_dau, string $ket_thuc): int
         return 1;
     }
 
-    if ($don_vi === 'gio') {
-        return max(1, (int) ceil(($den - $tu) / 3600));
+    $diff_seconds = $den - $tu;
+
+    // Nếu là giờ: tính chuẩn xác số giờ chênh lệch (làm tròn lên mỗi giờ)
+    if ($don_vi === 'gio' || $don_vi === 'giờ' || str_starts_with($don_vi, 'gi')) {
+        return max(1, (int) ceil($diff_seconds / 3600));
     }
 
-    return max(1, (int) round(($den - $tu) / 86400));
+    // Nếu là ngày: giữ nguyên công thức tính ngày
+    return max(1, (int) round($diff_seconds / 86400));
 }
 
 function lay_gio_hang($conn) {
@@ -55,7 +61,7 @@ function lay_gio_hang($conn) {
         $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($product) {
-            $product['cart_key'] = $cart_key; // Gắn cart_key để view giỏ hàng nhận diện chính xác
+            $product['cart_key'] = $cart_key;
             $product['qty'] = $qty;
             $product['bat_dau'] = $bat_dau;
             $product['ket_thuc'] = $ket_thuc;
@@ -72,20 +78,23 @@ function lay_gio_hang($conn) {
 
 function thoi_gian_thue(string $don_vi, string $bat_dau, string $ket_thuc): ?array
 {
+    $don_vi = strtolower(trim($don_vi));
     $tu = strtotime($bat_dau);
     $den = strtotime($ket_thuc);
 
-    if ($tu === false || $den === false) {
+    if ($tu === false || $den === false || $den <= $tu) {
         return null;
     }
 
-    if ($don_vi === 'gio') {
-        if ($den <= $tu) {
-            return null;
-        }
-        return ['bat_dau' => date('Y-m-d H:i:s', $tu), 'ket_thuc' => date('Y-m-d H:i:s', $den)];
+    // Dịch vụ tính theo GIỜ: Cho phép chọn linh hoạt mọi khung giờ (ví dụ 8:00 -> 9:00, hoặc 8:00 -> 20:00)
+    if ($don_vi === 'gio' || $don_vi === 'giờ' || str_starts_with($don_vi, 'gi')) {
+        return [
+            'bat_dau' => date('Y-m-d H:i:s', $tu), 
+            'ket_thuc' => date('Y-m-d H:i:s', $den)
+        ];
     }
 
+    // Dịch vụ tính theo NGÀY: Giữ nguyên logic chuẩn hóa ngày của studio
     $ngay_nhan = date('Y-m-d', $tu);
     $ngay_tra = date('Y-m-d', $den);
 
