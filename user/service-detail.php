@@ -196,16 +196,27 @@ require_once '../includes/header.php';
                     </div>
                 <?php endif; ?>
 
-                <div class="chon-thoi-gian">
-                    <div>
-                        <label for="bat-dau"><?= $theo_gio ? 'GIỜ NHẬN' : 'NGÀY NHẬN' ?></label>
-                        <input type="<?= $kieu_nhap ?>" id="bat-dau" name="bat-dau" min="<?= $nho_nhat ?>" required>
-                    </div>
-                    <div>
-                        <label for="ket-thuc"><?= $theo_gio ? 'GIỜ TRẢ' : 'NGÀY TRẢ' ?></label>
-                        <input type="<?= $kieu_nhap ?>" id="ket-thuc" name="ket-thuc" min="<?= $nho_nhat ?>" required>
-                    </div>
-                </div>
+<div class="chon-thoi-gian" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+    <div>
+        <label for="ngay-nhan" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 12px;">NGÀY NHẬN</label>
+        <input type="date" id="ngay-nhan" name="ngay_nhan" min="<?= date('Y-m-d') ?>" value="<?= date('Y-m-d') ?>" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
+    </div>
+    <div>
+        <label for="gio-nhan" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 12px;">GIỜ NHẬN</label>
+        <input type="time" id="gio-nhan" name="gio_nhan" value="08:00" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
+    </div>
+</div>
+
+<div class="chon-thoi-gian" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+    <div>
+        <label for="ngay-tra" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 12px;">NGÀY TRẢ</label>
+        <input type="date" id="ngay-tra" name="ngay_tra" min="<?= date('Y-m-d') ?>" value="<?= date('Y-m-d') ?>" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
+    </div>
+    <div>
+        <label for="gio-tra" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 12px;">GIỜ TRẢ</label>
+        <input type="time" id="gio-tra" name="gio_tra" value="17:00" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
+    </div>
+</div>
 
                 <div class="quantity-box">
                     <p>Số lượng</p>
