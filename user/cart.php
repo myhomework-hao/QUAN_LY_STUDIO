@@ -45,10 +45,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $dv = $stmt->fetch(PDO::FETCH_ASSOC);
         }
         
-        // Bắt chuẩn xác các kiểu tên biến thời gian gửi lên từ form (có gạch ngang hoặc gạch dưới)
-        $bat_dau = trim((string) ($_POST['bat-dau'] ?? $_POST['bat_dau'] ?? $_POST['ngay_dat'] ?? ''));
-        $ket_thuc = trim((string) ($_POST['ket-thuc'] ?? $_POST['ket_thuc'] ?? $_POST['gio_dat'] ?? ''));
-        $kich_co = trim((string) ($_POST['kich_co'] ?? ''));
+        // Bắt dữ liệu ngày và giờ gửi lên từ form
+        $ngay_nhan = trim((string) ($_POST['ngay_nhan'] ?? ''));
+        $gio_nhan  = trim((string) ($_POST['gio_nhan'] ?? '08:00'));
+        $ngay_tra  = trim((string) ($_POST['ngay_tra'] ?? ''));
+        $gio_tra   = trim((string) ($_POST['gio_tra'] ?? '17:00'));
+        $kich_co   = trim((string) ($_POST['kich_co'] ?? ''));
+
+        // Kiểm tra nếu là dịch vụ tính theo lượt thì gộp thời gian theo 1 mốc, ngược lại theo khoảng thời gian nhận/trả
+        $don_vi_tinh = $dv['DV_DonViTinh'] ?? 'ngay';
+
+        if ($don_vi_tinh === 'luot') {
+            $bat_dau  = ($ngay_nhan !== '' ? $ngay_nhan : date('Y-m-d')) . ' ' . ($gio_nhan !== '' ? $gio_nhan : '08:00') . ':00';
+            $ket_thuc = $bat_dau; // Dịch vụ tính theo lượt dùng chung mốc thời điểm
+        } else {
+            $bat_dau  = ($ngay_nhan !== '' ? $ngay_nhan : date('Y-m-d')) . ' ' . ($gio_nhan !== '' ? $gio_nhan : '08:00') . ':00';
+            $ket_thuc = ($ngay_tra !== '' ? $ngay_tra : date('Y-m-d')) . ' ' . ($gio_tra !== '' ? $gio_tra : '17:00') . ':00';
+        }
+
+        // Ràng buộc phía Server: Thời gian trả bắt buộc phải lớn hơn hoặc bằng thời gian nhận (đối với dịch vụ theo ngày/giờ)
+        if ($don_vi_tinh !== 'luot' && strtotime($ket_thuc) <= strtotime($bat_dau)) {
+            $_SESSION['thong_bao_dat'] = 'Thời gian trả phải lớn hơn thời gian nhận!';
+            header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'services.php'));
+            exit;
+        }
 
         $tg = $dv ? thoi_gian_thue((string) $dv['DV_DonViTinh'], $bat_dau, $ket_thuc) : null;
 
