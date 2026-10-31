@@ -28,55 +28,71 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    const oBatDau = document.getElementById("bat-dau");
-    const oKetThuc = document.getElementById("ket-thuc");
+    // Lấy các input ngày và giờ mới
+    const ngayNhanInput = document.getElementById("ngay-nhan");
+    const gioNhanInput = document.getElementById("gio-nhan");
+    const ngayTraInput = document.getElementById("ngay-tra");
+    const gioTraInput = document.getElementById("gio-tra");
     const serviceId = oSoLuong.form?.querySelector('input[name="service_id"]')?.value;
 
-    if (!oBatDau || !oKetThuc) return;
+    if (!ngayNhanInput || !ngayTraInput || !gioNhanInput || !gioTraInput) return;
 
-    // Ràng buộc giờ mở cửa studio (08:00 đến 21:00) cho input dạng datetime-local
-    function kiemTraKhungGio(e) {
-        let val = e.target.value;
-        if (!val) return;
-        let dateObj = new Date(val);
-        let hour = dateObj.getHours();
-
-        // Kiểm tra nếu chọn ngoài khung giờ 08:00 - 21:00
-        if (hour < 8 || hour > 21) {
-            alert('Studio chỉ mở cửa phục vụ từ 08:00 đến 21:00 hàng ngày. Vui lòng chọn lại giờ!');
-            e.target.value = '';
+    // Thiết lập min cho ngày trả khi ngày nhận thay đổi
+    ngayNhanInput.addEventListener("change", function () {
+        ngayTraInput.min = ngayNhanInput.value;
+        if (ngayTraInput.value < ngayNhanInput.value) {
+            ngayTraInput.value = ngayNhanInput.value;
         }
+        kiemTraVaGoiAjax();
+    });
+
+    gioNhanInput.addEventListener("change", kiemTraVaGoiAjax);
+    ngayTraInput.addEventListener("change", kiemTraVaGoiAjax);
+    gioTraInput.addEventListener("change", kiemTraVaGoiAjax);
+
+    function kiemTraVaGoiAjax() {
+        const ngayNhan = ngayNhanInput.value;
+        const gioNhan = gioNhanInput.value || '08:00';
+        const ngayTra = ngayTraInput.value;
+        const gioTra = gioTraInput.value || '17:00';
+
+        if (!ngayNhan || !ngayTra) return;
+
+        const thoiGianNhanStr = `${ngayNhan} ${gioNhan}:00`;
+        const thoiGianTraStr = `${ngayTra} ${gioTra}:00`;
+
+        const btnDatThuê = document.querySelector('.rental-button');
+
+        // Ràng buộc thời gian trả phải sau thời gian nhận (Có báo lỗi alert)[cite: 11]
+        if (new Date(thoiGianTraStr) <= new Date(thoiGianNhanStr)) {
+            alert('Thời gian trả phải lớn hơn thời gian nhận! Vui lòng chọn lại.');[cite: 11]
+            
+            // Khóa nút đặt thuê lại nếu thời gian không hợp lệ[cite: 11]
+            if (btnDatThuê) {
+                btnDatThuê.disabled = true;
+                btnDatThuê.style.opacity = '0.5';
+                btnDatThuê.style.cursor = 'not-allowed';
+            }
+            return;
+        }
+
+        kiemTraTonKhoTheoThoiGian(thoiGianNhanStr, thoiGianTraStr);
     }
 
-    oBatDau.addEventListener("change", function () {
-        oKetThuc.min = oBatDau.value;
-        if (oKetThuc.value && oKetThuc.value < oBatDau.value) {
-            oKetThuc.value = oBatDau.value;
-        }
-        kiemTraKhungGio(this);
-        kiemTraTonKhoTheoThoiGian();
-    });
+    // Hàm gọi AJAX kiểm tra tồn kho theo khung giờ thực tế[cite: 11]
+    function kiemTraTonKhoTheoThoiGian(batDau, ketThuc) {
+        if (!serviceId) return;
 
-    oKetThuc.addEventListener("change", function (e) {
-        kiemTraKhungGio(this);
-        kiemTraTonKhoTheoThoiGian();
-    });
-
-    // Hàm gọi AJAX kiểm tra tồn kho theo khung giờ thực tế
-    function kiemTraTonKhoTheoThoiGian() {
-        if (!serviceId || !oBatDau.value || !oKetThuc.value) return;
-
-        fetch(`kiem_tra_kho.php?id=${serviceId}&bat_dau=${encodeURIComponent(oBatDau.value)}&ket_thuc=${encodeURIComponent(oKetThuc.value)}`)
+        fetch(`kiem_tra_kho.php?id=${serviceId}&bat_dau=${encodeURIComponent(batDau)}&ket_thuc=${encodeURIComponent(ketThuc)}`)
             .then(res => res.json())
             .then(data => {
-                const btnDatThuê = document.querySelector('.rental-button'); // Nút Đặt thuê
-                const nhanTrangThai = document.getElementById('nhan-trang-thai'); // Nhãn số lượng trên trang chi tiết
+                const btnDatThuê = document.querySelector('.rental-button'); 
+                const nhanTrangThai = document.getElementById('nhan-trang-thai'); 
 
                 if (data.con_lai !== undefined) {
                     toiDa = parseInt(data.con_lai, 10);
                     oSoLuong.setAttribute('data-toi-da', toiDa);
 
-                    // Cập nhật lại dòng chữ thông báo số lượng trên giao diện
                     if (nhanTrangThai) {
                         nhanTrangThai.innerText = toiDa > 0 ? `Còn ${toiDa} sản phẩm trong khung giờ này` : 'Hết hàng trong khung giờ này';
                         nhanTrangThai.style.backgroundColor = toiDa > 0 ? '' : '#ff4d4f';
