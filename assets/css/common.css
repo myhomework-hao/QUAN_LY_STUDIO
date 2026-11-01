@@ -1,11 +1,25 @@
-/* ===== BASE ===== */
+
+/* ==================================================
+   VIBE STUDIO - COMMON CSS
+   Dùng chung cho toàn bộ website
+================================================== */
+
+
+/* ==================================================
+   1. BASE
+================================================== */
 
 :root {
     --ink: #111111;
     --muted: #777777;
     --line: #dddddd;
     --soft: #f5f5f5;
+    --cream: #f5f0e8;
+    --brown: #49352b;
+    --brown-light: #80634f;
     --error: #b3261e;
+
+    --header-height: 80px;
 }
 
 * {
@@ -21,21 +35,32 @@ html {
 body {
     font-family: "Montserrat", sans-serif;
     background: #ffffff;
-    color: #111111;
+    color: var(--ink);
 }
 
 a {
-    text-decoration: none;
     color: inherit;
+    text-decoration: none;
 }
 
 img {
-    width: 100%;
     display: block;
+    max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
 }
 
 section[id] {
-    scroll-margin-top: 80px;
+    scroll-margin-top: var(--header-height);
 }
 
 :focus-visible {
@@ -51,21 +76,27 @@ h2 i {
 
 .small-title,
 .section-title {
+    margin-bottom: 25px;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 3px;
-    margin-bottom: 25px;
 }
+
+
+/* ==================================================
+   2. BUTTON
+================================================== */
 
 .main-button {
     display: inline-block;
-    background: #111111;
-    color: #ffffff;
     padding: 17px 28px;
+    background: var(--ink);
+    color: #ffffff;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1px;
-    transition: 0.3s;
+    border: none;
+    transition: background 0.3s ease;
 }
 
 .main-button:hover {
@@ -74,13 +105,14 @@ h2 i {
 
 .white-button {
     display: inline-block;
-    background: white;
-    color: #111111;
     padding: 18px 35px;
+    background: #ffffff;
+    color: var(--ink);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1px;
-    transition: 0.3s;
+    border: none;
+    transition: background 0.3s ease;
 }
 
 .white-button:hover {
@@ -88,54 +120,72 @@ h2 i {
 }
 
 
-/* ===== HEADER ===== */
+/* ==================================================
+   3. HEADER
+================================================== */
 
 .header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
     width: 100%;
-    height: 80px;
+    height: var(--header-height);
     padding: 0 4%;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid #e5e5e5;
-    position: sticky;
-    top: 0;
+
     background: #ffffff;
-    z-index: 1000;
+    border-bottom: 1px solid #e5e5e5;
 }
 
 .logo {
+    flex-shrink: 0;
+    white-space: nowrap;
+
+    color: var(--ink);
     font-size: 20px;
     font-weight: 700;
     letter-spacing: 2px;
-    color: #111111;
-    white-space: nowrap;
-    flex-shrink: 0;
 }
 
 .logo span {
     font-weight: 400;
 }
 
+
+/* ==================================================
+   4. NAVBAR
+================================================== */
+
 .navbar {
     display: flex;
-    gap: 20px;
     align-items: center;
+    gap: 20px;
 }
 
 .navbar a {
+    white-space: nowrap;
+
+    color: var(--ink);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1px;
-    color: #111111;
-    transition: 0.3s;
-    white-space: nowrap;
+
+    transition: opacity 0.3s ease;
 }
 
 .navbar a:hover,
 .navbar a.active {
     opacity: 0.5;
 }
+
+
+/* ==================================================
+   5. HEADER RIGHT
+================================================== */
 
 .header-right {
     display: flex;
@@ -146,12 +196,15 @@ h2 i {
 
 .header-icon {
     position: relative;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #111111;
-    transition: 0.3s;
+
     padding: 4px;
+    color: var(--ink);
+
+    transition: opacity 0.3s ease;
 }
 
 .header-icon:hover {
@@ -159,30 +212,38 @@ h2 i {
 }
 
 .header-icon svg {
+    display: block;
     width: 22px;
     height: 22px;
-    display: block;
 }
 
 .cart-badge {
     position: absolute;
     top: -4px;
     right: -6px;
+    z-index: 10;
+
     min-width: 16px;
     height: 16px;
     padding: 0 4px;
-    border-radius: 50%;
-    background-color: #e63946;
-    color: #ffffff;
-    font-size: 10px;
-    font-weight: 700;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
+    border-radius: 50%;
+    background: #e63946;
+    color: #ffffff;
+
+    font-size: 10px;
+    font-weight: 700;
     line-height: 1;
-    z-index: 10;
 }
-/* tai khoan*/
+
+
+/* ==================================================
+   6. ACCOUNT MENU
+================================================== */
 
 .tai-khoan {
     position: relative;
@@ -197,15 +258,18 @@ h2 i {
 
 .tai-khoan-menu {
     display: none;
+
     position: absolute;
     top: calc(100% + 14px);
     right: 0;
+    z-index: 1100;
+
     min-width: 210px;
     padding: 8px 0;
+
     background: #ffffff;
     border: 1px solid #e5e5e5;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    z-index: 1100;
 }
 
 .tai-khoan.mo .tai-khoan-menu {
@@ -215,11 +279,13 @@ h2 i {
 .tai-khoan-menu a {
     display: block;
     padding: 12px 20px;
+
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1px;
     white-space: nowrap;
-    transition: 0.3s;
+
+    transition: background 0.3s ease;
 }
 
 .tai-khoan-menu a:hover {
@@ -227,11 +293,13 @@ h2 i {
 }
 
 .tai-khoan-ten {
+    margin-bottom: 6px;
     padding: 12px 20px;
+
+    border-bottom: 1px solid #e5e5e5;
+
     font-size: 12px;
     font-weight: 700;
-    border-bottom: 1px solid #e5e5e5;
-    margin-bottom: 6px;
 }
 
 .tai-khoan-menu .dang-xuat {
@@ -239,20 +307,29 @@ h2 i {
     border-top: 1px solid #e5e5e5;
     color: var(--error);
 }
+
+
+/* Account avatar */
+
 .tai-khoan-nut.da-dang-nhap {
     width: 36px;
     height: 36px;
     padding: 0;
-    border-radius: 50%;
-    border: none;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
+
+    border: none;
+    border-radius: 50%;
+
+    color: #ffffff;
     background: linear-gradient(135deg, #b08d57, #8f6f3f);
-    box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(176, 141, 87, .55);
+    box-shadow: 0 0 0 2px #ffffff,
+                0 0 0 3px rgba(176, 141, 87, 0.55);
+
     cursor: pointer;
-    transition: transform .15s, box-shadow .15s;
+    transition: transform 0.15s ease;
 }
 
 .tai-khoan-nut.da-dang-nhap:hover {
@@ -261,33 +338,45 @@ h2 i {
 
 .tai-khoan-nut.da-dang-nhap.vt-admin {
     background: linear-gradient(135deg, #3a342c, #1f1b16);
-    box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(31, 27, 22, .55);
+    box-shadow: 0 0 0 2px #ffffff,
+                0 0 0 3px rgba(31, 27, 22, 0.55);
 }
 
 .tai-khoan-nut.da-dang-nhap.vt-nhanvien {
     background: linear-gradient(135deg, #3f8a5a, #2e6b3f);
-    box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(46, 107, 63, .55);
+    box-shadow: 0 0 0 2px #ffffff,
+                0 0 0 3px rgba(46, 107, 63, 0.55);
 }
 
 .tai-khoan-chu {
-    font-family: 'Montserrat', sans-serif;
+    font-family: "Montserrat", sans-serif;
     font-size: 15px;
     font-weight: 600;
     line-height: 1;
     pointer-events: none;
 }
 
-/* ===== FOOTER ===== */
 
-footer {
+/* ==================================================
+   7. FOOTER
+================================================== */
+
+.site-footer {
+    width: 100%;
     min-height: 100px;
     padding: 30px 8%;
+
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    background: var(--cream);
+    border: none;
 }
 
 .footer-logo {
+    color: var(--ink);
     font-size: 18px;
     font-weight: 700;
     letter-spacing: 2px;
@@ -297,24 +386,30 @@ footer {
     font-weight: 400;
 }
 
-footer p {
-    font-size: 10px;
+.footer-copyright {
     color: #888888;
-}
-
-footer a {
     font-size: 10px;
-    letter-spacing: 1px;
-    font-weight: 600;
+    text-align: right;
 }
 
+.site-footer a {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
 
-/* ===== RESPONSIVE ===== */
+/* ==================================================
+   9. RESPONSIVE
+================================================== */
 
 @media (max-width: 900px) {
-    footer {
+    .site-footer {
         flex-direction: column;
-        gap: 20px;
+        text-align: center;
+        gap: 15px;
+    }
+
+    .footer-copyright {
         text-align: center;
     }
 }
@@ -339,64 +434,38 @@ footer a {
 }
 
 @media (max-width: 600px) {
+    :root {
+        --header-height: 70px;
+    }
+
     section[id] {
         scroll-margin-top: 70px;
     }
-}
 
-@media (prefers-reduced-motion: reduce) {
-    * {
-        transition: none !important;
-        scroll-behavior: auto !important;
+    .site-footer {
+        padding: 25px 15px;
+    }
+
+    .back-to-top {
+        right: 16px;
+        bottom: 82px;
+        width: 42px;
+        height: 42px;
     }
 }
-/*back-to-top*/
-.back-to-top {
-    position: fixed;
-    right: 25px;
-    bottom: 110px;
-    z-index: 10001;
-
-    width: 45px;
-    height: 45px;
-
-    display: none;
-    align-items: center;
-    justify-content: center;
-
-    border: none;
-    border-radius: 50%;
-
-    background: #49352b;
-    color: #fff;
-
-    font-size: 18px;
-    cursor: pointer;
-
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.18);
-    transition: all 0.3s ease;
-}
-
-.back-to-top.show {
-    display: flex;
-}
-
-.back-to-top:hover {
-    background: #80634f;
-    transform: translateY(-4px);
-}
 
 
-footer {
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    min-height: 100px !important;
-    background: #f5f0e8 !important;
-    border: 2px solid red !important;
-}
+/* ==================================================
+   10. ACCESSIBILITY
+================================================== */
 
-footer * {
-    visibility: visible !important;
-    opacity: 1 !important;
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
 }

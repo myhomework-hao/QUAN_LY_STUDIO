@@ -23,8 +23,7 @@ $so_luong_gio = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/common.css">
-
+<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/common.css?v=2">
     <!-- Thư viện icon dùng chung -->
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">

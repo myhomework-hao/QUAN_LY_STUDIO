@@ -1,29 +1,37 @@
-<?php $js_rieng = $js_rieng ?? []; ?>
 
-<footer>
+<?php
+$js_rieng = $js_rieng ?? [];
+?>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer">
     <div class="footer-logo">
-        VIBE<span>STUDIO</span>
+        <strong>VIBE</strong><span>STUDIO</span>
     </div>
-    <p>© <?= date('Y') ?> VIBE Studio. All Rights Reserved.</p>
+
+    <p class="footer-copyright">
+        © <?= date('Y') ?> VIBE Studio. All Rights Reserved.
+    </p>
 </footer>
 
-<button
-    type="button"
-    id="backToTop"
-    class="back-to-top"
-    aria-label="Lên đầu trang"
-    title="Lên đầu trang"
->
-    <i class="fa-solid fa-arrow-up"></i>
-</button>
 
+<!-- ===== JAVASCRIPT DÙNG CHUNG ===== -->
 <script src="<?= BASE_URL ?>assets/js/common.js"></script>
 
+
+<!-- ===== JAVASCRIPT RIÊNG TỪNG TRANG ===== -->
 <?php foreach ($js_rieng as $file_js): ?>
-    <script src="<?= htmlspecialchars($file_js) ?>"></script>
+    <script src="<?= htmlspecialchars($file_js, ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php endforeach; ?>
 
+
+<!-- ===== BACK TO TOP ===== -->
+<?php require_once __DIR__ . '/back_to_top.php'; ?>
+
+
+<!-- ===== CHAT WIDGET ===== -->
 <?php require_once __DIR__ . '/chat_widget.php'; ?>
+
 
 </body>
 </html>

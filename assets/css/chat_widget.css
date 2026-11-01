@@ -1,16 +1,4 @@
-.vibe-chat-widget {
-    --vc-ink: #111111;
-    --vc-muted: #777777;
-    --vc-line: #eaeaea;
-    --vc-soft: #f6f4f0;
-    --vc-accent: #b08d57;
-    position: fixed;
-    right: 24px;
-    bottom: 24px;
-    z-index: 1200;
-    font-family: "Montserrat", sans-serif;
-}
-
+v
 .vibe-chat-toggle {
     position: relative;
     width: 56px;
