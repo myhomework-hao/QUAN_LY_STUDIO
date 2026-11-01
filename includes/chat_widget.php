@@ -1,4 +1,3 @@
-
 <?php
 // Không hiển thị popup trong trang chat toàn màn hình
 $la_trang_chat = isset($trang_hien_tai) && $trang_hien_tai === 'chat';
@@ -13,6 +12,7 @@ $duoc_hien_thi_chat = in_array($vai_tro_chat, ['guest', 'khachhang'], true);
 if (!$la_trang_chat && $duoc_hien_thi_chat):
 ?>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/chat_widget.css">
 
 <div class="vibe-chat-widget" id="vibe-chat-widget">
@@ -27,7 +27,7 @@ if (!$la_trang_chat && $duoc_hien_thi_chat):
         aria-controls="vibe-chat-panel"
     >
         <i class="fa-regular fa-comment-dots"></i>
-        <span class="vibe-chat-notification"></span>
+        <span class="vibe-chat-notification" aria-hidden="true"></span>
     </button>
 
     <!-- Khung chat -->
@@ -79,7 +79,7 @@ if (!$la_trang_chat && $duoc_hien_thi_chat):
 
             <div class="vibe-chat-intro">
                 <span class="vibe-chat-intro-icon">
-                    <i class="fa-solid fa-sparkles"></i>
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
                 </span>
 
                 <div>
@@ -160,7 +160,7 @@ if (!$la_trang_chat && $duoc_hien_thi_chat):
 <script>
 window.VIBE_WIDGET_CONFIG = {
     apiUrl: <?= json_encode(BASE_URL . 'api/chat_api.php') ?>,
-    productId: null,
+    productId: <?= json_encode(isset($chat_product_id) ? (int) $chat_product_id : null) ?>,
     loginUrl: <?= json_encode(BASE_URL . 'user/login.php') ?>
 };
 </script>

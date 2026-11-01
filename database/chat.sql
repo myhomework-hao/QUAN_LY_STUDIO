@@ -91,3 +91,64 @@ CREATE TABLE IF NOT EXISTS chat_tin_nhan (
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
+/* test */
+SELECT
+    CHT_Ma,
+    ND_Ma,
+    NV_Ma,
+    CHT_TieuDe,
+    CHT_CheDo,
+    CHT_TrangThai,
+    CHT_NgayTao,
+    CHT_NgayCapNhat
+FROM chat_hoi_thoai
+ORDER BY CHT_NgayCapNhat DESC;
+
+SELECT
+    CTN_Ma,
+    CHT_Ma,
+    CTN_NguoiGui,
+    ND_Ma,
+    NV_Ma,
+    CTN_NoiDung,
+    CTN_ThoiDiem,
+    CTN_DaDoc
+FROM chat_tin_nhan
+ORDER BY CTN_Ma DESC
+LIMIT 20;
+/* sửa*/
+CREATE TABLE IF NOT EXISTS chat_hoi_thoai (
+  CHT_Ma INT(11) NOT NULL AUTO_INCREMENT,
+  ND_Ma INT(11) NOT NULL,
+  NV_Ma INT(11) NULL,
+  CHT_TieuDe VARCHAR(150) NULL,
+  CHT_CheDo VARCHAR(20) NOT NULL DEFAULT 'bot',
+  CHT_TrangThai VARCHAR(30) NOT NULL DEFAULT 'dang_mo',
+  CHT_NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CHT_NgayCapNhat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CHT_NgayDong DATETIME NULL,
+  PRIMARY KEY (CHT_Ma),
+  KEY ix_cht_nd (ND_Ma),
+  KEY ix_cht_nv (NV_Ma),
+  KEY ix_cht_trangthai (CHT_TrangThai, CHT_NgayCapNhat),
+  CONSTRAINT fk_cht_nd FOREIGN KEY (ND_Ma) REFERENCES nguoidung (ND_Ma),
+  CONSTRAINT fk_cht_nv FOREIGN KEY (NV_Ma) REFERENCES nhanvien (NV_Ma)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS chat_tin_nhan (
+  CTN_Ma BIGINT(20) NOT NULL AUTO_INCREMENT,
+  CHT_Ma INT(11) NOT NULL,
+  CTN_NguoiGui VARCHAR(20) NOT NULL,
+  ND_Ma INT(11) NULL,
+  NV_Ma INT(11) NULL,
+  CTN_NoiDung TEXT NOT NULL,
+  CTN_ThoiDiem DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CTN_DaDoc TINYINT(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (CTN_Ma),
+  KEY ix_ctn_cht (CHT_Ma, CTN_Ma),
+  KEY ix_ctn_nd (ND_Ma),
+  KEY ix_ctn_nv (NV_Ma),
+  CONSTRAINT fk_ctn_cht FOREIGN KEY (CHT_Ma) REFERENCES chat_hoi_thoai (CHT_Ma) ON DELETE CASCADE,
+  CONSTRAINT fk_ctn_nd FOREIGN KEY (ND_Ma) REFERENCES nguoidung (ND_Ma),
+  CONSTRAINT fk_ctn_nv FOREIGN KEY (NV_Ma) REFERENCES nhanvien (NV_Ma)
+) ENGINE=InnoDB;

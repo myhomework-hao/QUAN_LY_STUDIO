@@ -1,224 +1,252 @@
+(function () {
+    var cfg = window.VIBE_WIDGET_CONFIG || {};
+    var widget = document.getElementById('vibe-chat-widget');
+    if (!widget) { return; }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const widget = document.getElementById('vibe-chat-widget');
+    var toggle = document.getElementById('vibe-chat-toggle');
+    var panel = document.getElementById('vibe-chat-panel');
+    var list = document.getElementById('vibe-chat-messages');
+    var form = document.getElementById('vibe-chat-form');
+    var input = document.getElementById('vibe-chat-input');
+    var sendBtn = document.getElementById('vibe-chat-send');
+    var suggestions = widget.querySelector('.vibe-chat-suggestions');
+    var subtitle = widget.querySelector('.vibe-chat-brand p');
+    var footer = widget.querySelector('.vibe-chat-footer');
 
-    if (!widget) return;
+    var chuMacDinh = subtitle ? subtitle.textContent : '';
+    var st = { conv: null, lastId: 0, seen: {}, daMo: false, dangGui: false, ketThuc: false, dangNhap: true };
+    var timerMo = null, timerDong = null, nutKetThuc = null, nutMoi = null;
 
-    const toggle = document.getElementById('vibe-chat-toggle');
-    const panel = document.getElementById('vibe-chat-panel');
-    const close = document.getElementById('vibe-chat-close');
-    const minimize = document.getElementById('vibe-chat-minimize');
-    const form = document.getElementById('vibe-chat-form');
-    const input = document.getElementById('vibe-chat-input');
-    const sendButton = document.getElementById('vibe-chat-send');
-    const messages = document.getElementById('vibe-chat-messages');
-
-    const config = window.VIBE_WIDGET_CONFIG || {};
-    const apiUrl = config.apiUrl;
-
-    const productId = Number(config.productId) || null;
-    const storageKey = 'vibe_chat_conversation_id';
-
-    let conversationId = null;
-    let isSending = false;
-
-    try {
-        conversationId = Number(sessionStorage.getItem(storageKey)) || null;
-    } catch (error) {
-        conversationId = null;
+    function goi(body) {
+        return fetch(cfg.apiUrl, {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        }).then(function (r) {
+            return r.json().catch(function () { return { success: false, message: 'Phản hồi không hợp lệ.' }; })
+                .then(function (d) { d._status = r.status; return d; });
+        }).catch(function () { return { success: false, message: 'Mất kết nối tới máy chủ.' }; });
     }
 
-    function openChat() {
+    function gio(s) {
+        if (!s) { return 'Vừa xong'; }
+        var h = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
+        var homNay = h.getFullYear() + '-' + p(h.getMonth() + 1) + '-' + p(h.getDate());
+        return s.substr(0, 10) === homNay ? s.substr(11, 5) : s.substr(8, 2) + '/' + s.substr(5, 2) + ' ' + s.substr(11, 5);
+    }
+
+    function cuonXuong() { list.scrollTop = list.scrollHeight; }
+
+    function veTin(loai, noiDung, thoiGian, nodeThem) {
+        var w = document.createElement('div');
+        w.className = 'vibe-message ' + loai;
+
+        if (loai !== 'user') {
+            var av = document.createElement('div');
+            av.className = 'vibe-message-avatar';
+            av.innerHTML = loai === 'staff' ? '<i class="fa-solid fa-headset"></i>' : '<i class="fa-solid fa-camera"></i>';
+            w.appendChild(av);
+        }
+
+        var c = document.createElement('div');
+        c.className = 'vibe-message-content';
+        var b = document.createElement('div');
+        b.className = 'vibe-message-bubble';
+        b.textContent = noiDung;
+        if (nodeThem) { b.appendChild(nodeThem); }
+        var t = document.createElement('span');
+        t.className = 'vibe-message-time';
+        t.textContent = thoiGian;
+        c.appendChild(b);
+        c.appendChild(t);
+        w.appendChild(c);
+        list.appendChild(w);
+        return w;
+    }
+
+    function themTin(m) {
+        if (m.id && st.seen[m.id]) { return false; }
+        if (m.id) { st.seen[m.id] = true; if (m.id > st.lastId) { st.lastId = m.id; } }
+        var loai = m.sender === 'khach' ? 'user' : (m.sender === 'nhanvien' ? 'staff' : 'bot');
+        veTin(loai, m.content, gio(m.created_at));
+        if (suggestions) { suggestions.hidden = true; }
+        return loai !== 'user';
+    }
+
+    function capNhatTrangThai(d) {
+        if (!d || !d.status) { return; }
+        var chu = chuMacDinh;
+        if (d.status === 'cho_nhan_vien') { chu = 'Đang chờ nhân viên phản hồi...'; }
+        else if (d.status === 'dang_ho_tro') { chu = (d.staff_name ? 'Nhân viên ' + d.staff_name : 'Nhân viên') + ' đang hỗ trợ bạn'; }
+        else if (d.status === 'da_dong') { chu = 'Cuộc trò chuyện đã kết thúc'; }
+        if (subtitle) { subtitle.textContent = chu; }
+
+        st.ketThuc = d.status === 'da_dong';
+        input.disabled = st.ketThuc;
+        sendBtn.disabled = st.ketThuc;
+        input.placeholder = st.ketThuc ? 'Cuộc trò chuyện đã kết thúc' : 'Nhập tin nhắn của bạn...';
+        hienNut();
+    }
+
+    function hienNut() {
+        if (!footer) { return; }
+        if (!nutKetThuc) {
+            nutKetThuc = document.createElement('button');
+            nutKetThuc.type = 'button';
+            nutKetThuc.className = 'vibe-chat-link';
+            nutKetThuc.textContent = 'Kết thúc cuộc trò chuyện';
+            nutKetThuc.addEventListener('click', ketThuc);
+            footer.appendChild(nutKetThuc);
+        }
+        if (!nutMoi) {
+            nutMoi = document.createElement('button');
+            nutMoi.type = 'button';
+            nutMoi.className = 'vibe-chat-new';
+            nutMoi.textContent = 'Bắt đầu cuộc trò chuyện mới';
+            nutMoi.addEventListener('click', batDauMoi);
+            form.parentNode.insertBefore(nutMoi, form);
+        }
+        nutKetThuc.hidden = !st.conv || st.ketThuc;
+        nutMoi.hidden = !st.ketThuc;
+        form.hidden = st.ketThuc;
+    }
+
+    function ketThuc() {
+        if (!st.conv || !confirm('Kết thúc cuộc trò chuyện này?')) { return; }
+        goi({ action: 'close', conversation_id: st.conv }).then(function (d) {
+            if (d.success) { poll(); }
+        });
+    }
+
+    function batDauMoi() {
+        st.conv = null; st.lastId = 0; st.seen = {}; st.ketThuc = false;
+        Array.prototype.slice.call(list.querySelectorAll('.vibe-message')).forEach(function (n, i) { if (i > 0) { n.remove(); } });
+        if (suggestions) { suggestions.hidden = false; }
+        if (subtitle) { subtitle.textContent = chuMacDinh; }
+        input.disabled = false; sendBtn.disabled = false;
+        input.placeholder = 'Nhập tin nhắn của bạn...';
+        hienNut();
+        input.focus();
+    }
+
+    function nhacDangNhap() {
+        var a = document.createElement('a');
+        a.href = cfg.loginUrl;
+        a.textContent = ' Đăng nhập ngay';
+        a.className = 'vibe-chat-login';
+        veTin('bot', 'Bạn cần đăng nhập để trò chuyện với VIBE STUDIO.', gio(''), a);
+        cuonXuong();
+    }
+
+    function moDau() {
+        if (st.daMo) { return; }
+        st.daMo = true;
+        goi({ action: 'open' }).then(function (d) {
+            if (d._status === 401 || d._status === 403) { st.dangNhap = false; return; }
+            if (!d.success || !d.conversation_id) { hienNut(); return; }
+            st.conv = d.conversation_id;
+            d.messages.forEach(themTin);
+            capNhatTrangThai(d);
+            cuonXuong();
+        });
+    }
+
+    function poll() {
+        if (!st.conv || st.dangGui) { return; }
+        goi({ action: 'poll', conversation_id: st.conv, after_id: st.lastId }).then(function (d) {
+            if (!d.success) { return; }
+            var coMoi = false;
+            d.messages.forEach(function (m) { if (themTin(m)) { coMoi = true; } });
+            capNhatTrangThai(d);
+            if (d.messages.length) { cuonXuong(); }
+            if (coMoi && panel.hidden) { toggle.classList.add('has-new'); }
+        });
+    }
+
+    function chayPoll() {
+        clearInterval(timerMo); clearInterval(timerDong);
+        if (panel.hidden) {
+            timerDong = setInterval(function () { if (!document.hidden && !st.ketThuc) { poll(); } }, 12000);
+        } else {
+            timerMo = setInterval(function () { if (!document.hidden) { poll(); } }, 3000);
+        }
+    }
+
+    function mo() {
         panel.hidden = false;
         toggle.setAttribute('aria-expanded', 'true');
-        toggle.style.display = 'none';
-        input.focus();
-        scrollBottom();
+        toggle.classList.remove('has-new');
+        widget.classList.add('is-open');
+        moDau();
+        chayPoll();
+        setTimeout(function () { input.focus(); cuonXuong(); }, 50);
     }
 
-    function closeChat() {
+    function dong() {
         panel.hidden = true;
         toggle.setAttribute('aria-expanded', 'false');
-        toggle.style.display = '';
+        widget.classList.remove('is-open');
+        chayPoll();
     }
 
-    function scrollBottom() {
-        messages.scrollTop = messages.scrollHeight;
-    }
+    function gui(noiDung) {
+        noiDung = (noiDung || '').trim();
+        if (!noiDung || st.dangGui || st.ketThuc) { return; }
+        if (!st.dangNhap) { nhacDangNhap(); return; }
 
-    function getTime() {
-        return new Date().toLocaleTimeString('vi-VN', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-
-    function addMessage(content, sender = 'bot') {
-        const message = document.createElement('div');
-        message.className = 'vibe-message ' + (
-            sender === 'khach' ? 'user' : 'bot'
-        );
-
-        const avatar = document.createElement('div');
-        avatar.className = 'vibe-message-avatar';
-
-        const icon = document.createElement('i');
-        icon.className = sender === 'khach'
-            ? 'fa-solid fa-user'
-            : 'fa-solid fa-camera';
-
-        avatar.appendChild(icon);
-
-        const messageContent = document.createElement('div');
-        messageContent.className = 'vibe-message-content';
-
-        const bubble = document.createElement('div');
-        bubble.className = 'vibe-message-bubble';
-        bubble.textContent = content;
-
-        const time = document.createElement('span');
-        time.className = 'vibe-message-time';
-        time.textContent = getTime();
-
-        messageContent.appendChild(bubble);
-        messageContent.appendChild(time);
-
-        message.appendChild(avatar);
-        message.appendChild(messageContent);
-
-        messages.appendChild(message);
-        scrollBottom();
-    }
-
-    function addHandoffNotice() {
-        if (messages.querySelector('.vibe-chat-handoff')) return;
-
-        const notice = document.createElement('div');
-        notice.className = 'vibe-chat-handoff';
-        notice.textContent =
-            'Yêu cầu của bạn đã được chuyển đến nhân viên. Vui lòng chờ phản hồi nhé!';
-
-        messages.appendChild(notice);
-        scrollBottom();
-    }
-
-    function setSending(value) {
-        isSending = value;
-        sendButton.disabled = value;
-        sendButton.innerHTML = value
-            ? '<i class="fa-solid fa-spinner fa-spin"></i>'
-            : '<i class="fa-solid fa-paper-plane"></i>';
-    }
-
-    async function sendMessage(messageText) {
-        const message = messageText.trim();
-
-        if (!message || isSending) return;
-
-        if (!apiUrl) {
-            addMessage('Không tìm thấy địa chỉ API chat.', 'bot');
-            return;
-        }
-
-        addMessage(message, 'khach');
+        st.dangGui = true;
+        sendBtn.disabled = true;
+        var tam = veTin('user', noiDung, gio(''));
+        var go = veTin('bot', '...', '');
+        go.classList.add('is-typing');
+        if (suggestions) { suggestions.hidden = true; }
         input.value = '';
         input.style.height = 'auto';
+        cuonXuong();
 
-        setSending(true);
+        goi({ action: 'send', message: noiDung, conversation_id: st.conv, product_id: cfg.productId || null }).then(function (d) {
+            st.dangGui = false;
+            sendBtn.disabled = false;
+            go.remove();
+            tam.remove();
 
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    action: 'send',
-                    message: message,
-                    conversation_id: conversationId,
-                    product_id: productId
-                })
-            });
-
-            const raw = await response.text();
-
-            let data;
-
-            try {
-                data = JSON.parse(raw);
-            } catch (error) {
-                console.error('API chat trả về:', raw);
-                throw new Error('Máy chủ trả về dữ liệu không hợp lệ.');
-            }
-
-            if (response.status === 401) {
-                addMessage(
-                    'Bạn cần đăng nhập để sử dụng chức năng chat. Vui lòng đăng nhập nhé!'
-                );
+            if (d._status === 401) {
+                st.dangNhap = false;
+                nhacDangNhap();
                 return;
             }
-
-            if (!response.ok || !data.success) {
-                throw new Error(data.message || 'Không thể gửi tin nhắn.');
+            if (!d.success) {
+                veTin('bot', d.message || 'Không gửi được tin nhắn.', gio(''));
+                if (d._status === 409) { st.ketThuc = true; capNhatTrangThai({ status: 'da_dong' }); }
+                cuonXuong();
+                return;
             }
-
-            conversationId = Number(data.conversation_id);
-
-            try {
-                sessionStorage.setItem(storageKey, conversationId);
-            } catch (error) {
-                console.warn('Không thể lưu phiên chat.');
-            }
-
-            if (data.reply) {
-                addMessage(data.reply, 'bot');
-            }
-
-            if (data.handoff) {
-                addHandoffNotice();
-            }
-
-        } catch (error) {
-            console.error('Lỗi chat:', error);
-            addMessage(
-                error.message || 'Không thể kết nối. Vui lòng thử lại sau.'
-            );
-        } finally {
-            setSending(false);
-        }
+            st.conv = d.conversation_id;
+            d.messages.forEach(themTin);
+            capNhatTrangThai(d);
+            cuonXuong();
+        });
     }
 
-    toggle.addEventListener('click', openChat);
-    close.addEventListener('click', closeChat);
-    minimize.addEventListener('click', closeChat);
+    toggle.addEventListener('click', function () { panel.hidden ? mo() : dong(); });
+    document.getElementById('vibe-chat-minimize').addEventListener('click', dong);
+    document.getElementById('vibe-chat-close').addEventListener('click', dong);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) { dong(); } });
 
-    form.addEventListener('submit', event => {
-        event.preventDefault();
-        sendMessage(input.value);
+    form.addEventListener('submit', function (e) { e.preventDefault(); gui(input.value); });
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); gui(input.value); }
     });
-
-    input.addEventListener('keydown', event => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            form.requestSubmit();
-        }
-    });
-
-    input.addEventListener('input', () => {
+    input.addEventListener('input', function () {
         input.style.height = 'auto';
-        input.style.height = Math.min(input.scrollHeight, 90) + 'px';
+        input.style.height = Math.min(input.scrollHeight, 110) + 'px';
     });
 
-    widget.querySelectorAll('[data-message]').forEach(button => {
-        button.addEventListener('click', () => {
-            sendMessage(button.dataset.message);
+    if (suggestions) {
+        suggestions.addEventListener('click', function (e) {
+            var nut = e.target.closest('button[data-message]');
+            if (nut) { gui(nut.dataset.message); }
         });
-    });
+    }
 
-    document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && !panel.hidden) {
-            closeChat();
-        }
-    });
-});
+    chayPoll();
+})();
