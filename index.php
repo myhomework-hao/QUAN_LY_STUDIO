@@ -35,6 +35,16 @@ try {
 require_once __DIR__ . '/includes/header.php';
 ?>
 
+<!-- Style tinh chỉnh đồng bộ hiệu ứng trỏ chuột nổi lên -->
+<style>
+    .service-item {
+        transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.3s ease;
+    }
+    .service-item:hover {
+        transform: translateY(-4px);
+    }
+</style>
+
 <main>
 
     <!-- HERO -->
@@ -57,14 +67,71 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     </section>
 
-    <!-- SẢN PHẨM NỔI BẬT -->
+    <!-- GIỚI THIỆU + DỊCH VỤ (NẰM TRÊN BEST SELLERS) -->
+    <section class="about-services" id="about">
+        <div class="section-number">01</div>
+
+        <div class="about-services-content">
+            <p class="section-title">ABOUT US &amp; SERVICES</p>
+            <h2>
+                YOUR MOMENTS.<br>
+                OUR <i>VISION.</i>
+            </h2>
+            <p class="about-text">
+                VIBE Studio là không gian sáng tạo dành cho những
+                người yêu thích hình ảnh và nghệ thuật.
+                Chúng tôi cung cấp các dịch vụ chụp ảnh chuyên nghiệp
+                với phong cách hiện đại, tối giản và cá tính.
+            </p>
+
+            <div class="service-list" id="services">
+                <a href="<?= BASE_URL ?>user/services.php?loai=thiet_bi" class="service-item">
+                    <span>01</span>
+                    <div>
+                        <h3>MÁY ẢNH - THIẾT BỊ</h3>
+                        <p>Máy ảnh, ống kính, đèn và thiết bị cho buổi chụp của bạn.</p>
+                    </div>
+                    <strong>↗</strong>
+                </a>
+
+                <a href="<?= BASE_URL ?>user/services.php?loai=phong_chup" class="service-item">
+                    <span>02</span>
+                    <div>
+                        <h3>CHỖ CHỤP ẢNH</h3>
+                        <p>Không gian studio và phim trường chuẩn bị sẵn để thuê theo giờ.</p>
+                    </div>
+                    <strong>↗</strong>
+                </a>
+
+                <a href="<?= BASE_URL ?>user/services.php?loai=trang_phuc" class="service-item">
+                    <span>03</span>
+                    <div>
+                        <h3>BỘ ĐỒ</h3>
+                        <p>Trang phục cho chân dung, couple, sự kiện và lookbook.</p>
+                    </div>
+                    <strong>↗</strong>
+                </a>
+
+                <a href="<?= BASE_URL ?>user/services.php?loai=phu_kien" class="service-item">
+                    <span>04</span>
+                    <div>
+                        <h3>PHỤ KIỆN - ĐẠO CỤ</h3>
+                        <p>Đạo cụ và phụ kiện giúp bức ảnh có thêm cá tính.</p>
+                    </div>
+                    <strong>↗</strong>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- SẢN PHẨM NỔI BẬT (BEST SELLERS) -->
     <section class="featured" id="products">
         <div class="section-header">
             <div>
                 <p class="section-title">BEST SELLERS</p>
                 <h2>FEATURED <i>PRODUCTS</i></h2>
             </div>
-            <p class="section-number">01</p>
+            <p class="section-number">02</p>
         </div>
 
         <?php if (empty($san_pham_noi_bat)): ?>
