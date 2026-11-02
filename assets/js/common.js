@@ -50,24 +50,15 @@ function khoiTaoMenuTaiKhoan() {
 }
 
 
-
 /* ========================================
-   3. KHỞI TẠO
-   Hỗ trợ cả khi DOM chưa tải xong
-   hoặc đã tải xong.
+   2. KHỞI TẠO
+   Nút Back to Top tự khởi tạo trong back_to_top.js
 ======================================== */
 
-function khoiTaoChucNangChung() {
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', khoiTaoMenuTaiKhoan, { once: true });
+} else {
     khoiTaoMenuTaiKhoan();
-    khoiTaoBackToTop();
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener(
-        'DOMContentLoaded',
-        khoiTaoChucNangChung,
-        { once: true }
-    );
-} else {
-    khoiTaoChucNangChung();
-}
+

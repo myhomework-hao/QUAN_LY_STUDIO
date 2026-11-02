@@ -8,6 +8,7 @@ require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/auth.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/donhang.php';
+require_once __DIR__ . '/../includes/don_vi.php';
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 yeu_cau_vai_tro('nhanvien');
@@ -86,7 +87,7 @@ function ve_trang_truoc(string $trang_goc): string
 
 function ten_don_vi_gia(string $don_vi): string
 {
-    return ['gio' => 'giờ', 'ngay' => 'ngày', 'bo' => 'bộ'][$don_vi] ?? $don_vi;
+    return nhan_don_vi($don_vi);
 }
 
 function gia_hien_thi($gia, string $don_vi): string

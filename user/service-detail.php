@@ -58,19 +58,22 @@ if ($dv) {
     $ten_danh_muc = $ten_danh_muc_theo_loai[$loai_chuan] ?? $loai_chuan;
 
     $tt_don_vi = function_exists('thong_tin_don_vi') ? thong_tin_don_vi($dv['don_vi']) : ['hinh_thuc' => 'Cho thuê'];
-    $theo_gio = $dv['don_vi'] === 'gio';
+    $theo_gio = chuan_hoa_don_vi((string) $dv['don_vi']) === 'gio';
     $kieu_nhap = $theo_gio ? 'datetime-local' : 'date';
     $nho_nhat = date($theo_gio ? 'Y-m-d\TH:i' : 'Y-m-d');
 
-    $stmt_kho = $conn->prepare(
-        "SELECT (dv.DV_SoLuong - COALESCE((
-            SELECT SUM(c.CTD_SoLuong) FROM chitietdon c 
-            JOIN dondatlich d ON d.DDL_Ma = c.DDL_Ma 
-            WHERE c.DV_Ma = dv.DV_Ma AND d.DDL_TrangThai IN ('Chờ duyệt', 'Đã duyệt') AND c.CTD_KetThuc > NOW()
-        ), 0)) AS con_lai FROM dichvu dv WHERE dv.DV_Ma = ?"
-    );
-    $stmt_kho->execute([$dv['id']]);
-    $con_lai_ban_dau = (int) $stmt_kho->fetchColumn();
+    // Hiển thị tồn kho ban đầu theo sức chứa thực tế.
+    // Tồn kho theo khung giờ sẽ do API kiểm tra khi khách chọn thời gian.
+    $con_lai_ban_dau = (int) $dv['so_luong'];
+
+    // Mốc mặc định luôn ở tương lai để trang vừa mở đã tính được tạm tính.
+    $khoa_don_vi = chuan_hoa_don_vi((string) $dv['don_vi']);
+    $moc_bat_dau_mac_dinh = strtotime(date('Y-m-d H:00:00')) + 3600;
+    $moc_ket_thuc_mac_dinh = $moc_bat_dau_mac_dinh + ($khoa_don_vi === 'ngay' ? 86400 : 3600);
+    $ngay_nhan_mac_dinh = date('Y-m-d', $moc_bat_dau_mac_dinh);
+    $gio_nhan_mac_dinh = date('H:i', $moc_bat_dau_mac_dinh);
+    $ngay_tra_mac_dinh = date('Y-m-d', $moc_ket_thuc_mac_dinh);
+    $gio_tra_mac_dinh = date('H:i', $moc_ket_thuc_mac_dinh);
 
     $thuoc_tinh_rieng = [];
     if ($dv['suc_chua'] !== null) {
@@ -91,10 +94,11 @@ $tieu_de_trang = ($dv ? $dv['ten'] : 'Không tìm thấy') . ' - VIBE STUDIO';
 $trang_hien_tai = 'san-pham';
 $css_rieng = [
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css',
-    BASE_URL . 'assets/css/at.css' // Trỏ chuẩn vào thư mục assets/css chung
+    BASE_URL . 'assets/css/at.css?v=' . (is_file(__DIR__ . '/../assets/css/at.css') ? filemtime(__DIR__ . '/../assets/css/at.css') : time())
 ];
 $js_rieng = $dv ? [
-       BASE_URL . 'assets/js/at-chitiet.js'] : []; // Trỏ chuẩn vào thư mục assets/js chung
+    BASE_URL . 'assets/js/at-chitiet.js?v=' . (is_file(__DIR__ . '/../assets/js/at-chitiet.js') ? filemtime(__DIR__ . '/../assets/js/at-chitiet.js') : time())
+] : [];
 
 require_once '../includes/header.php';
 ?>
@@ -180,7 +184,11 @@ require_once '../includes/header.php';
             <!-- Form gửi dữ liệu đặt thuê trỏ thẳng vào cart.php ở root -->
             <form method="post" action="cart.php">
                 <input type="hidden" name="service_id" value="<?= (int) $dv['id'] ?>">
-                <input type="hidden" name="so_luong" id="so-luong-gui" value="1" data-toi-da="<?= (int) $con_lai_ban_dau ?>">
+                <input type="hidden" name="so_luong" id="so-luong-gui" value="1"
+                       data-toi-da="<?= (int) $con_lai_ban_dau ?>"
+                       data-don-vi="<?= h((string) $dv['don_vi']) ?>"
+                       data-gia="<?= (int) $dv['gia'] ?>"
+                       data-api="<?= BASE_URL ?>api/kiem_tra_kho.php">
 
                 <!-- Phần chọn Size nếu sản phẩm là trang phục -->
                 <?php if (!empty($dv['kich_co'])): ?>
@@ -199,22 +207,22 @@ require_once '../includes/header.php';
 <div class="chon-thoi-gian" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
     <div>
         <label for="ngay-nhan" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 12px;">NGÀY NHẬN</label>
-        <input type="date" id="ngay-nhan" name="ngay_nhan" min="<?= date('Y-m-d') ?>" value="<?= date('Y-m-d') ?>" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
+        <input type="date" id="ngay-nhan" name="ngay_nhan" min="<?= date('Y-m-d') ?>" value="<?= $ngay_nhan_mac_dinh ?>" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
     </div>
     <div>
         <label for="gio-nhan" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 12px;">GIỜ NHẬN</label>
-        <input type="time" id="gio-nhan" name="gio_nhan" value="08:00" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
+        <input type="time" id="gio-nhan" name="gio_nhan" value="<?= $gio_nhan_mac_dinh ?>" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
     </div>
 </div>
 
 <div class="chon-thoi-gian" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
     <div>
         <label for="ngay-tra" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 12px;">NGÀY TRẢ</label>
-        <input type="date" id="ngay-tra" name="ngay_tra" min="<?= date('Y-m-d') ?>" value="<?= date('Y-m-d') ?>" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
+        <input type="date" id="ngay-tra" name="ngay_tra" min="<?= date('Y-m-d') ?>" value="<?= $ngay_tra_mac_dinh ?>" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
     </div>
     <div>
         <label for="gio-tra" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 12px;">GIỜ TRẢ</label>
-        <input type="time" id="gio-tra" name="gio_tra" value="17:00" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
+        <input type="time" id="gio-tra" name="gio_tra" value="<?= $gio_tra_mac_dinh ?>" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
     </div>
 </div>
 
@@ -225,6 +233,14 @@ require_once '../includes/header.php';
                         <span id="quantity">1</span>
                         <button type="button" id="quantity-plus">+</button>
                     </div>
+                </div>
+
+                <div class="vibe-price-summary" aria-live="polite">
+                    <div class="vibe-price-summary-row">
+                        <span>Tạm tính</span>
+                        <strong id="tong-tien-so">—</strong>
+                    </div>
+                    <small class="vibe-price-summary-note" id="tong-tien-chi-tiet">Chọn thời gian để xem giá</small>
                 </div>
 
                 <div class="detail-buttons">
@@ -283,4 +299,5 @@ require_once '../includes/header.php';
 
 </main>
 
+<?php if ($dv) { $chat_product_id = (int) $dv['id']; } ?>
 <?php require_once '../includes/footer.php'; ?>

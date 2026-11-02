@@ -12,7 +12,7 @@ const SO_LUONG_TOI_DA_MOI_DICH_VU = 20;
 
 function ten_don_vi_gio_hang(string $don_vi): string
 {
-    return ['gio' => 'giờ', 'ngay' => 'ngày', 'bo' => 'bộ'][$don_vi] ?? $don_vi;
+    return nhan_don_vi($don_vi);
 }
 
 function so_luong_toi_da(PDO $conn, int $ma_dich_vu): int
@@ -53,9 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $kich_co   = trim((string) ($_POST['kich_co'] ?? ''));
 
         // Kiểm tra nếu là dịch vụ tính theo lượt thì gộp thời gian theo 1 mốc, ngược lại theo khoảng thời gian nhận/trả
-        $don_vi_tinh = $dv['DV_DonViTinh'] ?? 'ngay';
+        $don_vi_tinh = chuan_hoa_don_vi((string) ($dv['DV_DonViTinh'] ?? 'ngay'));
 
-        if ($don_vi_tinh === 'luot') {
+        if (la_don_vi_luot($don_vi_tinh)) {
             $bat_dau  = ($ngay_nhan !== '' ? $ngay_nhan : date('Y-m-d')) . ' ' . ($gio_nhan !== '' ? $gio_nhan : '08:00') . ':00';
             $ket_thuc = $bat_dau; // Dịch vụ tính theo lượt dùng chung mốc thời điểm
         } else {
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Ràng buộc phía Server: Thời gian trả bắt buộc phải lớn hơn hoặc bằng thời gian nhận (đối với dịch vụ theo ngày/giờ)
-        if ($don_vi_tinh !== 'luot' && strtotime($ket_thuc) <= strtotime($bat_dau)) {
+        if (!la_don_vi_luot($don_vi_tinh) && strtotime($ket_thuc) <= strtotime($bat_dau)) {
             $_SESSION['thong_bao_dat'] = 'Thời gian trả phải lớn hơn thời gian nhận!';
             header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'services.php'));
             exit;
@@ -76,11 +76,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['thong_bao_dat'] = 'Dịch vụ này hiện không còn nhận thuê.';
         } elseif ($tg === null) {
             $_SESSION['thong_bao_dat'] = 'Vui lòng chọn thời gian nhận và trả hợp lệ.';
+        } elseif (strtotime($tg['bat_dau']) <= time()) {
+            $_SESSION['thong_bao_dat'] = 'Thời gian nhận đã qua, vui lòng chọn khung giờ khác.';
         } elseif (strtotime($tg['ket_thuc']) <= time()) {
             $_SESSION['thong_bao_dat'] = 'Thời gian thuê đã qua, vui lòng chọn lại.';
         } else {
-            // Tạo khóa riêng cho từng sản phẩm + size
-            $cart_key = $ma . ($kich_co !== '' ? '_' . $kich_co : '');
+            // Tạo khóa riêng cho từng sản phẩm + size + khung giờ.
+            // Nhờ vậy đặt cùng dịch vụ ở hai khung giờ khác nhau sẽ không ghi đè nhau.
+            $khoa_thoi_gian = substr(md5($tg['bat_dau'] . '|' . $tg['ket_thuc']), 0, 10);
+            $cart_key = $ma . ($kich_co !== '' ? '_' . $kich_co : '') . '_' . $khoa_thoi_gian;
 
             $da_co = is_array($_SESSION['cart'][$cart_key] ?? null) ? (int) ($_SESSION['cart'][$cart_key]['qty'] ?? 0) : 0;
             
@@ -156,7 +160,7 @@ foreach ($cart_items as $k => $item) {
     $cart_items[$k]['tg'] = $tg;
     $cart_items[$k]['canh_bao'] = '';
 
-    if ($tg === null || strtotime($tg['ket_thuc']) <= time()) {
+    if ($tg === null || strtotime($tg['bat_dau']) <= time() || strtotime($tg['ket_thuc']) <= time()) {
         $cart_items[$k]['canh_bao'] = 'Thời gian thuê không hợp lệ hoặc đã qua, vui lòng xóa và chọn lại.';
     } else {
         try {
@@ -172,7 +176,7 @@ foreach ($cart_items as $k => $item) {
 
 $tieu_de_trang = 'Giỏ hàng - VIBE Studio';
 $css_rieng = [
-    BASE_URL . 'assets/css/cart.css'
+    BASE_URL . 'assets/css/cart.css?v=' . (is_file(__DIR__ . '/../assets/css/cart.css') ? filemtime(__DIR__ . '/../assets/css/cart.css') : time())
 ];
 require_once '../includes/header.php';
 ?>
@@ -224,7 +228,9 @@ require_once '../includes/header.php';
                                 <?php if ($item['tg']) : ?>
                                     <p class="unit" style="font-size:12px; color:#666;">
                                         <?= htmlspecialchars(dinh_dang_ngay_gio($item['tg']['bat_dau'])) ?>
-                                        → <?= htmlspecialchars(dinh_dang_ngay_gio($item['tg']['ket_thuc'])) ?>
+                                        <?php if (!la_don_vi_luot((string) $item['don_vi'])) : ?>
+                                            → <?= htmlspecialchars(dinh_dang_ngay_gio($item['tg']['ket_thuc'])) ?>
+                                        <?php endif; ?>
                                         (<?= (int) $item['so_don_vi'] ?> <?= htmlspecialchars(ten_don_vi_gio_hang((string) $item['don_vi'])) ?>)
                                     </p>
                                 <?php endif; ?>

@@ -2,6 +2,7 @@
 <?php
 require_once '../config/app.php';
 require_once '../config/db.php';
+require_once '../config/auth.php';
 require_once '../includes/header.php';
 
 $product_id = filter_input(INPUT_GET, 'product_id', FILTER_VALIDATE_INT);

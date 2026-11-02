@@ -1,4 +1,16 @@
-v
+.vibe-chat-widget {
+    --vc-ink: #111111;
+    --vc-muted: #888888;
+    --vc-line: #dddddd;
+    --vc-soft: #f5f5f5;
+    --vc-accent: #555555;
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1200;
+    font-family: inherit;
+}
+
 .vibe-chat-toggle {
     position: relative;
     width: 56px;
@@ -42,8 +54,8 @@ v
     overflow: hidden;
     background: #ffffff;
     border: 1px solid var(--vc-line);
-    border-radius: 16px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+    border-radius: 0;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 .vibe-chat-panel[hidden] { display: none; }
 
@@ -60,14 +72,14 @@ v
 .vibe-chat-logo {
     width: 38px; height: 38px; flex: 0 0 auto;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, var(--vc-accent), #8f6f3f);
+    background: #333333;
     border-radius: 50%;
 }
 .vibe-chat-brand h3 { margin: 0; font-size: 13px; letter-spacing: 2px; }
-.vibe-chat-brand p { margin: 2px 0 0; font-size: 11px; color: #cfcfcf; }
+.vibe-chat-brand p { margin: 2px 0 0; font-size: 11px; color: #bbbbbb; }
 .vibe-chat-header-actions { display: flex; gap: 4px; }
 .vibe-chat-header-actions button {
-    width: 30px; height: 30px; color: #ffffff; background: none; border: 0; border-radius: 6px; cursor: pointer;
+    width: 30px; height: 30px; color: #ffffff; background: none; border: 0; border-radius: 0; cursor: pointer;
 }
 .vibe-chat-header-actions button:hover { background: rgba(255, 255, 255, 0.15); }
 
@@ -76,7 +88,7 @@ v
 .vibe-chat-intro { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #ffffff; border-bottom: 1px solid var(--vc-line); }
 .vibe-chat-intro-icon {
     width: 34px; height: 34px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
-    color: var(--vc-accent); background: #f4ecde; border-radius: 50%;
+    color: var(--vc-accent); background: #eeeeee; border-radius: 50%;
 }
 .vibe-chat-intro h4 { margin: 0; font-size: 13px; }
 .vibe-chat-intro p { margin: 2px 0 0; font-size: 12px; color: var(--vc-muted); }
@@ -94,13 +106,13 @@ v
 .vibe-message.user .vibe-message-content { align-items: flex-end; }
 .vibe-message-bubble {
     padding: 10px 14px; font-size: 13px; line-height: 1.55; white-space: pre-wrap; word-break: break-word;
-    background: #ffffff; border: 1px solid var(--vc-line); border-radius: 14px; border-bottom-left-radius: 4px;
+    background: #ffffff; border: 1px solid var(--vc-line); border-radius: 0; 
 }
 .vibe-message.user .vibe-message-bubble {
-    color: #ffffff; background: var(--vc-ink); border-color: var(--vc-ink);
-    border-bottom-left-radius: 14px; border-bottom-right-radius: 4px;
+    color: #ffffff; background: #111111; border-color: #111111;
+    
 }
-.vibe-message.staff .vibe-message-bubble { background: #f4ecde; border-color: #e6d8bd; }
+.vibe-message.staff .vibe-message-bubble { background: #eeeeee; border-color: #dddddd; }
 .vibe-message-time { margin-top: 4px; font-size: 10px; color: var(--vc-muted); }
 .vibe-message.is-typing .vibe-message-bubble { color: var(--vc-muted); letter-spacing: 3px; }
 .vibe-chat-login { display: block; margin-top: 6px; font-weight: 700; text-decoration: underline; color: var(--vc-ink); }
@@ -109,7 +121,7 @@ v
 .vibe-chat-suggestions[hidden] { display: none; }
 .vibe-chat-suggestions button {
     padding: 7px 12px; font: inherit; font-size: 12px; color: var(--vc-ink);
-    background: #ffffff; border: 1px solid #d8d8d8; border-radius: 999px; cursor: pointer;
+    background: #ffffff; border: 1px solid #dddddd; border-radius: 0; cursor: pointer;
 }
 .vibe-chat-suggestions button:hover { color: #ffffff; background: var(--vc-ink); border-color: var(--vc-ink); }
 
@@ -117,18 +129,18 @@ v
 .vibe-chat-form[hidden] { display: none; }
 .vibe-chat-form textarea {
     flex: 1; max-height: 110px; padding: 10px 12px; font: inherit; font-size: 13px; resize: none; outline: none;
-    border: 1px solid #dcdcdc; border-radius: 10px;
+    border: 1px solid #dddddd; border-radius: 0;
 }
 .vibe-chat-form textarea:focus { border-color: var(--vc-ink); }
 .vibe-chat-form textarea:disabled { background: var(--vc-soft); }
 .vibe-chat-form button {
-    width: 40px; height: 40px; flex: 0 0 auto; color: #ffffff; background: var(--vc-ink); border: 0; border-radius: 10px; cursor: pointer;
+    width: 40px; height: 40px; flex: 0 0 auto; color: #ffffff; background: var(--vc-ink); border: 0; border-radius: 0; cursor: pointer;
 }
 .vibe-chat-form button:disabled { opacity: 0.5; cursor: default; }
 
 .vibe-chat-new {
-    margin: 12px 14px; padding: 12px; font: inherit; font-size: 12px; font-weight: 600; letter-spacing: 1px;
-    color: #ffffff; background: var(--vc-ink); border: 0; border-radius: 10px; cursor: pointer;
+    margin: 12px 14px; padding: 12px; font: inherit; font-size: 12px; font-weight: 600; letter-spacing: 2px;
+    color: #ffffff; background: var(--vc-ink); border: 0; border-radius: 0; cursor: pointer;
 }
 .vibe-chat-new[hidden] { display: none; }
 

@@ -8,7 +8,14 @@ $trang_hien_tai = $trang_hien_tai ?? '';
 $css_rieng = $css_rieng ?? [];
  
 $da_dang_nhap = da_dang_nhap();
-$so_luong_gio = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
+$so_luong_gio = 0;
+if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
+    foreach ($_SESSION['cart'] as $mon_hang) {
+        if (is_array($mon_hang)) {
+            $so_luong_gio += (int) ($mon_hang['qty'] ?? 0);
+        }
+    }
+}
 ?>
  
 <!DOCTYPE html>
@@ -24,6 +31,9 @@ $so_luong_gio = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/common.css?v=2">
+
+    <?php $tep_theme = __DIR__ . '/../assets/css/vibe-theme.css'; ?>
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/vibe-theme.css?v=<?= is_file($tep_theme) ? filemtime($tep_theme) : 1 ?>">
     <!-- Thư viện icon dùng chung -->
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
@@ -104,6 +114,4 @@ $so_luong_gio = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
  
 <script>
     const IS_LOGGED_IN = <?= !empty($_SESSION['user_id']) ? 'true' : 'false' ?>;
-</script>
-</body>
-</html>     
+</script>     

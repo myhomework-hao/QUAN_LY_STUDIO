@@ -2,7 +2,8 @@
 require_once __DIR__ . '/khung_nv.php';
 
 const LOAI_HOP_LE = ['phong_chup', 'thiet_bi', 'trang_phuc', 'phu_kien'];
-const DON_VI_HOP_LE = ['gio', 'ngay', 'bo'];
+// Lưu đúng dạng có dấu như dữ liệu hiện có trong DB: giờ / ngày / lượt / bộ
+const DON_VI_HOP_LE = ['giờ', 'ngày', 'lượt', 'bộ'];
 
 $ma_sua = (int) ($_GET['id'] ?? $_POST['ma_sua'] ?? 0);
 $dv_cu = null;
@@ -66,7 +67,7 @@ $du_lieu = [
     'ten' => $dv_cu['DV_Ten'] ?? '', 'loai' => $dv_cu['DV_Loai'] ?? 'phong_chup',
     'mo_ta' => $dv_cu['DV_MoTa'] ?? '', 'mo_ta_ct' => $dv_cu['DV_MoTaChiTiet'] ?? '',
     'gia' => isset($dv_cu['DV_GiaThue']) ? (string) (int) $dv_cu['DV_GiaThue'] : '',
-    'don_vi' => $dv_cu['DV_DonViTinh'] ?? 'gio', 'so_luong' => (string) ($dv_cu['DV_SoLuong'] ?? 1),
+    'don_vi' => nhan_don_vi((string) ($dv_cu['DV_DonViTinh'] ?? 'giờ')), 'so_luong' => (string) ($dv_cu['DV_SoLuong'] ?? 1),
     'hien' => (int) ($dv_cu['DV_DangBan'] ?? 1), 'thuoc_tinh' => $dv_cu ? lay_thuoc_tinh($conn, $dv_cu['DV_Loai'], $ma_sua) : '',
 ];
 
@@ -81,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'mo_ta' => trim((string) ($_POST['mo_ta'] ?? '')),
         'mo_ta_ct' => trim((string) ($_POST['mo_ta_ct'] ?? '')),
         'gia' => trim((string) ($_POST['gia'] ?? '')),
-        'don_vi' => (string) ($_POST['don_vi'] ?? ''),
+        'don_vi' => nhan_don_vi((string) ($_POST['don_vi'] ?? '')),
         'so_luong' => trim((string) ($_POST['so_luong'] ?? '')),
         'hien' => isset($_POST['hien']) ? 1 : 0,
         'thuoc_tinh' => trim((string) ($_POST['thuoc_tinh'] ?? '')),
@@ -165,7 +166,7 @@ $loi_truong = function (string $khoa) use ($loi) {
                     <div class="field">
                         <label for="don_vi">Tính theo</label>
                         <select id="don_vi" name="don_vi">
-                            <?php foreach (DON_VI_HOP_LE as $m) : ?><option value="<?= $m ?>" <?= $du_lieu['don_vi'] === $m ? 'selected' : '' ?>><?= h(ucfirst(ten_don_vi_gia($m))) ?></option><?php endforeach; ?>
+                            <?php foreach (DON_VI_HOP_LE as $m) : ?><option value="<?= h($m) ?>" <?= $du_lieu['don_vi'] === $m ? 'selected' : '' ?>><?= h(ucfirst($m)) ?></option><?php endforeach; ?>
                         </select>
                         <?php $loi_truong('don_vi'); ?>
                     </div>

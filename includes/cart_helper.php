@@ -3,11 +3,16 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/don_vi.php';
+
+// Dịch vụ tính theo lượt: tạm dùng khung 1 giờ để vẫn kiểm tra được trùng lịch.
+const THOI_LUONG_LUOT_GIAY = 3600;
+
 function tinh_so_don_vi(string $don_vi, string $bat_dau, string $ket_thuc): int
 {
-    $don_vi = strtolower(trim($don_vi));
+    $don_vi = chuan_hoa_don_vi($don_vi);
 
-    if ($don_vi === 'bo' || $don_vi === 'bộ' || $don_vi === 'luot' || $don_vi === 'lượt') {
+    if ($don_vi === 'bo' || $don_vi === 'luot') {
         return 1;
     }
 
@@ -21,7 +26,7 @@ function tinh_so_don_vi(string $don_vi, string $bat_dau, string $ket_thuc): int
     $diff_seconds = $den - $tu;
 
     // Nếu là giờ: tính chuẩn xác số giờ chênh lệch (làm tròn lên mỗi giờ)
-    if ($don_vi === 'gio' || $don_vi === 'giờ' || str_starts_with($don_vi, 'gi')) {
+    if ($don_vi === 'gio') {
         return max(1, (int) ceil($diff_seconds / 3600));
     }
 
@@ -78,33 +83,40 @@ function lay_gio_hang($conn) {
 
 function thoi_gian_thue(string $don_vi, string $bat_dau, string $ket_thuc): ?array
 {
-    $don_vi = strtolower(trim($don_vi));
+    $don_vi = chuan_hoa_don_vi($don_vi);
     $tu = strtotime($bat_dau);
+
+    if ($tu === false) {
+        return null;
+    }
+
+    // Dịch vụ tính theo LƯỢT: khách chỉ chọn một mốc thời điểm.
+    // Mở rộng thành khung 1 giờ để vẫn kiểm tra được trùng lịch.
+    if ($don_vi === 'luot') {
+        return [
+            'bat_dau'  => date('Y-m-d H:i:s', $tu),
+            'ket_thuc' => date('Y-m-d H:i:s', $tu + THOI_LUONG_LUOT_GIAY),
+        ];
+    }
+
     $den = strtotime($ket_thuc);
 
-    if ($tu === false || $den === false || $den <= $tu) {
+    if ($den === false || $den <= $tu) {
         return null;
     }
 
     // Dịch vụ tính theo GIỜ: Cho phép chọn linh hoạt mọi khung giờ (ví dụ 8:00 -> 9:00, hoặc 8:00 -> 20:00)
-    if ($don_vi === 'gio' || $don_vi === 'giờ' || str_starts_with($don_vi, 'gi')) {
+    if ($don_vi === 'gio') {
         return [
-            'bat_dau' => date('Y-m-d H:i:s', $tu), 
-            'ket_thuc' => date('Y-m-d H:i:s', $den)
+            'bat_dau'  => date('Y-m-d H:i:s', $tu),
+            'ket_thuc' => date('Y-m-d H:i:s', $den),
         ];
     }
 
-    // Dịch vụ tính theo NGÀY: Giữ nguyên logic chuẩn hóa ngày của studio
-    $ngay_nhan = date('Y-m-d', $tu);
-    $ngay_tra = date('Y-m-d', $den);
-
-    if ($ngay_tra < $ngay_nhan) {
-        return null;
-    }
-
+    // Dịch vụ tính theo NGÀY / BỘ: giữ đúng giờ khách đã chọn trên form.
     return [
-        'bat_dau' => $ngay_nhan . ' 08:00:00',
-        'ket_thuc' => $ngay_tra === $ngay_nhan ? $ngay_nhan . ' 20:00:00' : $ngay_tra . ' 08:00:00',
+        'bat_dau' => date('Y-m-d H:i:s', $tu),
+        'ket_thuc' => date('Y-m-d H:i:s', $den),
     ];
 }
 

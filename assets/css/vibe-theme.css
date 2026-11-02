@@ -1,0 +1,327 @@
+/* ==================================================
+   VIBE STUDIO - THEME DÙNG CHUNG
+   Bảng màu + kiểu chữ chuẩn cho toàn website.
+
+   Thứ tự nạp trong includes/header.php:
+   common.css  ->  vibe-theme.css  ->  css riêng của trang
+================================================== */
+
+
+/* ==================================================
+   1. BIẾN DÙNG CHUNG (DESIGN TOKENS)
+================================================== */
+
+:root {
+    /* --- Nền --- */
+    --vibe-white: #ffffff;
+    --vibe-bg-soft: #f5f5f5;
+    --vibe-item: #eeeeee;
+    --vibe-dark: #111111;
+    --vibe-dark-hover: #1c1c1c;
+
+    /* --- Chữ trên nền sáng --- */
+    --vibe-text: #111111;
+    --vibe-text-muted: #555555;
+    --vibe-text-soft: #777777;
+    --vibe-text-faint: #888888;
+
+    /* --- Chữ trên nền tối --- */
+    --vibe-on-dark: #ffffff;
+    --vibe-on-dark-muted: #bbbbbb;
+    --vibe-on-dark-soft: #999999;
+    --vibe-on-dark-faint: #888888;
+
+    /* --- Đường kẻ / viền --- */
+    --vibe-line: #e5e5e5;
+
+    /* --- Phông chữ --- */
+    --vibe-font: "Montserrat", sans-serif;
+    --vibe-font-accent: "Playfair Display", serif;
+
+    /* --- Cỡ chữ --- */
+    --vibe-text-xs: 11px;
+    --vibe-text-sm: 13px;
+    --vibe-text-base: 16px;
+    --vibe-text-lg: 18px;
+    --vibe-heading-sm: clamp(22px, 3vw, 32px);
+    --vibe-heading-lg: clamp(34px, 5vw, 60px);
+
+    /* --- Giãn chữ --- */
+    --vibe-tracking: 0.04em;
+    --vibe-tracking-wide: 0.22em;
+
+    /* --- Khoảng cách / bo góc --- */
+    --vibe-radius: 8px;
+    --vibe-radius-sm: 6px;
+    --vibe-container: 1240px;
+    --vibe-gap: 24px;
+    --vibe-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+
+    /* --- Ghi đè biến cũ để toàn site dùng chung một bảng màu --- */
+    --ink: var(--vibe-text);
+    --muted: var(--vibe-text-soft);
+    --line: var(--vibe-line);
+    --soft: var(--vibe-bg-soft);
+}
+
+
+/* ==================================================
+   2. KIỂU CHỮ
+================================================== */
+
+body {
+    font-family: var(--vibe-font);
+    background: var(--vibe-white);
+    color: var(--vibe-text);
+    -webkit-font-smoothing: antialiased;
+}
+
+h1 i,
+h2 i,
+h3 i,
+h4 i {
+    font-family: var(--vibe-font-accent);
+    font-weight: 500;
+}
+
+.vibe-heading {
+    margin: 0;
+    font-family: var(--vibe-font);
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    color: var(--vibe-text);
+}
+
+.vibe-heading--lg {
+    font-size: var(--vibe-heading-lg);
+}
+
+.vibe-heading--sm {
+    font-size: var(--vibe-heading-sm);
+}
+
+.vibe-eyebrow {
+    margin: 0;
+    font-size: var(--vibe-text-xs);
+    font-weight: 600;
+    letter-spacing: var(--vibe-tracking-wide);
+    text-transform: uppercase;
+    color: var(--vibe-text-faint);
+}
+
+.vibe-body {
+    font-size: var(--vibe-text-base);
+    line-height: 1.7;
+    color: var(--vibe-text-muted);
+}
+
+.vibe-text-muted {
+    color: var(--vibe-text-muted);
+}
+
+.vibe-text-soft {
+    color: var(--vibe-text-soft);
+}
+
+.vibe-text-faint {
+    color: var(--vibe-text-faint);
+}
+
+
+/* ==================================================
+   3. KHUNG TRANG
+================================================== */
+
+.vibe-container {
+    width: min(100% - 40px, var(--vibe-container));
+    margin-inline: auto;
+}
+
+.vibe-gallery {
+    background: var(--vibe-bg-soft);
+}
+
+.vibe-divider {
+    border: 0;
+    border-top: 1px solid var(--vibe-line);
+}
+
+
+/* ==================================================
+   4. SECTION NỀN TỐI (About, Services, Booking, Footer)
+================================================== */
+
+.vibe-dark {
+    background: var(--vibe-dark);
+    color: var(--vibe-on-dark);
+}
+
+.vibe-dark .vibe-heading,
+.vibe-dark h1,
+.vibe-dark h2,
+.vibe-dark h3 {
+    color: var(--vibe-on-dark);
+}
+
+.vibe-dark .vibe-body,
+.vibe-dark p {
+    color: var(--vibe-on-dark-muted);
+}
+
+.vibe-dark .vibe-eyebrow,
+.vibe-dark .vibe-number {
+    color: var(--vibe-on-dark-faint);
+}
+
+.vibe-dark a {
+    color: var(--vibe-on-dark);
+}
+
+.vibe-dark a:hover {
+    color: var(--vibe-on-dark-muted);
+}
+
+
+/* ==================================================
+   5. ITEM / DANH SÁCH DỊCH VỤ
+================================================== */
+
+.vibe-item {
+    background: var(--vibe-item);
+    border-radius: var(--vibe-radius);
+    transition:
+        background 0.3s var(--vibe-ease),
+        color 0.3s var(--vibe-ease),
+        transform 0.3s var(--vibe-ease);
+}
+
+.vibe-item:hover,
+.vibe-item:focus-visible {
+    background: var(--vibe-dark-hover);
+    color: var(--vibe-on-dark);
+}
+
+
+/* ==================================================
+   6. NÚT
+================================================== */
+
+.vibe-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    padding: 16px 28px;
+    border: 1px solid transparent;
+    border-radius: var(--vibe-radius-sm);
+
+    font-family: var(--vibe-font);
+    font-size: var(--vibe-text-xs);
+    font-weight: 600;
+    letter-spacing: var(--vibe-tracking);
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+
+    transition:
+        background 0.3s var(--vibe-ease),
+        color 0.3s var(--vibe-ease),
+        border-color 0.3s var(--vibe-ease);
+}
+
+.vibe-btn--dark {
+    background: var(--vibe-dark);
+    border-color: var(--vibe-dark);
+    color: var(--vibe-on-dark);
+}
+
+.vibe-btn--dark:hover {
+    background: var(--vibe-dark-hover);
+    border-color: var(--vibe-dark-hover);
+    color: var(--vibe-on-dark);
+}
+
+.vibe-btn--light {
+    background: var(--vibe-white);
+    border-color: var(--vibe-line);
+    color: var(--vibe-text);
+}
+
+.vibe-btn--light:hover {
+    background: var(--vibe-bg-soft);
+}
+
+.vibe-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+/* ==================================================
+   7. TẠM TÍNH (TRANG CHI TIẾT DỊCH VỤ)
+================================================== */
+
+.vibe-price-summary {
+    margin: 4px 0 18px;
+    padding: 16px 18px;
+
+    background: var(--vibe-bg-soft);
+    border: 1px solid var(--vibe-line);
+    border-radius: var(--vibe-radius);
+}
+
+.vibe-price-summary-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.vibe-price-summary-row span {
+    font-size: var(--vibe-text-xs);
+    font-weight: 600;
+    letter-spacing: var(--vibe-tracking-wide);
+    text-transform: uppercase;
+    color: var(--vibe-text-soft);
+}
+
+.vibe-price-summary-row strong {
+    font-size: clamp(20px, 3vw, 26px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--vibe-text);
+}
+
+.vibe-price-summary-note {
+    display: block;
+    margin-top: 6px;
+
+    font-size: 12px;
+    color: var(--vibe-text-faint);
+}
+
+
+/* ==================================================
+   8. FOOTER THEO BẢNG MÀU TỐI
+   Muốn quay lại nền cũ: xoá riêng khối này.
+================================================== */
+
+.site-footer {
+    background: var(--vibe-dark);
+    color: var(--vibe-on-dark);
+}
+
+.site-footer .footer-logo,
+.site-footer a {
+    color: var(--vibe-on-dark);
+}
+
+.site-footer .footer-copyright {
+    color: var(--vibe-on-dark-faint);
+}
+
+.site-footer a:hover {
+    color: var(--vibe-on-dark-muted);
+}

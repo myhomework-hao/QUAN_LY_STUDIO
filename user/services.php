@@ -18,7 +18,7 @@ $sql = "SELECT dv.DV_Ma AS id, dv.DV_Ten AS ten, dv.DV_Loai AS loai, dv.DV_GiaTh
                 JOIN dondatlich d ON d.DDL_Ma = c.DDL_Ma 
                 WHERE c.DV_Ma = dv.DV_Ma 
                   AND d.DDL_TrangThai IN ('Chờ duyệt', 'Đã duyệt') 
-                  AND c.CTD_KetThuc > NOW()) AS da_dat,
+                  AND c.CTD_BatDau <= NOW() AND c.CTD_KetThuc > NOW()) AS da_dat,
                (SELECT AVG(dg.DG_SoSao) FROM danhgia dg WHERE dg.DV_Ma = dv.DV_Ma) AS diem_tb,
                (SELECT COUNT(*) FROM danhgia dg WHERE dg.DV_Ma = dv.DV_Ma) AS so_danh_gia
         FROM dichvu dv

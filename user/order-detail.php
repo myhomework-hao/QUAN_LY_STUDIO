@@ -89,6 +89,11 @@ if ($don && $la_chu_don && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $thong_bao = 'Mỗi dịch vụ trong đơn chỉ được đánh giá một lần.';
             $loai_thong_bao = 'error';
 
+        } elseif (mb_strlen($noi_dung) > 1000) {
+
+            $thong_bao = 'Nội dung đánh giá không được dài quá 1000 ký tự.';
+            $loai_thong_bao = 'error';
+
         } elseif ($so_sao < 1 || $so_sao > 5) {
 
             $thong_bao = 'Vui lòng chọn số sao từ 1 đến 5.';

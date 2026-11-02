@@ -3,6 +3,7 @@
 require_once '../config/app.php';
 require_once '../config/db.php';
 require_once '../includes/dich_vu.php';
+require_once '../includes/cart_helper.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -26,7 +27,7 @@ if (!$dv) {
 }
 
 $tg = thoi_gian_thue($dv['DV_DonViTinh'], $bat_dau, $ket_thuc);
-if ($tg === null || strtotime($tg['ket_thuc']) <= time()) {
+if ($tg === null || strtotime($tg['bat_dau']) <= time() || strtotime($tg['ket_thuc']) <= time()) {
     echo json_encode(['con_lai' => 0, 'loi' => 'Thời gian không hợp lệ']);
     exit;
 }

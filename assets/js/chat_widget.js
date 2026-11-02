@@ -141,10 +141,17 @@
         if (st.daMo) { return; }
         st.daMo = true;
         goi({ action: 'open' }).then(function (d) {
-            if (d._status === 401 || d._status === 403) { st.dangNhap = false; return; }
-            if (!d.success || !d.conversation_id) { hienNut(); return; }
+            if (d._status === 401 || d._status === 403) { st.dangNhap = false; st.daMo = false; return; }
+            if (!d.success) {
+                st.daMo = false;
+                veTin('bot', d.message || 'Không tải được lịch sử trò chuyện. Bạn thử đóng rồi mở lại khung chat nhé.', gio(''));
+                cuonXuong();
+                hienNut();
+                return;
+            }
+            if (!d.conversation_id) { hienNut(); return; }
             st.conv = d.conversation_id;
-            d.messages.forEach(themTin);
+            (Array.isArray(d.messages) ? d.messages : []).forEach(themTin);
             capNhatTrangThai(d);
             cuonXuong();
         });
@@ -155,9 +162,9 @@
         goi({ action: 'poll', conversation_id: st.conv, after_id: st.lastId }).then(function (d) {
             if (!d.success) { return; }
             var coMoi = false;
-            d.messages.forEach(function (m) { if (themTin(m)) { coMoi = true; } });
+            (Array.isArray(d.messages) ? d.messages : []).forEach(function (m) { if (themTin(m)) { coMoi = true; } });
             capNhatTrangThai(d);
-            if (d.messages.length) { cuonXuong(); }
+            if (d.messages && d.messages.length) { cuonXuong(); }
             if (coMoi && panel.hidden) { toggle.classList.add('has-new'); }
         });
     }
@@ -221,7 +228,7 @@
                 return;
             }
             st.conv = d.conversation_id;
-            d.messages.forEach(themTin);
+            (Array.isArray(d.messages) ? d.messages : []).forEach(themTin);
             capNhatTrangThai(d);
             cuonXuong();
         });

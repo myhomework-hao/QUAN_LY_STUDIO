@@ -92,6 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
                     $loi_form = 'Vui lòng chọn lại thời gian thuê hợp lệ cho "' . $item['ten'] . '".';
                     break;
                 }
+                if (strtotime($tg['bat_dau']) <= time()) {
+                    $loi_form = 'Thời gian thuê của "' . $item['ten'] . '" đã qua, vui lòng chọn lại.';
+                    break;
+                }
                 if (strtotime($tg['ket_thuc']) <= time()) {
                     $loi_form = 'Thời gian thuê của "' . $item['ten'] . '" đã qua, vui lòng chọn lại.';
                     break;
@@ -189,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
 }
 
 $tieu_de_trang = 'Thanh toán - VIBE Studio';
-$css_rieng = [BASE_URL . 'assets/css/cart.css'];
+$css_rieng = [BASE_URL . 'assets/css/cart.css?v=' . (is_file(__DIR__ . '/../assets/css/cart.css') ? filemtime(__DIR__ . '/../assets/css/cart.css') : time())];
 require_once '../includes/header.php';
 ?>
 
@@ -317,8 +321,10 @@ require_once '../includes/header.php';
                                     <br>
                                     <small style="color:#777;">
                                         <?= htmlspecialchars(dinh_dang_ngay_gio($item['bat_dau'])) ?>
-                                        → <?= htmlspecialchars(dinh_dang_ngay_gio($item['ket_thuc'])) ?>
-                                        (<?= (int) $item['so_don_vi'] ?> <?= ['gio' => 'giờ', 'ngay' => 'ngày', 'bo' => 'lần'][$item['don_vi']] ?? '' ?>)
+                                        <?php if (!la_don_vi_luot((string) $item['don_vi'])) : ?>
+                                            → <?= htmlspecialchars(dinh_dang_ngay_gio($item['ket_thuc'])) ?>
+                                        <?php endif; ?>
+                                        (<?= (int) $item['so_don_vi'] ?> <?= htmlspecialchars(nhan_don_vi((string) $item['don_vi'])) ?>)
                                     </small>
                                 </span>
                                 <span><?= dinh_dang_tien($item['subtotal']) ?></span>

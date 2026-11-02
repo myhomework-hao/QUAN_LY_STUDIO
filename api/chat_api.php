@@ -73,6 +73,21 @@ function chat_get_owned_conversation(PDO $conn, int $conversationId, int $userId
     return $conversation;
 }
 
+function chat_hoi_thoai_gan_nhat(PDO $conn, int $userId): ?array
+{
+    $stmt = $conn->prepare(
+        'SELECT CHT_Ma, CHT_TrangThai
+         FROM chat_hoi_thoai
+         WHERE ND_Ma = ?
+         ORDER BY CHT_NgayCapNhat DESC, CHT_Ma DESC
+         LIMIT 1'
+    );
+    $stmt->execute([$userId]);
+    $hoiThoai = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $hoiThoai ?: null;
+}
+
 function chat_create_conversation(PDO $conn, int $userId, ?int $productId): int
 {
     $title = 'Hỗ trợ khách hàng VIBE STUDIO';
@@ -210,17 +225,13 @@ $action = trim((string) ($data['action'] ?? 'send'));
 
 try {
     if ($action === 'open') {
-        $stmt = $conn->prepare(
-            "SELECT CHT_Ma FROM chat_hoi_thoai WHERE ND_Ma = ? ORDER BY CHT_Ma DESC LIMIT 1"
-        );
-        $stmt->execute([$userId]);
-        $conversationId = $stmt->fetchColumn();
+        $hoiThoai = chat_hoi_thoai_gan_nhat($conn, $userId);
 
-        if ($conversationId === false) {
+        if ($hoiThoai === null) {
             chat_json(['success' => true, 'conversation_id' => null, 'messages' => []]);
         }
 
-        $conversationId = (int) $conversationId;
+        $conversationId = (int) $hoiThoai['CHT_Ma'];
         $messages = chat_get_messages($conn, $conversationId);
         chat_mark_read($conn, $conversationId);
 
@@ -282,7 +293,13 @@ try {
     $conn->beginTransaction();
 
     if ($conversationId === null) {
-        $conversationId = chat_create_conversation($conn, $userId, $productId);
+        $hoiThoai = chat_hoi_thoai_gan_nhat($conn, $userId);
+
+        if ($hoiThoai !== null && $hoiThoai['CHT_TrangThai'] !== 'da_dong') {
+            $conversationId = (int) $hoiThoai['CHT_Ma'];
+        } else {
+            $conversationId = chat_create_conversation($conn, $userId, $productId);
+        }
     }
 
     $conversation = chat_get_owned_conversation($conn, $conversationId, $userId);
