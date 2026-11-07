@@ -3,6 +3,7 @@ require_once '../config/app.php';
 require_once '../config/auth.php';
 require_once '../config/db.php';
 require_once '../includes/dich_vu.php';
+require_once '../includes/security.php';
 
 $ten_danh_muc_theo_loai = [
     'thiet_bi'   => 'Máy ảnh - thiết bị',
@@ -183,6 +184,7 @@ require_once '../includes/header.php';
 
             <!-- Form gửi dữ liệu đặt thuê trỏ thẳng vào cart.php ở root -->
             <form method="post" action="cart.php">
+                <?= csrf_input() ?>
                 <input type="hidden" name="service_id" value="<?= (int) $dv['id'] ?>">
                 <input type="hidden" name="so_luong" id="so-luong-gui" value="1"
                        data-toi-da="<?= (int) $con_lai_ban_dau ?>"

@@ -3,6 +3,7 @@
 require_once '../config/app.php';
 require_once '../config/db.php';
 require_once '../config/auth.php';
+require_once '../includes/security.php';
 require_once '../includes/header.php';
 
 $product_id = filter_input(INPUT_GET, 'product_id', FILTER_VALIDATE_INT);
@@ -143,7 +144,8 @@ $trang_hien_tai = 'chat';
 <script>
     window.CHAT_CONFIG = {
         productId: <?= $product_id ? (int) $product_id : 'null' ?>,
-        apiUrl: <?= json_encode(BASE_URL . 'api/chat_api.php') ?>
+        apiUrl: <?= json_encode(BASE_URL . 'api/chat_api.php') ?>,
+        csrf: <?= json_encode(csrf_token()) ?>
     };
 </script>
 <script src="<?= BASE_URL ?>assets/js/chat.js" defer></script>

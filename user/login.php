@@ -2,6 +2,7 @@
 require_once '../config/app.php';
 require_once '../config/auth.php';
 require_once '../config/db.php';
+require_once '../includes/security.php';
 require_once '../includes/o-mat-khau.php';
 
 if (da_dang_nhap()) {
@@ -23,7 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if ($email === '' || $password === '') {
+    if (!csrf_hop_le()) {
+
+        $message = 'Phiên làm việc đã hết hạn, vui lòng tải lại trang và thử lại.';
+        $message_type = 'error';
+
+    } elseif ($email === '' || $password === '') {
 
         $message = 'Vui lòng nhập email và mật khẩu.';
         $message_type = 'error';
@@ -31,6 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
         $message = 'Email không hợp lệ.';
+        $message_type = 'error';
+
+    } elseif (bi_khoa_dang_nhap($conn, $email)) {
+
+        $message = 'Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau 15 phút.';
         $message_type = 'error';
 
     } else {
@@ -46,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$user || !password_verify($password, $user['ND_MatKhau'])) {
 
+            ghi_dang_nhap_sai($conn, $email);
             $message = 'Email hoặc mật khẩu không chính xác.';
             $message_type = 'error';
 
@@ -57,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         } else {
 
+            xoa_dang_nhap_sai($conn, $email);
             session_regenerate_id(true);
 
             $_SESSION['user_id'] = (int) $user['ND_Ma'];
@@ -94,6 +107,8 @@ require_once '../includes/header.php';
         <?php endif; ?>
 
         <form method="POST" action="" novalidate>
+
+            <?= csrf_input() ?>
 
             <label for="email">Email</label>
             <input type="email" id="email" name="email" placeholder="ten@email.com" autocomplete="email"

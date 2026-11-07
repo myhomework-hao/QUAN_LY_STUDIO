@@ -1,0 +1,2 @@
+# Chặn truy cập trực tiếp vào các file SQL trong thư mục này.
+Require all denied

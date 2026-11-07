@@ -151,12 +151,15 @@ nv_dau('Chat khách hàng', 'chat');
 <script>
 (function () {
     var API = <?= json_encode(BASE_URL . 'api/chat_nv_api.php') ?>;
+    var CSRF = <?= json_encode(csrf_token()) ?>;
     var $ = function (id) { return document.getElementById(id); };
 
     var st = { loc: 'cho', conv: null, lastId: 0, seen: {}, me: null, busy: false };
     var ds = $('nv-ds'), msgs = $('nv-msgs'), input = $('nv-input'), thongbao = $('nv-thongbao');
 
     function goi(body) {
+        body.csrf = CSRF;
+
         return fetch(API, {
             method: 'POST', credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)

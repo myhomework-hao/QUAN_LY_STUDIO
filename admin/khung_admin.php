@@ -4,6 +4,7 @@ require_once __DIR__ . '/../config/auth.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/donhang.php';
 require_once __DIR__ . '/../includes/don_vi.php';
+require_once __DIR__ . '/../includes/security.php';
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 yeu_cau_vai_tro('admin');
@@ -34,24 +35,6 @@ function lay_mot(PDO $conn, string $sql, array $tham_so = [])
     $stmt = $conn->prepare($sql);
     $stmt->execute($tham_so);
     return $stmt->fetch(PDO::FETCH_ASSOC);
-}
-
-function csrf_token(): string
-{
-    if (empty($_SESSION['csrf_admin'])) {
-        $_SESSION['csrf_admin'] = bin2hex(random_bytes(16));
-    }
-    return $_SESSION['csrf_admin'];
-}
-
-function csrf_input(): string
-{
-    return '<input type="hidden" name="csrf" value="' . h(csrf_token()) . '">';
-}
-
-function csrf_hop_le(): bool
-{
-    return isset($_POST['csrf']) && hash_equals(csrf_token(), (string) $_POST['csrf']);
 }
 
 function dat_thong_bao(string $noi_dung, string $loai = 'success'): void

@@ -2,6 +2,7 @@
 require_once '../config/app.php';
 require_once '../config/auth.php';
 require_once '../config/db.php';
+require_once '../includes/security.php';
 
 yeu_cau_dang_nhap();
 
@@ -30,6 +31,12 @@ if (!$user) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $hanh_dong = $_POST['hanh_dong'] ?? '';
+
+    if (!csrf_hop_le()) {
+        $message = 'Phiên làm việc đã hết hạn, vui lòng tải lại trang và thử lại.';
+        $message_type = 'error';
+        $hanh_dong = '';
+    }
 
     if ($hanh_dong === 'cap_nhat_thong_tin') {
 
@@ -155,6 +162,7 @@ require_once '../includes/header.php';
                 <h2 class="hs-tieu-de">Thông tin <i>cá nhân</i></h2>
 
                 <form method="POST" action="">
+                    <?= csrf_input() ?>
                     <input type="hidden" name="hanh_dong" value="cap_nhat_thong_tin">
 
                     <label for="name">Họ và tên</label>
@@ -175,6 +183,7 @@ require_once '../includes/header.php';
                 <h2 class="hs-tieu-de">Đổi <i>mật khẩu</i></h2>
 
                 <form method="POST" action="">
+                    <?= csrf_input() ?>
                     <input type="hidden" name="hanh_dong" value="doi_mat_khau">
 
                     <label for="mat_khau_hien_tai">Mật khẩu hiện tại</label>

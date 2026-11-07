@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once '../config/app.php';
 require_once '../config/db.php';
 require_once '../config/auth.php';
+require_once '../includes/security.php';
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 header('Content-Type: application/json; charset=utf-8');
@@ -139,6 +140,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $maNhanVien = nv_yeu_cau_nhan_vien($conn);
 $data = nv_doc_du_lieu();
+
+if (!csrf_hop_le($data['csrf'] ?? null)) {
+    nv_json(['success' => false, 'message' => 'Phiên làm việc đã hết hạn, vui lòng tải lại trang và thử lại.'], 403);
+}
+
 $action = trim((string) ($data['action'] ?? ''));
 
 try {

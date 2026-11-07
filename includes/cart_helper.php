@@ -1,8 +1,4 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 require_once __DIR__ . '/don_vi.php';
 
 // Dịch vụ tính theo lượt: tạm dùng khung 1 giờ để vẫn kiểm tra được trùng lịch.

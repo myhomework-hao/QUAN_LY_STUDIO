@@ -2,6 +2,7 @@
 require_once '../config/app.php';
 require_once '../config/auth.php';
 require_once '../config/db.php';
+require_once '../includes/security.php';
 require_once '../includes/o-mat-khau.php';
 
 if (da_dang_nhap()) {
@@ -19,6 +20,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
+
+    if (!csrf_hop_le()) {
+        $loi['chung'] = 'Phiên làm việc đã hết hạn, vui lòng tải lại trang và thử lại.';
+    }
 
     if ($name === '') {
         $loi['name'] = 'Vui lòng nhập họ và tên.';
@@ -80,7 +85,14 @@ require_once '../includes/header.php';
         <p class="small-title">ACCOUNT</p>
         <h1>ĐĂNG <i>KÝ</i></h1>
 
+        <?php if (isset($loi['chung'])): ?>
+            <p class="message error" role="alert"><?= htmlspecialchars($loi['chung']) ?></p>
+        <?php endif; ?>
+
         <form method="POST" action="" novalidate>
+
+            <?= csrf_input() ?>
+
 
             <label for="name">Họ và tên</label>
             <input type="text" id="name" name="name" placeholder="Nguyễn Văn A" maxlength="100" autocomplete="name"

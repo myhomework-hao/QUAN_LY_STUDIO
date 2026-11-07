@@ -3,8 +3,9 @@ require_once '../config/app.php';
 require_once '../config/auth.php';
 require_once '../config/db.php';
 require_once '../includes/cart_helper.php';
-require_once '../includes/coupon_helper.php'; 
+require_once '../includes/coupon_helper.php';
 require_once '../includes/donhang.php';
+require_once '../includes/security.php';
 
 yeu_cau_vai_tro('khachhang');
 
@@ -24,6 +25,12 @@ function so_luong_toi_da(PDO $conn, int $ma_dich_vu): int
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_hop_le()) {
+        $_SESSION['thong_bao_dat'] = 'Phiên làm việc đã hết hạn, vui lòng tải lại trang và thử lại.';
+        header('Location: cart.php');
+        exit;
+    }
+
     $hanh_dong = $_POST['action'] ?? 'add';
     $ma = (int) ($_POST['service_id'] ?? $_POST['id'] ?? 0);
     $so_luong = (int) ($_POST['so_luong'] ?? $_POST['qty'] ?? 1);
@@ -240,6 +247,7 @@ require_once '../includes/header.php';
                                 <?php endif; ?>
 
                                 <form method="POST" style="display:inline-block;">
+                                    <?= csrf_input() ?>
                                     <input type="hidden" name="action" value="update">
                                     <input type="hidden" name="cart_key" value="<?= htmlspecialchars($item['cart_key'] ?? '') ?>">
                                     <div class="qty">
@@ -253,6 +261,7 @@ require_once '../includes/header.php';
                                 <span class="line-total"><?= dinh_dang_tien($item['subtotal']) ?></span>
                                 
                                 <form method="POST">
+                                    <?= csrf_input() ?>
                                     <input type="hidden" name="action" value="remove">
                                     <input type="hidden" name="cart_key" value="<?= htmlspecialchars($item['cart_key'] ?? '') ?>">
                                     <button type="submit" class="link-btn">XÓA</button>
@@ -267,6 +276,7 @@ require_once '../includes/header.php';
                 <a href="services.php" class="continue">← TIẾP TỤC CHỌN DỊCH VỤ</a>
                 <?php if (!empty($cart_items)) : ?>
                     <form method="POST" style="margin:0;">
+                        <?= csrf_input() ?>
                         <input type="hidden" name="action" value="clear">
                         <button type="submit" class="link-btn">XÓA TẤT CẢ</button>
                     </form>
@@ -283,6 +293,7 @@ require_once '../includes/header.php';
             <div class="coupon-box">
                 <?php if ($coupon_info !== null) : ?>
                     <form method="POST" class="coupon-applied">
+                        <?= csrf_input() ?>
                         <div class="coupon-applied-info">
                             <span class="coupon-tag">🎉 <?= htmlspecialchars($coupon_code) ?></span>
                             <span class="coupon-desc"><?= htmlspecialchars((string) ($coupon_info['MG_MoTa'] ?? '')) ?></span>
@@ -292,6 +303,7 @@ require_once '../includes/header.php';
                     </form>
                 <?php else : ?>
                     <form method="POST" class="coupon-form">
+                        <?= csrf_input() ?>
                         <input type="hidden" name="action" value="apply_coupon">
                         <input type="text" name="coupon_code" placeholder="Nhập mã giảm giá"
                             maxlength="50" autocomplete="off" spellcheck="false">

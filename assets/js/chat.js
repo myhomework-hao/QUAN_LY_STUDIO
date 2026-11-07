@@ -110,7 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     action: 'send',
                     message: message,
                     conversation_id: conversationId,
-                    product_id: productId
+                    product_id: productId,
+                    csrf: config.csrf || ''
                 })
             });
 

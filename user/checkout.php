@@ -5,6 +5,7 @@ require_once '../config/db.php';
 require_once '../includes/cart_helper.php';
 require_once '../includes/coupon_helper.php';
 require_once '../includes/donhang.php';
+require_once '../includes/security.php';
 
 yeu_cau_vai_tro('khachhang');
 
@@ -54,8 +55,12 @@ $dia_chi        = trim($_POST['dia_chi'] ?? '');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
 
+    if (!csrf_hop_le()) {
+        $loi_form = 'Phiên làm việc đã hết hạn, vui lòng tải lại trang và thử lại.';
+    }
+
     // ===== RE-VALIDATE COUPON NGAY TRƯỚC KHI XỬ LÝ =====
-    if ($coupon_code !== '') {
+    if ($loi_form === '' && $coupon_code !== '') {
         $kq_recheck = kiem_tra_ma_giam_gia($conn, $coupon_code, (float) $totals['subtotal']);
         if (!$kq_recheck['ok']) {
             $loi_form = 'Mã giảm giá không còn hiệu lực: ' . $kq_recheck['message']
@@ -232,6 +237,8 @@ require_once '../includes/header.php';
     <?php else : ?>
         <div class="checkout-layout">
             <form class="checkout-form stack" method="POST" id="checkoutForm">
+
+                <?= csrf_input() ?>
 
                 <?php if ($empty) : ?>
                     <div class="notice">

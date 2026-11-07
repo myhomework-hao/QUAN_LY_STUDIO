@@ -3,6 +3,7 @@ require_once '../config/app.php';
 require_once '../config/auth.php';
 require_once '../config/db.php';
 require_once '../includes/donhang.php';
+require_once '../includes/security.php';
 
 yeu_cau_dang_nhap();
 
@@ -36,6 +37,12 @@ $la_chu_don = $don && (int) $don['ND_Ma'] === $ma_nguoi_dung && $vai_tro === 'kh
 if ($don && $la_chu_don && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $hanh_dong = $_POST['hanh_dong'] ?? '';
+
+    if (!csrf_hop_le()) {
+        $thong_bao = 'Phiên làm việc đã hết hạn, vui lòng tải lại trang và thử lại.';
+        $loai_thong_bao = 'error';
+        $hanh_dong = '';
+    }
 
     if ($hanh_dong === 'huy_don') {
 
@@ -268,6 +275,7 @@ require_once '../includes/header.php';
 
             <?php if ($la_chu_don && $don['DDL_TrangThai'] === TRANG_THAI_CHO_DUYET) : ?>
                 <form method="POST" action="" class="dh-huy" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn thuê này?');">
+                    <?= csrf_input() ?>
                     <input type="hidden" name="hanh_dong" value="huy_don">
                     <label for="ly_do">Lý do hủy (không bắt buộc)</label>
                     <input type="text" id="ly_do" name="ly_do" maxlength="255">
@@ -294,6 +302,7 @@ require_once '../includes/header.php';
                             <p class="dh-phu">Đã đánh giá lúc <?= htmlspecialchars(dinh_dang_ngay_gio($dg['DG_NgayTao'])) ?></p>
                         <?php else : ?>
                             <form method="POST" action="">
+                                <?= csrf_input() ?>
                                 <input type="hidden" name="hanh_dong" value="gui_danh_gia">
                                 <input type="hidden" name="ma_dich_vu" value="<?= (int) $ma_dv ?>">
 

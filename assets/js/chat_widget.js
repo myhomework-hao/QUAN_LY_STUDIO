@@ -18,6 +18,9 @@
     var timerMo = null, timerDong = null, nutKetThuc = null, nutMoi = null;
 
     function goi(body) {
+        // Gắn CSRF token vào mọi yêu cầu gửi API.
+        body.csrf = cfg.csrf || '';
+
         return fetch(cfg.apiUrl, {
             method: 'POST', credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)

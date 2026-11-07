@@ -11,6 +11,8 @@ $duoc_hien_thi_chat = in_array($vai_tro_chat, ['guest', 'khachhang'], true);
 
 if (!$la_trang_chat && $duoc_hien_thi_chat):
 
+    require_once __DIR__ . '/security.php';
+
     $js_chat = __DIR__ . '/../assets/js/chat_widget.js';
     $phien_ban_chat = is_file($js_chat) ? (string) filemtime($js_chat) : '1';
 ?>
@@ -82,6 +84,7 @@ if (!$la_trang_chat && $duoc_hien_thi_chat):
 <script>
 window.VIBE_WIDGET_CONFIG = {
     apiUrl: <?= json_encode(BASE_URL . 'api/chat_api.php') ?>,
+    csrf: <?= json_encode(csrf_token()) ?>,
     productId: <?= json_encode(isset($chat_product_id) ? (int) $chat_product_id : null) ?>,
     loginUrl: <?= json_encode(BASE_URL . 'user/login.php') ?>
 };
