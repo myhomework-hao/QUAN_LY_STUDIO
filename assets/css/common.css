@@ -309,6 +309,36 @@ h2 i {
 }
 
 
+/* Nút đăng xuất là nút submit của form POST kèm CSRF (không còn liên kết GET) */
+.tai-khoan-menu .dang-xuat-form {
+    margin: 0;
+}
+
+.tai-khoan-menu button.dang-xuat {
+    display: block;
+    width: 100%;
+    padding: 12px 20px;
+
+    border: 0;
+    border-top: 1px solid #e5e5e5;
+
+    background: transparent;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-align: left;
+    white-space: nowrap;
+
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.tai-khoan-menu button.dang-xuat:hover {
+    background: var(--soft);
+}
+
+
 /* Account avatar */
 
 .tai-khoan-nut.da-dang-nhap {

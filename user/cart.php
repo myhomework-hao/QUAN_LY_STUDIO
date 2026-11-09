@@ -171,7 +171,7 @@ foreach ($cart_items as $k => $item) {
         $cart_items[$k]['canh_bao'] = 'Thời gian thuê không hợp lệ hoặc đã qua, vui lòng xóa và chọn lại.';
     } else {
         try {
-            kiem_tra_con_cho($conn, (int) $item['id'], $item['ten'], $tg['bat_dau'], $tg['ket_thuc'], (int) $item['qty']);
+            kiem_tra_con_cho($conn, (int) $item['id'], $item['ten'], $tg['bat_dau'], $tg['ket_thuc'], (int) $item['qty'], (string) $item['kich_co']);
         } catch (DomainException $e) {
             $cart_items[$k]['canh_bao'] = $e->getMessage();
         }

@@ -15,6 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let conversationId = null;
     let isSending = false;
+    let lastId = 0;
+    let boLayTin = null;
+    let daKetThuc = false;
+    const tinDaXem = new Set();
 
     function scrollToBottom() {
         messages.scrollTop = messages.scrollHeight;
@@ -29,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function addMessage(content, sender, time = formatTime()) {
         const isUser = sender === 'khach';
+        const isStaff = sender === 'nhanvien';
 
         const wrapper = document.createElement('div');
         wrapper.className = isUser
@@ -41,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const avatarIcon = document.createElement('i');
         avatarIcon.className = isUser
             ? 'fa-solid fa-user'
-            : 'fa-solid fa-robot';
+            : (isStaff ? 'fa-solid fa-headset' : 'fa-solid fa-robot');
 
         avatar.appendChild(avatarIcon);
 
@@ -52,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         senderName.className = 'message-sender';
         senderName.textContent = isUser
             ? 'Bạn'
-            : 'Trợ lý VIBE';
+            : (isStaff ? 'Nhân viên VIBE' : 'Trợ lý VIBE');
 
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
@@ -70,10 +75,57 @@ document.addEventListener('DOMContentLoaded', () => {
         scrollToBottom();
     }
 
+    // Đổi 'YYYY-MM-DD HH:MM:SS' từ API thành giờ dạng ngắn theo máy người dùng.
+    function formatMessageTime(gia_tri) {
+        const thoiGian = new Date(String(gia_tri || '').replace(' ', 'T'));
+        return Number.isNaN(thoiGian.getTime()) ? formatTime() : formatTime(thoiGian);
+    }
+
+    // Ghi nhận mã tin nhắn đã xử lý để lần hỏi sau không vẽ trùng.
+    function ghiNhan(m) {
+        const id = Number(m && m.id);
+        if (id > 0) {
+            tinDaXem.add(id);
+            if (id > lastId) lastId = id;
+        }
+    }
+
+    // Vẽ một tin nhắn lấy từ API (bot/nhân viên) nếu chưa từng thấy.
+    function themTin(m) {
+        const id = Number(m && m.id);
+        if (id > 0 && tinDaXem.has(id)) {
+            return;
+        }
+        ghiNhan(m);
+        addMessage(m.content, m.sender || 'bot', formatMessageTime(m.created_at));
+    }
+
+    // Dòng trạng thái (chờ nhân viên / đã kết thúc), chỉ giữ một dòng duy nhất.
+    function thongBaoTrangThai(noiDung) {
+        let notice = messages.querySelector('.chat-handoff-notice');
+        if (!notice) {
+            notice = document.createElement('p');
+            notice.className = 'chat-handoff-notice';
+            messages.appendChild(notice);
+        }
+        if (notice.textContent === noiDung) {
+            return;
+        }
+        notice.textContent = noiDung;
+        scrollToBottom();
+    }
+
+    function dinhLayTin() {
+        if (boLayTin) {
+            clearInterval(boLayTin);
+            boLayTin = null;
+        }
+    }
+
     function setSending(sending) {
         isSending = sending;
-        sendButton.disabled = sending;
-        input.disabled = sending;
+        sendButton.disabled = sending || daKetThuc;
+        input.disabled = sending || daKetThuc;
         sendButton.innerHTML = sending
             ? '<i class="fa-solid fa-spinner fa-spin"></i>'
             : '<i class="fa-solid fa-paper-plane"></i>';
@@ -82,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function sendMessage(text) {
         const message = String(text || '').trim();
 
-        if (!message || isSending) {
+        if (!message || isSending || daKetThuc) {
             return;
         }
 
@@ -126,6 +178,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            if (response.status === 409) {
+                daKetThuc = true;
+                dinhLayTin();
+            }
+
             if (!response.ok || !result.success) {
                 throw new Error(
                     result.message || 'Không thể gửi tin nhắn.'
@@ -136,19 +193,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 conversationId = Number(result.conversation_id);
             }
 
-            if (result.reply) {
-                addMessage(result.reply, 'bot');
-            }
+            // API trả về cả tin của chính mình vừa lưu: chỉ ghi nhận mã để
+            // poll không vẽ trùng, phản hồi của bot/nhân viên sẽ được vẽ bên dưới.
+            (result.messages || []).forEach(m => {
+                if (m.sender === 'khach') {
+                    ghiNhan(m);
+                    return;
+                }
+                themTin(m);
+            });
 
             if (result.handoff) {
-                const status = document.createElement('p');
-                status.className = 'chat-handoff-notice';
-                status.textContent =
-                    'Cuộc trò chuyện đang chờ nhân viên tiếp nhận.';
-
-                messages.appendChild(status);
-                scrollToBottom();
+                thongBaoTrangThai(
+                    'Cuộc trò chuyện đang chờ nhân viên tiếp nhận.'
+                );
             }
+
+            batDauLayTin();
         } catch (error) {
             console.error('Lỗi chat:', error);
 
@@ -162,6 +223,70 @@ document.addEventListener('DOMContentLoaded', () => {
             setSending(false);
             input.focus();
         }
+    }
+
+    // Hỏi định kỳ để nhận phản hồi của bot/nhân viên gửi sau tin nhắn cuối.
+    async function layTinMoi() {
+        if (!conversationId || isSending || document.hidden || daKetThuc) {
+            return;
+        }
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'poll',
+                    conversation_id: conversationId,
+                    after_id: lastId,
+                    csrf: config.csrf || ''
+                })
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const result = await response.json();
+
+            if (!result.success) {
+                return;
+            }
+
+            if (result.status === 'da_dong') {
+                daKetThuc = true;
+                dinhLayTin();
+                thongBaoTrangThai('Cuộc trò chuyện đã kết thúc.');
+                return;
+            }
+
+            let coMoi = false;
+            (result.messages || []).forEach(m => {
+                if (m.sender === 'khach') {
+                    ghiNhan(m);
+                    return;
+                }
+                themTin(m);
+                coMoi = true;
+            });
+
+            if (coMoi) {
+                scrollToBottom();
+            }
+        } catch (error) {
+            // Lỗi tạm thời: bỏ qua, lần hỏi sau sẽ thử lại.
+        }
+    }
+
+    function batDauLayTin() {
+        if (boLayTin || !conversationId || !apiUrl) {
+            return;
+        }
+        boLayTin = setInterval(layTinMoi, 4000);
     }
 
     form.addEventListener('submit', event => {

@@ -4,6 +4,10 @@ require_once '../config/app.php';
 require_once '../config/db.php';
 require_once '../config/auth.php';
 require_once '../includes/security.php';
+
+// Trang chat cần phiên đăng nhập: guest được dẫn tới trang đăng nhập trước.
+yeu_cau_dang_nhap();
+
 require_once '../includes/header.php';
 
 $product_id = filter_input(INPUT_GET, 'product_id', FILTER_VALIDATE_INT);

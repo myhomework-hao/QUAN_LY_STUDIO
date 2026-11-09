@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/khung_nv.php';
+require_once __DIR__ . '/../includes/cart_helper.php'; // dùng kiem_tra_con_cho() khi duyệt đơn
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dich = ve_trang_truoc('vendor-orders.php');
@@ -20,10 +21,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $thanh_cong = false;
 
     if ($hanh_dong === 'duyet') {
-        $stmt = $conn->prepare("UPDATE dondatlich SET DDL_TrangThai = ?, NV_Ma = ?, DDL_ThoiDiemXuLy = ? WHERE DDL_Ma = ? AND DDL_TrangThai = ?");
-        $stmt->execute([TRANG_THAI_DA_DUYET, $ma_nhan_vien, $bay_gio, $ma_don, TRANG_THAI_CHO_DUYET]);
-        $thanh_cong = $stmt->rowCount() === 1;
-        dat_thong_bao($thanh_cong ? "Đã duyệt đơn $ten_don." : "Đơn $ten_don không còn ở trạng thái chờ duyệt.", $thanh_cong ? 'success' : 'error');
+        // Duyệt nằm trong transaction: kiểm tra lại kho từng dịch vụ (kể cả size) rồi mới
+        // đổi trạng thái; giữa two thao tác có đơn đặt chồng thì từ chối duyệt thay vì để kho âm.
+        $conn->beginTransaction();
+        try {
+            $cac_ctd = lay_nhieu(
+                $conn,
+                "SELECT c.DV_Ma, c.CTD_SoLuong, c.CTD_KichCo, c.CTD_BatDau, c.CTD_KetThuc, dv.DV_Ten AS ten
+                 FROM chitietdon c JOIN dichvu dv ON dv.DV_Ma = c.DV_Ma
+                 WHERE c.DDL_Ma = ?",
+                [$ma_don]
+            );
+
+            foreach ($cac_ctd as $ct) {
+                kiem_tra_con_cho(
+                    $conn, (int) $ct['DV_Ma'], (string) $ct['ten'],
+                    (string) $ct['CTD_BatDau'], (string) $ct['CTD_KetThuc'],
+                    (int) $ct['CTD_SoLuong'], (string) $ct['CTD_KichCo'],
+                    $ma_don
+                );
+            }
+
+            $stmt = $conn->prepare("UPDATE dondatlich SET DDL_TrangThai = ?, NV_Ma = ?, DDL_ThoiDiemXuLy = ? WHERE DDL_Ma = ? AND DDL_TrangThai = ?");
+            $stmt->execute([TRANG_THAI_DA_DUYET, $ma_nhan_vien, $bay_gio, $ma_don, TRANG_THAI_CHO_DUYET]);
+
+            if ($stmt->rowCount() === 1) {
+                $conn->commit();
+                $thanh_cong = true;
+                dat_thong_bao("Đã duyệt đơn $ten_don.", 'success');
+            } else {
+                $conn->rollBack();
+                dat_thong_bao("Đơn $ten_don không còn ở trạng thái chờ duyệt.", 'error');
+            }
+        } catch (DomainException $e) {
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
+            dat_thong_bao($e->getMessage(), 'error');
+        } catch (Throwable $e) {
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
+            dat_thong_bao("Không thể duyệt đơn $ten_don, vui lòng thử lại.", 'error');
+        }
     } elseif ($hanh_dong === 'tu_choi') {
         $ly_do = trim((string) ($_POST['ly_do'] ?? ''));
         if ($ly_do === '' || mb_strlen($ly_do) > 255) {

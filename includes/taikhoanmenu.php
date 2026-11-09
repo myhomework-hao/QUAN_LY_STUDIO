@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/security.php';
 $vai_tro = function_exists('vai_tro_hien_tai') ? vai_tro_hien_tai() : 'guest';
 $ten_hien_thi = function_exists('ten_nguoi_dung_hien_tai') ? ten_nguoi_dung_hien_tai() : '';
 $da_dn = function_exists('da_dang_nhap') ? da_dang_nhap() : false;
@@ -43,7 +44,10 @@ $chu_cai_dau = $ten_hien_thi !== '' ? mb_strtoupper(mb_substr($ten_hien_thi, 0, 
                 <a href="<?= BASE_URL ?>user/my-orders.php">ĐƠN HÀNG CỦA TÔI</a>
             <?php endif; ?>
 
-            <a href="<?= BASE_URL ?>user/logout.php" class="dang-xuat">ĐĂNG XUẤT</a>
+            <form method="POST" action="<?= BASE_URL ?>user/logout.php" class="dang-xuat-form">
+                <?= csrf_input() ?>
+                <button type="submit" class="dang-xuat">ĐĂNG XUẤT</button>
+            </form>
 
         <?php else: ?>
             <a href="<?= BASE_URL ?>user/login.php">ĐĂNG NHẬP</a>

@@ -117,7 +117,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
             foreach ($cac_dong as $dong) {
                 kiem_tra_con_cho(
                     $conn, (int) $dong['item']['id'], $dong['item']['ten'],
-                    $dong['tg']['bat_dau'], $dong['tg']['ket_thuc'], (int) $dong['item']['qty']
+                    $dong['tg']['bat_dau'], $dong['tg']['ket_thuc'], (int) $dong['item']['qty'],
+                    (string) $dong['item']['kich_co']
                 );
             }
 
@@ -172,16 +173,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
                 date('Y-m-d H:i:s'),
             ]);
 
-            $conn->commit();
-
-            // Tăng lượt dùng mã (sau commit — không rollback đơn nếu lỗi)
+            // Tăng lượt dùng mã TRONG cùng transaction: hết lượt/quota thì
+            // kèm điều kiện UPDATE không khớp → ném lỗi → rollback cả đơn.
             if ($coupon_code !== '' && $discount > 0) {
-                try {
-                    tang_luot_dung_ma($conn, $coupon_code);
-                } catch (Exception $e) {
-                    error_log('Khong tang duoc luot dung ma ' . $coupon_code . ': ' . $e->getMessage());
-                }
+                tang_luot_dung_ma($conn, $coupon_code);
             }
+
+            $conn->commit();
             unset($_SESSION['cart'], $_SESSION['coupon_code']);
 
             $dat_hang_thanh_cong = true;

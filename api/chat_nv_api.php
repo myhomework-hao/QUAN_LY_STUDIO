@@ -145,6 +145,9 @@ if (!csrf_hop_le($data['csrf'] ?? null)) {
     nv_json(['success' => false, 'message' => 'Phiên làm việc đã hết hạn, vui lòng tải lại trang và thử lại.'], 403);
 }
 
+// Sau khi đọc xong session, nhả khóa để poll thường xuyên không chặn trang khác.
+session_write_close();
+
 $action = trim((string) ($data['action'] ?? ''));
 
 try {

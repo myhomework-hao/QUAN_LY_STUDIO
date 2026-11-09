@@ -54,7 +54,8 @@
 - **Transaction**: mọi thao tác ghi nhiều bước (đặt đơn, dùng mã giảm giá, tạo thanh toán, đổi trạng thái kèm cập nhật liên quan) nằm trong MỘT transaction, lỗi thì rollback.
 - **Chống XSS**: escape KHI IN RA (`htmlspecialchars(..., ENT_QUOTES, 'UTF-8')` hoặc `h()` nếu file đã có). KHÔNG escape lúc nhận/lưu dữ liệu (kiểu hàm `test_input()` lưu chuỗi đã escape vào DB sẽ bị escape hai lần khi in ra, ví dụ "Tom & Jerry" hiện thành "Tom &amp; Jerry").
 - **JavaScript**: KHÔNG gán dữ liệu từ server/người dùng vào `innerHTML` (ví dụ `${item.ten}` trong chuỗi HTML). Dùng `textContent` hoặc `createElement`, hoặc escape trước.
-- **Form POST**: có CSRF token (`csrf_input()` và `csrf_hop_le()` trong `includes/security.php` nếu file đã tồn tại).
+- **Form POST**: có CSRF token (`csrf_input()` và `csrf_hop_le()` trong `includes/security.php`, file đã tồn tại). API nhận JSON (chat) dùng `csrf_hop_le($data['csrf'] ?? null)` với token nằm trong body.
+- **Đăng xuất**: mọi nút ĐĂNG XUẤT là form POST kèm token (`user/logout.php`), không còn liên kết GET.
 - **Phân quyền**: kiểm tra vai trò bằng `yeu_cau_vai_tro()` VÀ kiểm tra quyền sở hữu: khách chỉ được đọc/sửa/hủy đơn, giỏ, đánh giá có `ND_Ma` của chính mình.
 - **Hai loại mã người**: `ND_Ma` là tài khoản; `NV_Ma` là hồ sơ nhân viên. Session lưu `ND_Ma` (`$_SESSION['user_id']`). `dondatlich` và `chat_*` dùng `NV_Ma`. Đổi qua lại bằng `ma_nhan_vien_hien_tai($conn)`. Không trộn lẫn hai loại mã (lỗi rất dễ mắc).
 - **Session**: chỉ `config/auth.php` được gọi `session_start()`. Không gọi ở file khác.
@@ -78,7 +79,7 @@ user/      khu khách hàng: login, register, logout, profile, services, service
 vendor/    KHU NHÂN VIÊN (không phải thư mục Composer): my-services, dich-vu-form,
            vendor-orders, chat, khung_nv
 admin/     dashboard, dich-vu, nguoi-dung, nhan-vien, thong-ke, khung_admin
-api/       cart_api, kiem_tra_kho, chat_api, chat_nv_api (endpoint cho JS)
+api/       kiem_tra_kho, chat_api, chat_nv_api (endpoint cho JS; cart_api đã xóa 09/11)
 assets/    css, js, images, uploads (chứa cả ảnh mẫu mà studio.sql tham chiếu)
 database/  studio.sql (chính), csdl.sql, chat.sql
 ```
@@ -195,7 +196,7 @@ Quyết định thiết kế của nhóm: nhân viên cùng quản lý TOÀN B�
 4. **Đơn đã thanh toán rồi hủy/từ chối nhưng không có bản ghi hoàn tiền.** `thanhtoan` 3 (đơn 3, `Đã hủy`, 900.000, Thành công) và `thanhtoan` 9 (đơn 9, `Đã từ chối`, 450.000, Thành công). Cần xem `admin/thong-ke.php` và `admin/dashboard.php` tính doanh thu theo đơn `Hoàn thành` hay theo `thanhtoan`; nếu theo `thanhtoan` thì doanh thu bị tính dư.
 5. **Hủy đơn không trả lượt mã giảm giá.** `ma_giam_gia` VIBE10 có MG_DaDung = 1, nhưng đơn duy nhất dùng nó (đơn 11) đã `Đã hủy`. Cần nhóm quyết định có trả lượt khi hủy không.
 6. **`lichthue` có vẻ là bảng cũ.** Chỉ có dữ liệu ngày 21 đến 27/10 cho dịch vụ 1 đến 24, tất cả `trống`, dù đơn 4 đã chiếm dịch vụ 7 ngày 25/10. Không thấy bảng này được cập nhật theo đơn. Việc chống trùng lịch dựa vào index `ix_ctd_trung_lich` trên `chitietdon`. Cần grep `lichthue` trong code để xác nhận có còn dùng không; không xóa.
-7. **Giỏ hàng lưu ở đâu?** Báo cáo rà soát cũ nói `api/cart_api.php` ghi vào session, nhưng CSDL có bảng `giohang` (đang trống). Cần xác định giỏ thật sự nằm ở session hay DB, và `cart-old.js` có còn được nạp không.
+7. **Giỏ hàng lưu ở đâu?** ĐÃ XÁC ĐỊNH (09/11): giỏ nằm ở `$_SESSION['cart']` (đọc qua `includes/cart_helper.php`), `giohang` trong CSDL không được code dùng. `api/cart_api.php` ghi sai cấu trúc giỏ và không trang nào nạp nó → đã xóa `api/cart_api.php` + `assets/js/cart.js`, không viết lại AJAX giỏ.
 8. **Dữ liệu cá nhân thật trong `studio.sql`**: email thật của người dùng và mã băm mật khẩu. Không đưa file này lên GitHub công khai khi chưa làm sạch.
 9. **Hai nguồn dữ liệu cho size**: `trangphuc.TP_KichCo` ('S, M, L', chuỗi) và `dichvu_kichco`. Không tự gộp.
 10. **Cột trạng thái và loại là varchar tự do** (DV_Loai, DV_DonViTinh, DDL_TrangThai, TT_TrangThai), không có enum hay khóa ngoại. Gõ sai dấu là lỗi âm thầm.
@@ -225,14 +226,25 @@ Yêu cầu môn học đã xác minh với giảng viên (sinh viên điền; đ
 
 ## 11. LỘ TRÌNH THEO LÔ (mỗi lô một lần giao việc)
 
-1. Session cookie (httponly, samesite), tạo `includes/security.php`, CSRF + giới hạn đăng nhập sai cho `login.php`/`register.php`, chặn truy cập web vào `database/` (`.htaccess`: `Require all denied`).
-2. CSRF cho `user/cart.php`, `user/checkout.php`, `user/order-detail.php`.
-3. Phân trang admin (đối chiếu `trang_hien_tai` và biến `$tong_trang`), link `order-detail` sai đường dẫn trong `admin/nguoi-dung.php`.
-4. Giỏ hàng: xác định giỏ nằm ở session hay DB, rồi mới quyết định vá hay đề xuất bỏ `api/cart_api.php`, `cart-old.js`.
-5. Tồn kho và mã giảm giá trong transaction: `user/checkout.php`, `api/kiem_tra_kho.php`, `includes/coupon_helper.php`, `includes/donhang.php` (mục 6.2, 6.3; điểm nghi vấn 1, 2, 3, 5).
-6. Quy trình đơn của nhân viên: điều kiện trạng thái trong UPDATE, kiểm tra lại tồn kho khi duyệt (`vendor/vendor-orders.php`).
-7. Tìm kiếm popup: `includes/search.php`, `includes/search_popup.php` (cả lỗi `innerHTML`).
-8. Doanh thu và hoàn tiền: `admin/thong-ke.php`, `admin/dashboard.php` (điểm nghi vấn 4).
+1. Session cookie (httponly, samesite), tạo `includes/security.php`, CSRF + giới hạn đăng nhập sai cho `login.php`/`register.php`, chặn truy cập web vào `database/` (`.htaccess`: `Require all denied`). — **ĐÃ XONG (09/11)**.
+2. CSRF cho `user/cart.php`, `user/checkout.php`, `user/order-detail.php`. — **ĐÃ XONG (09/11)**.
+3. Phân trang admin (đối chiếu `trang_hien_tai` và biến `$tong_trang`), link `order-detail` sai đường dẫn trong `admin/nguoi-dung.php`. — **CHƯA LÀM** (chỉ sửa vài tên file đã nêu, tối đa 5 file/lô).
+4. Giỏ hàng: ĐÃ XONG (09/11) — giỏ ở session; `api/cart_api.php` + `cart.js` là code chết nên đã xóa, quyết định KHÔNG viết lại tính năng AJAX giỏ.
+5. Tồn kho và mã giảm giá trong transaction: `user/checkout.php`, `api/kiem_tra_kho.php`, `includes/coupon_helper.php`, `includes/donhang.php` (mục 6.2, 6.3; điểm nghi vấn 1, 2, 3, 5). — **ĐÃ XONG (09/11, Lô A)**: tồn kho theo size (`dichvu_kichco`) cho trang phục, tăng lượt mã nằm trong transaction có UPDATE điều kiện + `rowCount()`.
+6. Quy trình đơn của nhân viên: điều kiện trạng thái trong UPDATE, kiểm tra lại tồn kho khi duyệt (`vendor/vendor-orders.php`). — **ĐÃ XONG (09/11, Lô B)**: duyệt nằm trong transaction, kiểm lại kho từng dòng (đúng size, loại trừ chính đơn đang duyệt qua `$ma_don_bo_qua`).
+7. Tìm kiếm popup: `includes/search.php`, `includes/search_popup.php` (cả lỗi `innerHTML`). — **CHƯA LÀM (Lô C)**.
+8. Doanh thu và hoàn tiền: `admin/thong-ke.php`, `admin/dashboard.php` (điểm nghi vấn 4). — **CHƯA LÀM (Lô D)**.
+
+### Danh sách việc CÒN LẠI (làm theo từng lô, mỗi lô tối đa 5 file)
+
+- **Lô C — Tìm kiếm popup chống XSS:** `includes/search.php`, `includes/search_popup.php` + JS liên quan (mục 11.7).
+- **Lô D — Doanh thu và hoàn tiền:** `admin/thong-ke.php`, `admin/dashboard.php` — kiểm doanh thu tính theo đơn `Hoàn thành` hay theo `thanhtoan` (điểm nghi vấn 4: đơn đã thanh toán rồi hủy/từ chối không có bản ghi hoàn tiền → nếu theo `thanhtoan` thì doanh thu bị dư).
+- **Điểm nghi vấn 8.2:** xác nhận cách tính đơn vị `lượt` — CTD 8 (dịch vụ 24, 9 ngày) bị tính 1.620.000 = 9 × 180.000; xem `includes/don_vi.php` và `includes/cart_helper.php` (`tinh_so_don_vi()` hiện trả 1 cho `luot` khi mới, nhưng CTD 8 cũ vẫn tính theo ngày → xác nhận đơn cũ không bị tính lại).
+- **Điểm nghi vấn 8.3:** xác nhận quy tắc giờ mở cửa có áp dụng cho dịch vụ tính theo `ngày` không (CTD 15 bắt đầu 21:00 sau `gio_dong_cua` 20:00).
+- **Điểm nghi vấn 8.5:** hủy/từ chối đơn có trả lại lượt mã giảm giá không (VIBE10: đơn duy nhất dùng nó đã `Đã hủy` nhưng `MG_DaDung` vẫn = 1). Cần nhóm quyết định rồi mới làm.
+- **Xác minh pattern UPDATE ở khu admin:** `admin/dich-vu.php`, `admin/nguoi-dung.php`, `admin/nhan-vien.php` — UPDATE muốn an toàn song song thì cũng cần điều kiện trong WHERE + `rowCount()`. Chỉ đọc và báo trước, sửa khi được giao.
+- **Đồng bộ `database/studio.sql`:** CSDL thật đang có 21 bảng, file SQL chỉ có 18 — thiếu `cau_hinh` và `dangnhap_thatbai` (đã duyệt ở lô 1). Sinh viên xuất lại dump (cần làm sạch email/mật khẩu thật trước khi nộp, xem mục 8.8).
+- **Lịch sử khảo sát cũ mục 10:** đã đối chiếu xong, phần sai hướng không làm.
 
 ## 12. KHÔNG LÀM, KIỂM TRA, BÁO CÁO
 
@@ -260,7 +272,20 @@ Yêu cầu môn học đã xác minh với giảng viên (sinh viên điền; đ
 
 ## 13. NHIỆM VỤ HIỆN TẠI
 
-[Sinh viên dán nhiệm vụ cụ thể ở đây. Ngoài nhiệm vụ này, không làm gì khác.]
+**Trạng thái hôm nay (09/11):** Lô 1, 2, 4, A, B + các lô CSRF/chat/đăng xuất đã xong (xem mục 11). Chưa commit gì, mọi thay đổi nằm trên máy.
+
+**Việc tiếp theo — sinh viên chọn một lô rồi dán vào đây (mỗi lô tối đa 5 file):**
+
+| Ưu tiên | Lô | Việc | File |
+|---|---|---|---|
+| 1 | Lô C | Tìm kiếm popup chống XSS (`innerHTML` → `textContent`/`createElement`) | `includes/search.php`, `includes/search_popup.php`, JS liên quan |
+| 2 | Lô D | Doanh thu/hoàn tiền (điểm nghi vấn 4) — xác minh rồi sửa | `admin/thong-ke.php`, `admin/dashboard.php` |
+| 3 | Lô E | Phân trang admin + link `order-detail` sai đường dẫn | `admin/*.php` (đối chiếu khi đọc) |
+| 4 | Xác minh | Cách tính đơn vị `lượt` (8.2), giờ ngoài mở cửa (8.3) — chỉ đọc + báo, KHÔNG sửa trước khi chốt | `includes/don_vi.php`, `includes/cart_helper.php` |
+| 5 | Chờ nhóm | Trả lượt mã giảm giá khi hủy/từ chối (8.5) — nhóm chốt chính sách rồi mới làm | `vendor/vendor-orders.php`, `user/my-orders.php` |
+| 6 | Sinh viên tự làm | Xuất lại `database/studio.sql` cho khớp CSDL thật (thiếu `cau_hinh`, `dangnhap_thatbai`); làm sạch dữ liệu cá nhân trước khi nộp | `database/studio.sql` |
+
+Chưa ghi gì vào phần dưới: nhiệm vụ cụ thể của lô đang chờ sinh viên chọn.
 
 PHÂN CÔNG NHÓM (sinh viên điền; để trống thì chỉ sửa file được nêu trong nhiệm vụ):
 [ai phụ trách thư mục/file nào]

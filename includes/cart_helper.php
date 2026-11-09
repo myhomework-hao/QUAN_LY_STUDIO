@@ -116,10 +116,14 @@ function thoi_gian_thue(string $don_vi, string $bat_dau, string $ket_thuc): ?arr
     ];
 }
 
-function kiem_tra_con_cho(PDO $conn, int $ma_dich_vu, string $ten, string $bat_dau, string $ket_thuc, int $so_luong): void
+function kiem_tra_con_cho(PDO $conn, int $ma_dich_vu, string $ten, string $bat_dau, string $ket_thuc, int $so_luong, string $kich_co = '', int $ma_don_bo_qua = 0): void
 {
     $khoa_dong = $conn->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
+    // Khi kiểm tra lại tồn kho lúc DUYỆT, bản thân đơn đang duyệt đã nằm ở chitietdon
+    // ('Chờ duyệt'); phải loại nó khỏi số đã đặt, nếu không sẽ bị đếm hai lần.
+    $bo_qua = $ma_don_bo_qua > 0 ? ' AND d.DDL_Ma <> ?' : '';
 
+    // Khóa dòng dịch vụ trước để hai đơn đặt cùng lúc xếp hàng chờ theo thứ tự.
     $stmt = $conn->prepare("SELECT DV_SoLuong FROM dichvu WHERE DV_Ma = ? AND DV_DangBan = 1" . $khoa_dong);
     $stmt->execute([$ma_dich_vu]);
     $tong_so_luong = $stmt->fetchColumn();
@@ -128,15 +132,49 @@ function kiem_tra_con_cho(PDO $conn, int $ma_dich_vu, string $ten, string $bat_d
         throw new DomainException($ten . ' hiện không còn nhận thuê.');
     }
 
-    $stmt = $conn->prepare(
-        "SELECT COALESCE(SUM(c.CTD_SoLuong), 0)
-         FROM chitietdon c
-         JOIN dondatlich d ON d.DDL_Ma = c.DDL_Ma
-         WHERE c.DV_Ma = ?
-           AND d.DDL_TrangThai IN ('Chờ duyệt', 'Đã duyệt')
-           AND c.CTD_BatDau < ? AND c.CTD_KetThuc > ?"
-    );
-    $stmt->execute([$ma_dich_vu, $ket_thuc, $bat_dau]);
+    // Trang phục có size: tồn kho tính theo dichvu_kichco của đúng size, không theo tổng dịch vụ.
+    if ($kich_co !== '') {
+        $stmt = $conn->prepare(
+            "SELECT DVK_SoLuong FROM dichvu_kichco WHERE DV_Ma = ? AND DVK_Ten = ? AND DVK_DangHoatDong = 1" . $khoa_dong
+        );
+        $stmt->execute([$ma_dich_vu, $kich_co]);
+        $tong_theo_size = $stmt->fetchColumn();
+
+        if ($tong_theo_size === false) {
+            throw new DomainException($ten . ' không còn nhận thuê size ' . $kich_co . '.');
+        }
+
+        $tong_so_luong = $tong_theo_size;
+    }
+
+    // Đếm số lượng đã bị các đơn Chờ duyệt/Đã duyệt chiếm trong khung giờ giao nhau.
+    if ($kich_co !== '') {
+        $stmt = $conn->prepare(
+            "SELECT COALESCE(SUM(c.CTD_SoLuong), 0)
+             FROM chitietdon c
+             JOIN dondatlich d ON d.DDL_Ma = c.DDL_Ma
+             WHERE c.DV_Ma = ? AND c.CTD_KichCo = ?
+               AND d.DDL_TrangThai IN ('Chờ duyệt', 'Đã duyệt')" . $bo_qua . "
+               AND c.CTD_BatDau < ? AND c.CTD_KetThuc > ?"
+        );
+        $tham_so = [$ma_dich_vu, $kich_co];
+        if ($ma_don_bo_qua > 0) { $tham_so[] = $ma_don_bo_qua; }
+        array_push($tham_so, $ket_thuc, $bat_dau);
+        $stmt->execute($tham_so);
+    } else {
+        $stmt = $conn->prepare(
+            "SELECT COALESCE(SUM(c.CTD_SoLuong), 0)
+             FROM chitietdon c
+             JOIN dondatlich d ON d.DDL_Ma = c.DDL_Ma
+             WHERE c.DV_Ma = ?
+               AND d.DDL_TrangThai IN ('Chờ duyệt', 'Đã duyệt')" . $bo_qua . "
+               AND c.CTD_BatDau < ? AND c.CTD_KetThuc > ?"
+        );
+        $tham_so = [$ma_dich_vu];
+        if ($ma_don_bo_qua > 0) { $tham_so[] = $ma_don_bo_qua; }
+        array_push($tham_so, $ket_thuc, $bat_dau);
+        $stmt->execute($tham_so);
+    }
     $da_dat = (int) $stmt->fetchColumn();
 
     if ($da_dat + $so_luong > (int) $tong_so_luong) {

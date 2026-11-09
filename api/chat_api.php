@@ -124,9 +124,12 @@ function chat_save_message(PDO $conn, int $conversationId, string $sender, strin
     );
     $stmt->execute([$conversationId, $sender, $userId, $content, $now, 0]);
 
+    // lastInsertId phai doc NGAY SAU INSERT; roi vao phat UPDATE thi MySQL tra 0.
+    $maTinNhan = (int) $conn->lastInsertId();
+
     $conn->prepare('UPDATE chat_hoi_thoai SET CHT_NgayCapNhat = ? WHERE CHT_Ma = ?')->execute([$now, $conversationId]);
 
-    return ['id' => (int) $conn->lastInsertId(), 'sender' => $sender, 'content' => $content, 'created_at' => $now];
+    return ['id' => $maTinNhan, 'sender' => $sender, 'content' => $content, 'created_at' => $now];
 }
 
 function chat_get_messages(PDO $conn, int $conversationId, int $afterId = 0): array
@@ -226,6 +229,9 @@ $data = chat_read_input();
 if (!csrf_hop_le($data['csrf'] ?? null)) {
     chat_json(['success' => false, 'message' => 'Phiên làm việc đã hết hạn, vui lòng tải lại trang và thử lại.'], 403);
 }
+
+// Sau khi đọc xong session, nhả khóa để poll thường xuyên không chặn trang khác.
+session_write_close();
 
 $action = trim((string) ($data['action'] ?? 'send'));
 

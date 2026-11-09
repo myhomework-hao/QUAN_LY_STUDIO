@@ -166,7 +166,10 @@ function nv_dau(string $tieu_de, string $muc_chon): void
                 <span><?= h(ten_nguoi_dung_hien_tai()) ?></span>
                 <!-- Nếu bạn đã đưa profile.php và logout.php ra root, hãy bỏ tiền tố KB/ đi -->
                 <a href="<?= BASE_URL ?>user/profile.php" class="btn-line">Hồ sơ</a>
-                <a href="<?= BASE_URL ?>user/logout.php" class="btn-line">Đăng xuất</a>
+                <form method="POST" action="<?= BASE_URL ?>user/logout.php" class="dang-xuat-form">
+                    <?= csrf_input() ?>
+                    <button type="submit" class="btn-line">Đăng xuất</button>
+                </form>
             </div>
         </header>
 

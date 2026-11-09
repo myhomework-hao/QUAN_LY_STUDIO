@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const ngayTraInput = document.getElementById('ngay-tra');
     const gioTraInput = document.getElementById('gio-tra');
     const serviceId = oSoLuong.form?.querySelector('input[name="service_id"]')?.value;
+    // Ô chọn size trên trang phục: gửi kèm để API tính đúng tồn của size đó
+    const oKichCo = document.getElementById('kich_co_chon');
 
     // Đơn vị tính lấy từ PHP (giờ / ngày / lượt / bộ)
     const donVi = (oSoLuong.dataset.donVi || '').trim().toLowerCase();
@@ -182,6 +184,10 @@ document.addEventListener('DOMContentLoaded', function () {
     ngayTraInput.addEventListener('change', function () { kiemTraVaGoiAjax(true); });
     gioTraInput.addEventListener('change', function () { kiemTraVaGoiAjax(true); });
 
+    if (oKichCo) {
+        oKichCo.addEventListener('change', function () { kiemTraVaGoiAjax(true); });
+    }
+
     function kiemTraVaGoiAjax(baoHetHang) {
         const ngayNhan = ngayNhanInput.value;
         const gioNhan = gioNhanInput.value || '08:00';
@@ -231,6 +237,11 @@ document.addEventListener('DOMContentLoaded', function () {
             bat_dau: batDau,
             ket_thuc: ketThuc
         });
+
+        // Trang phục có size: kèm size để tồn kho tính theo dichvu_kichco
+        if (oKichCo && oKichCo.value) {
+            thamSo.set('kich_co', oKichCo.value);
+        }
 
         fetch(apiKho + '?' + thamSo.toString())
             .then(function (res) {

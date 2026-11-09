@@ -176,7 +176,10 @@ function admin_dau(string $tieu_de, string $muc_chon): void
             </div>
             <div class="admin-user">
                 <span><?= h(ten_nguoi_dung_hien_tai()) ?></span>
-                <a href="<?= BASE_URL ?>user/logout.php" class="btn-line">Đăng xuất</a>
+                <form method="POST" action="<?= BASE_URL ?>user/logout.php" class="dang-xuat-form">
+                    <?= csrf_input() ?>
+                    <button type="submit" class="btn-line">Đăng xuất</button>
+                </form>
             </div>
         </header>
 

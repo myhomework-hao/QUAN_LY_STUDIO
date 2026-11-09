@@ -65,10 +65,19 @@ function kiem_tra_ma_giam_gia(PDO $conn, string $code, float $subtotal): array
 }
 
 /**
- * Tăng lượt dùng — gọi SAU khi đặt hàng thành công (trong checkout.php).
+ * Tăng lượt dùng — gọi TRONG cùng transaction của đơn đặt (checkout.php).
+ * Chỉ tăng khi còn lượt (MG_SoLuong = 0 nghĩa là không giới hạn);
+ * nếu bị ai khác chốt lượt cuối cùng trước thì UPDATE khít điều kiện = 0 dòng → ném lỗi để rollback đơn.
  */
 function tang_luot_dung_ma(PDO $conn, string $code): void
 {
-    $stmt = $conn->prepare("UPDATE ma_giam_gia SET MG_DaDung = MG_DaDung + 1 WHERE MG_Code = ?");
+    $stmt = $conn->prepare(
+        "UPDATE ma_giam_gia SET MG_DaDung = MG_DaDung + 1
+         WHERE MG_Code = ? AND (MG_SoLuong = 0 OR MG_DaDung < MG_SoLuong)"
+    );
     $stmt->execute([strtoupper(trim($code))]);
+
+    if ($stmt->rowCount() === 0) {
+        throw new DomainException('Mã giảm giá vừa hết lượt sử dụng, vui lòng bỏ mã hoặc dùng mã khác.');
+    }
 }
