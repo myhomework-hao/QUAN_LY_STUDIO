@@ -193,7 +193,7 @@ Quyết định thiết kế của nhóm: nhân viên cùng quản lý TOÀN B�
    (Câu này đếm theo dịch vụ, chưa tách theo size trang phục.)
 2. **Đơn vị `lượt` có thể bị tính theo ngày.** CTD 8: dịch vụ 24 (Zoey Dress, `lượt`, 180.000) thuê 27/10 đến 05/11 (9 ngày) bị tính 1.620.000 = 9 × 180.000. Cần xác nhận `lượt` là phí một lần hay theo ngày (xem `includes/don_vi.php`).
 3. **Đơn bắt đầu ngoài giờ mở cửa.** CTD 15: bắt đầu 02/11 21:00 trong khi `gio_dong_cua` = 20:00 và `cho_phep_chon_ngoai_gio` = 0 (đơn tạo lúc 20:10). Cần xác nhận quy tắc giờ có áp dụng cho thiết bị tính theo ngày không.
-4. **Đơn đã thanh toán rồi hủy/từ chối nhưng không có bản ghi hoàn tiền.** `thanhtoan` 3 (đơn 3, `Đã hủy`, 900.000, Thành công) và `thanhtoan` 9 (đơn 9, `Đã từ chối`, 450.000, Thành công). Cần xem `admin/thong-ke.php` và `admin/dashboard.php` tính doanh thu theo đơn `Hoàn thành` hay theo `thanhtoan`; nếu theo `thanhtoan` thì doanh thu bị tính dư.
+4. **Đơn đã thanh toán rồi hủy/từ chối nhưng không có bản ghi hoàn tiền.** ĐÃ XÁC MINH (11/11): code KHÔNG tính doanh thu theo `thanhtoan` mà theo đơn `Hoàn thành` (`doanh_thu_khoang()` — `admin/khung_admin.php:78`; `thong-ke.php:33-36`; dashboard cũng gọi hàm này). `thanhtoan` chỉ được đọc để hiển thị (`user/order-detail.php:139`). Dữ liệu nghi vấn vẫn đúng hiện tượng: đơn 3 (`Đã hủy`) và đơn 9 (`Đã từ chối`) có `thanhtoan` `Thành công` tổng 1.350.000, không có bản ghi hoàn tiền → nếu sau này nhóm thêm hoàn tiền thì phải nhớ loại các đơn này khỏi doanh thu. Việc thêm cơ chế hoàn tiền: KHÔNG tự làm (chờ nhóm).
 5. **Hủy đơn không trả lượt mã giảm giá.** `ma_giam_gia` VIBE10 có MG_DaDung = 1, nhưng đơn duy nhất dùng nó (đơn 11) đã `Đã hủy`. Cần nhóm quyết định có trả lượt khi hủy không.
 6. **`lichthue` có vẻ là bảng cũ.** Chỉ có dữ liệu ngày 21 đến 27/10 cho dịch vụ 1 đến 24, tất cả `trống`, dù đơn 4 đã chiếm dịch vụ 7 ngày 25/10. Không thấy bảng này được cập nhật theo đơn. Việc chống trùng lịch dựa vào index `ix_ctd_trung_lich` trên `chitietdon`. Cần grep `lichthue` trong code để xác nhận có còn dùng không; không xóa.
 7. **Giỏ hàng lưu ở đâu?** ĐÃ XÁC ĐỊNH (09/11): giỏ nằm ở `$_SESSION['cart']` (đọc qua `includes/cart_helper.php`), `giohang` trong CSDL không được code dùng. `api/cart_api.php` ghi sai cấu trúc giỏ và không trang nào nạp nó → đã xóa `api/cart_api.php` + `assets/js/cart.js`, không viết lại AJAX giỏ.
@@ -228,23 +228,25 @@ Yêu cầu môn học đã xác minh với giảng viên (sinh viên điền; đ
 
 1. Session cookie (httponly, samesite), tạo `includes/security.php`, CSRF + giới hạn đăng nhập sai cho `login.php`/`register.php`, chặn truy cập web vào `database/` (`.htaccess`: `Require all denied`). — **ĐÃ XONG (09/11)**.
 2. CSRF cho `user/cart.php`, `user/checkout.php`, `user/order-detail.php`. — **ĐÃ XONG (09/11)**.
-3. Phân trang admin (đối chiếu `trang_hien_tai` và biến `$tong_trang`), link `order-detail` sai đường dẫn trong `admin/nguoi-dung.php`. — **CHƯA LÀM** (chỉ sửa vài tên file đã nêu, tối đa 5 file/lô).
+3. Phân trang admin (đối chiếu `trang_hien_tai` và biến `$tong_trang`), link `order-detail` sai đường dẫn trong `admin/nguoi-dung.php`. — **ĐÃ XONG (11/11, Lô E)**: phân trang 3 trang (`dich-vu`, `nguoi-dung`, `nhan-vien`) đều đúng mẫu (`trang_hien_tai()` tính `$tong_trang` qua tham chiếu); sửa link sai `admin/nguoi-dung.php:77` thiếu `user/` trước `order-detail.php`.
 4. Giỏ hàng: ĐÃ XONG (09/11) — giỏ ở session; `api/cart_api.php` + `cart.js` là code chết nên đã xóa, quyết định KHÔNG viết lại tính năng AJAX giỏ.
 5. Tồn kho và mã giảm giá trong transaction: `user/checkout.php`, `api/kiem_tra_kho.php`, `includes/coupon_helper.php`, `includes/donhang.php` (mục 6.2, 6.3; điểm nghi vấn 1, 2, 3, 5). — **ĐÃ XONG (09/11, Lô A)**: tồn kho theo size (`dichvu_kichco`) cho trang phục, tăng lượt mã nằm trong transaction có UPDATE điều kiện + `rowCount()`.
 6. Quy trình đơn của nhân viên: điều kiện trạng thái trong UPDATE, kiểm tra lại tồn kho khi duyệt (`vendor/vendor-orders.php`). — **ĐÃ XONG (09/11, Lô B)**: duyệt nằm trong transaction, kiểm lại kho từng dòng (đúng size, loại trừ chính đơn đang duyệt qua `$ma_don_bo_qua`).
-7. Tìm kiếm popup: `includes/search.php`, `includes/search_popup.php` (cả lỗi `innerHTML`). — **CHƯA LÀM (Lô C)**.
-8. Doanh thu và hoàn tiền: `admin/thong-ke.php`, `admin/dashboard.php` (điểm nghi vấn 4). — **CHƯA LÀM (Lô D)**.
+7. Tìm kiếm popup: `includes/search.php`, `includes/search_popup.php` (cả lỗi `innerHTML`). — **ĐÃ XONG (11/11, Lô C)**: JS dựng kết quả bằng `textContent`/`createElement` (bản cũ đã đúng), còn sửa `buildPopup()` bỏ `innerHTML` + bỏ link `search.css` không tồn tại, `base` lấy từ `data-base` do PHP in.
+8. Doanh thu và hoàn tiền: `admin/thong-ke.php`, `admin/dashboard.php` (điểm nghi vấn 4). — **ĐÃ XÁC MINH (11/11, Lô D), KHÔNG cần sửa**: doanh thu mọi nơi đều tính trên đơn `Hoàn thành` (`doanh_thu_khoang()` trong `admin/khung_admin.php:78`, `thong-ke.php:33-36`); không chỗ nào đếm doanh thu từ `thanhtoan` (file này chỉ được đọc để hiển thị ở `user/order-detail.php:139`). Đơn hủy/từ chối đã "Thành công" 1.350.000 KHÔNG bị tính vào doanh thu. Chưa có cơ chế hoàn tiền — chờ nhóm quyết định (mục 8.4).
 
 ### Danh sách việc CÒN LẠI (làm theo từng lô, mỗi lô tối đa 5 file)
 
 - **Lô C — Tìm kiếm popup chống XSS:** `includes/search.php`, `includes/search_popup.php` + JS liên quan (mục 11.7).
-- **Lô D — Doanh thu và hoàn tiền:** `admin/thong-ke.php`, `admin/dashboard.php` — kiểm doanh thu tính theo đơn `Hoàn thành` hay theo `thanhtoan` (điểm nghi vấn 4: đơn đã thanh toán rồi hủy/từ chối không có bản ghi hoàn tiền → nếu theo `thanhtoan` thì doanh thu bị dư).
+- **Lô D — Doanh thu và hoàn tiền:** **ĐÃ XÁC MINH (11/11) — không có lỗi**: doanh thu mọi nơi tính trên đơn `Hoàn thành`, không đếm `thanhtoan` của đơn hủy/từ chối (chi tiết ở mục 11.8 và mục 8.4).
 - **Điểm nghi vấn 8.2:** xác nhận cách tính đơn vị `lượt` — CTD 8 (dịch vụ 24, 9 ngày) bị tính 1.620.000 = 9 × 180.000; xem `includes/don_vi.php` và `includes/cart_helper.php` (`tinh_so_don_vi()` hiện trả 1 cho `luot` khi mới, nhưng CTD 8 cũ vẫn tính theo ngày → xác nhận đơn cũ không bị tính lại).
 - **Điểm nghi vấn 8.3:** xác nhận quy tắc giờ mở cửa có áp dụng cho dịch vụ tính theo `ngày` không (CTD 15 bắt đầu 21:00 sau `gio_dong_cua` 20:00).
 - **Điểm nghi vấn 8.5:** hủy/từ chối đơn có trả lại lượt mã giảm giá không (VIBE10: đơn duy nhất dùng nó đã `Đã hủy` nhưng `MG_DaDung` vẫn = 1). Cần nhóm quyết định rồi mới làm.
 - **Xác minh pattern UPDATE ở khu admin:** `admin/dich-vu.php`, `admin/nguoi-dung.php`, `admin/nhan-vien.php` — UPDATE muốn an toàn song song thì cũng cần điều kiện trong WHERE + `rowCount()`. Chỉ đọc và báo trước, sửa khi được giao.
 - **Đồng bộ `database/studio.sql`:** CSDL thật đang có 21 bảng, file SQL chỉ có 18 — thiếu `cau_hinh` và `dangnhap_thatbai` (đã duyệt ở lô 1). Sinh viên xuất lại dump (cần làm sạch email/mật khẩu thật trước khi nộp, xem mục 8.8).
 - **Lịch sử khảo sát cũ mục 10:** đã đối chiếu xong, phần sai hướng không làm.
+
+Mục 11.3 (phân trang + link) và mục 11.7, 11.8 đã xong/xác minh — lộ trình gốc giờ chỉ còn việc chờ nhóm quyết định (hoàn tiền, trả lượt mã) và các mục "Phát hiện thêm".
 
 ## 12. KHÔNG LÀM, KIỂM TRA, BÁO CÁO
 
@@ -272,15 +274,15 @@ Yêu cầu môn học đã xác minh với giảng viên (sinh viên điền; đ
 
 ## 13. NHIỆM VỤ HIỆN TẠI
 
-**Trạng thái hôm nay (09/11):** Lô 1, 2, 4, A, B + các lô CSRF/chat/đăng xuất đã xong (xem mục 11). Chưa commit gì, mọi thay đổi nằm trên máy.
+**Trạng thái hôm nay (11/11):** Lô 1, 2, 3, 4, 5, 6, 7, 8 của lộ trình đã xong hoặc xác minh (xem mục 11). Chưa commit gì, mọi thay đổi nằm trên máy.
 
 **Việc tiếp theo — sinh viên chọn một lô rồi dán vào đây (mỗi lô tối đa 5 file):**
 
 | Ưu tiên | Lô | Việc | File |
 |---|---|---|---|
-| 1 | Lô C | Tìm kiếm popup chống XSS (`innerHTML` → `textContent`/`createElement`) | `includes/search.php`, `includes/search_popup.php`, JS liên quan |
-| 2 | Lô D | Doanh thu/hoàn tiền (điểm nghi vấn 4) — xác minh rồi sửa | `admin/thong-ke.php`, `admin/dashboard.php` |
-| 3 | Lô E | Phân trang admin + link `order-detail` sai đường dẫn | `admin/*.php` (đối chiếu khi đọc) |
+| 1 | Lô C | ~~Tìm kiếm popup chống XSS~~ — **ĐÃ XONG (11/11)** | `includes/search_popup.php` |
+| 2 | Lô D | ~~Doanh thu/hoàn tiền~~ — **ĐÃ XÁC MINH (11/11), không có lỗi** | — |
+| 3 | Lô E | ~~Phân trang admin + link `order-detail` sai đường dẫn~~ — **ĐÃ XONG (11/11)** | `admin/nguoi-dung.php` |
 | 4 | Xác minh | Cách tính đơn vị `lượt` (8.2), giờ ngoài mở cửa (8.3) — chỉ đọc + báo, KHÔNG sửa trước khi chốt | `includes/don_vi.php`, `includes/cart_helper.php` |
 | 5 | Chờ nhóm | Trả lượt mã giảm giá khi hủy/từ chối (8.5) — nhóm chốt chính sách rồi mới làm | `vendor/vendor-orders.php`, `user/my-orders.php` |
 | 6 | Sinh viên tự làm | Xuất lại `database/studio.sql` cho khớp CSDL thật (thiếu `cau_hinh`, `dangnhap_thatbai`); làm sạch dữ liệu cá nhân trước khi nộp | `database/studio.sql` |

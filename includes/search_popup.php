@@ -242,7 +242,7 @@ html.search-open {
 }
 </style>
  
-<div class="search-popup" id="search-popup" hidden>
+<div class="search-popup" id="search-popup" hidden data-base="<?= BASE_URL ?>">
     <div class="search-popup-backdrop" data-search-close></div>
  
     <div class="search-popup-box" role="dialog" aria-modal="true" aria-label="Tìm kiếm sản phẩm"
@@ -272,35 +272,96 @@ html.search-open {
 (function () {
     'use strict';
  
-    // Đường dẫn gốc của site, suy ra từ chính địa chỉ file search.js (…/assets/js/search.js)
-    var script = document.currentScript;
-    var base = script && script.src ? script.src.split('assets/js/')[0] : '/';
+    // Đường dẫn gốc site do PHP in vào data-base trên #search-popup
+    // (script này là inline nên không có src để suy ra như bản cũ).
+    var base = function () {
+        var p = document.getElementById('search-popup');
+        return (p && p.getAttribute('data-base')) || '/';
+    }();
     var searchUrl = base + 'includes/search.php';
  
-    // Nếu header chưa có sẵn khung popup thì tự tạo, để chỉ cần nạp search.js là chạy
+    // Nếu header chưa có sẵn khung popup thì tự tạo (dự phòng; header.php luôn nhúng search_popup.php).
+    // Dựng bằng createElement, không dùng innerHTML để không có chỗ dán chuỗi ngoài vào.
     function buildPopup() {
-        if (!document.querySelector('link[href*="assets/css/search.css"]')) {
-            var css = document.createElement('link');
-            css.rel = 'stylesheet';
-            css.href = base + 'assets/css/search.css';
-            document.head.appendChild(css);
-        }
- 
         var wrap = document.createElement('div');
         wrap.className = 'search-popup';
         wrap.id = 'search-popup';
         wrap.hidden = true;
-        wrap.innerHTML =
-            '<div class="search-popup-backdrop" data-search-close></div>' +
-            '<div class="search-popup-box" role="dialog" aria-modal="true" aria-label="Tìm kiếm sản phẩm" data-endpoint="' + searchUrl + '">' +
-            '<form class="search-popup-form" action="' + searchUrl + '" method="get" role="search" autocomplete="off">' +
-            '<svg class="search-popup-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>' +
-            '<input type="text" name="q" class="search-popup-input" placeholder="Tìm máy ảnh, chỗ chụp, bộ đồ, phụ kiện..." maxlength="60" inputmode="search" spellcheck="false" role="combobox" aria-label="Tìm kiếm sản phẩm" aria-autocomplete="list" aria-controls="search-popup-results">' +
-            '<button type="button" class="search-popup-close" data-search-close aria-label="Đóng tìm kiếm">&times;</button>' +
-            '</form>' +
-            '<div class="search-popup-body" id="search-popup-results" role="listbox">' +
-            '<p class="search-popup-hint">Gõ tên máy ảnh, chỗ chụp, bộ đồ hoặc phụ kiện để tìm.</p>' +
-            '</div></div>';
+        wrap.setAttribute('data-base', base);
+
+        var backdrop = document.createElement('div');
+        backdrop.className = 'search-popup-backdrop';
+        backdrop.setAttribute('data-search-close', '');
+        wrap.appendChild(backdrop);
+
+        var boxEl = document.createElement('div');
+        boxEl.className = 'search-popup-box';
+        boxEl.setAttribute('role', 'dialog');
+        boxEl.setAttribute('aria-modal', 'true');
+        boxEl.setAttribute('aria-label', 'Tìm kiếm sản phẩm');
+        boxEl.setAttribute('data-endpoint', searchUrl);
+        wrap.appendChild(boxEl);
+
+        var formEl = document.createElement('form');
+        formEl.className = 'search-popup-form';
+        formEl.action = searchUrl;
+        formEl.method = 'get';
+        formEl.setAttribute('role', 'search');
+        formEl.setAttribute('autocomplete', 'off');
+
+        var svgNS = 'http://www.w3.org/2000/svg';
+        var icon = document.createElementNS(svgNS, 'svg');
+        icon.setAttribute('class', 'search-popup-icon');
+        icon.setAttribute('width', '18');
+        icon.setAttribute('height', '18');
+        icon.setAttribute('viewBox', '0 0 24 24');
+        icon.setAttribute('fill', 'none');
+        icon.setAttribute('stroke', 'currentColor');
+        icon.setAttribute('stroke-width', '2');
+        icon.setAttribute('stroke-linecap', 'round');
+        icon.setAttribute('aria-hidden', 'true');
+        var vong = document.createElementNS(svgNS, 'circle');
+        vong.setAttribute('cx', '11'); vong.setAttribute('cy', '11'); vong.setAttribute('r', '7');
+        var kim = document.createElementNS(svgNS, 'path');
+        kim.setAttribute('d', 'M20 20l-4-4');
+        icon.appendChild(vong);
+        icon.appendChild(kim);
+        formEl.appendChild(icon);
+
+        var inputEl = document.createElement('input');
+        inputEl.type = 'text';
+        inputEl.name = 'q';
+        inputEl.className = 'search-popup-input';
+        inputEl.placeholder = 'Tìm máy ảnh, chỗ chụp, bộ đồ, phụ kiện...';
+        inputEl.maxLength = 60;
+        inputEl.setAttribute('inputmode', 'search');
+        inputEl.setAttribute('spellcheck', 'false');
+        inputEl.setAttribute('role', 'combobox');
+        inputEl.setAttribute('aria-label', 'Tìm kiếm sản phẩm');
+        inputEl.setAttribute('aria-autocomplete', 'list');
+        inputEl.setAttribute('aria-controls', 'search-popup-results');
+        formEl.appendChild(inputEl);
+
+        var close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'search-popup-close';
+        close.setAttribute('data-search-close', '');
+        close.setAttribute('aria-label', 'Đóng tìm kiếm');
+        close.textContent = '\u00D7';
+        formEl.appendChild(close);
+
+        boxEl.appendChild(formEl);
+
+        var bodyEl = document.createElement('div');
+        bodyEl.className = 'search-popup-body';
+        bodyEl.id = 'search-popup-results';
+        bodyEl.setAttribute('role', 'listbox');
+        var hint = document.createElement('p');
+        hint.className = 'search-popup-hint';
+        hint.textContent = 'Gõ tên máy ảnh, chỗ chụp, bộ đồ hoặc phụ kiện để tìm.';
+        bodyEl.appendChild(hint);
+        boxEl.appendChild(bodyEl);
+
         document.body.appendChild(wrap);
         return wrap;
     }
@@ -313,7 +374,6 @@ html.search-open {
     var body = popup.querySelector('.search-popup-body');
     var endpoint = box.getAttribute('data-endpoint');
     var pageUrl = form.getAttribute('action');
-    var hintHtml = body.innerHTML;
  
     var DELAY = 120;           // ms chờ sau ký tự cuối, tránh gọi server quá dày khi gõ nhanh
     var timer = null;
@@ -520,9 +580,7 @@ html.search-open {
         if (q === '') {
             if (controller) controller.abort();
             box.classList.remove('is-loading');
-            body.innerHTML = hintHtml;
-            items = [];
-            active = -1;
+            message('Gõ tên máy ảnh, chỗ chụp, bộ đồ hoặc phụ kiện để tìm.');
             return;
         }
         timer = setTimeout(function () { search(q); }, DELAY);

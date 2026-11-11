@@ -74,7 +74,7 @@ if ($ma_xem > 0) {
                             <td><?= h(dinh_dang_ngay_gio($d['DDL_NgayTao'])) ?></td>
                             <td><?= h(dinh_dang_tien($d['DDL_TongTien'])) ?></td>
                             <td><span class="badge <?= lop_badge_don($d['DDL_TrangThai']) ?>"><?= h($d['DDL_TrangThai']) ?></span></td>
-                            <td class="row-actions"><a href="<?= BASE_URL ?>order-detail.php?id=<?= (int) $d['DDL_Ma'] ?>">Chi tiết</a></td>
+                            <td class="row-actions"><a href="<?= BASE_URL ?>user/order-detail.php?id=<?= (int) $d['DDL_Ma'] ?>">Chi tiết</a></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
