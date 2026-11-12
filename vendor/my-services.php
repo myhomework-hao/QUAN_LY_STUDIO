@@ -1,6 +1,10 @@
 <?php
 require_once __DIR__ . '/khung_nv.php';
 
+// Kiểm tra quyền nhân viên hoặc admin
+$vai_tro_hien_tai = $_SESSION['ND_VaiTro'] ?? $_SESSION['vai_tro'] ?? $_SESSION['quyen'] ?? '';
+$la_nhan_vien_hoac_admin = in_array($vai_tro_hien_tai, ['admin', 'nhan_vien', 'Admin', 'NhanVien'], true) || !empty($ma_nhan_vien);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dich = ve_trang_truoc('my-services.php');
     if (!csrf_hop_le()) {
@@ -8,11 +12,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         chuyen_huong($dich);
     }
     $ma = (int) ($_POST['ma'] ?? 0);
-    $hien = ($_POST['hanh_dong'] ?? '') === 'hien';
-    $dv = lay_mot($conn, "SELECT DV_Ten FROM dichvu WHERE DV_Ma = ?", [$ma]);
+    $hanh_dong = $_POST['hanh_dong'] ?? '';
+    $dv = lay_mot($conn, "SELECT DV_Ten, DV_Loai FROM dichvu WHERE DV_Ma = ?", [$ma]);
+
     if (!$dv) {
         dat_thong_bao('Không tìm thấy dịch vụ.', 'error');
+    } elseif ($hanh_dong === 'khoa_bao_tri' || $hanh_dong === 'mo_khoa') {
+        if (!$la_nhan_vien_hoac_admin) {
+            dat_thong_bao('Chỉ nhân viên hoặc quản trị viên mới có quyền thay đổi trạng thái.', 'error');
+            chuyen_huong($dich);
+        }
+
+        $trang_thai_moi = ($hanh_dong === 'mo_khoa') ? 1 : 0;
+        
+        // Lấy chính xác giá trị do nhân viên chọn từ thẻ <select name="ly_do"> (Đang bảo trì hoặc Hư hỏng)
+        $ly_do = trim((string) ($_POST['ly_do'] ?? 'Đang bảo trì')); 
+
+        // Cập nhật trạng thái bán (0: khóa không cho khách đặt, 1: mở bán)
+        $conn->prepare("UPDATE dichvu SET DV_DangBan = ? WHERE DV_Ma = ?")->execute([$trang_thai_moi, $ma]);
+
+        // Đồng bộ lý do vào bảng phòng chụp hoặc thiết bị tương ứng
+        if ($dv['DV_Loai'] === 'phong_chup') {
+            $tt_pc = ($trang_thai_moi === 0) ? $ly_do : 'Sẵn sàng';
+            $conn->prepare("UPDATE phongchup SET PC_TrangThai = ? WHERE DV_Ma = ?")->execute([$tt_pc, $ma]);
+        } elseif ($dv['DV_Loai'] === 'thiet_bi') {
+            $tt_tb = ($trang_thai_moi === 0) ? $ly_do : 'Tốt';
+            $conn->prepare("UPDATE thietbi SET TB_TinhTrang = ? WHERE DV_Ma = ?")->execute([$tt_tb, $ma]);
+        }
+
+        $thong_bao_text = ($trang_thai_moi === 0) ? "Đã cập nhật trạng thái thành '$ly_do' cho: " : "Đã mở khóa hoạt động trở lại cho: ";
+        dat_thong_bao($thong_bao_text . $dv['DV_Ten'] . '.');
     } else {
+        $hien = ($hanh_dong === 'hien');
         $conn->prepare("UPDATE dichvu SET DV_DangBan = ? WHERE DV_Ma = ?")->execute([$hien ? 1 : 0, $ma]);
         dat_thong_bao(($hien ? 'Đã hiển thị ' : 'Đã ẩn ') . $dv['DV_Ten'] . '.');
     }
@@ -35,6 +66,7 @@ $loai = $_GET['loai'] ?? '';
 $hien = $_GET['hien'] ?? '';
 $dieu_kien = ['1 = 1'];
 $tham_so = [];
+
 if ($tu_khoa !== '') { $dieu_kien[] = "DV_Ten LIKE ?"; $tham_so[] = '%' . $tu_khoa . '%'; }
 if (in_array($loai, ['phong_chup', 'thiet_bi', 'trang_phuc', 'phu_kien'], true)) { $dieu_kien[] = "DV_Loai = ?"; $tham_so[] = $loai; } else { $loai = ''; }
 if ($hien === '1' || $hien === '0') { $dieu_kien[] = "DV_DangBan = ?"; $tham_so[] = (int) $hien; }
@@ -83,7 +115,7 @@ nv_dau('Quản lý dịch vụ', 'dich-vu');
                     <select id="hien" name="hien">
                         <option value="">Tất cả</option>
                         <option value="1" <?= $hien === '1' ? 'selected' : '' ?>>Đang hiển thị</option>
-                        <option value="0" <?= $hien === '0' ? 'selected' : '' ?>>Đang ẩn</option>
+                        <option value="0" <?= $hien === '0' ? 'selected' : '' ?>>Đang bảo trì / Hư hỏng</option>
                     </select>
                 </div>
                 <button class="btn-solid" type="submit">Lọc</button>
@@ -91,26 +123,64 @@ nv_dau('Quản lý dịch vụ', 'dich-vu');
 
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Ảnh</th><th>Tên dịch vụ</th><th>Loại</th><th>Giá thuê</th><th>Số lượng</th><th>Hiển thị</th><th><span class="sr-only">Thao tác</span></th></tr></thead>
+                    <thead><tr><th>Ảnh</th><th>Tên dịch vụ</th><th>Loại</th><th>Giá thuê</th><th>Số lượng</th><th>Trạng thái</th><th><span class="sr-only">Thao tác</span></th></tr></thead>
                     <tbody>
                         <?php if (!$ds) : ?><tr><td colspan="7" class="empty">Không tìm thấy dịch vụ nào.</td></tr><?php endif; ?>
-                        <?php foreach ($ds as $d) : $dang_ban = (int) $d['DV_DangBan'] === 1; ?>
+                        <?php foreach ($ds as $d) : 
+                            $dang_ban = (int) $d['DV_DangBan'] === 1;
+                            $trang_thai_chi_tiet = $dang_ban ? 'Đang hiển thị' : 'Đang bảo trì';
+                            if (!$dang_ban) {
+                                if ($d['DV_Loai'] === 'phong_chup') {
+                                    $trang_thai_chi_tiet = gia_tri($conn, "SELECT PC_TrangThai FROM phongchup WHERE DV_Ma = ?", [$d['DV_Ma']]) ?: 'Đang bảo trì';
+                                } elseif ($d['DV_Loai'] === 'thiet_bi') {
+                                    $trang_thai_chi_tiet = gia_tri($conn, "SELECT TB_TinhTrang FROM thietbi WHERE DV_Ma = ?", [$d['DV_Ma']]) ?: 'Đang bảo trì';
+                                }
+                            }
+                        ?>
                             <tr>
                                 <td><?php if ($d['DV_HinhAnh']) : ?><img class="thumb" src="<?= h(duong_dan_anh($d['DV_HinhAnh'])) ?>" alt=""><?php endif; ?></td>
                                 <td><?= h($d['DV_Ten']) ?></td>
                                 <td><?= h(ten_loai_dich_vu($d['DV_Loai'])) ?></td>
                                 <td><?= h(gia_hien_thi($d['DV_GiaThue'], $d['DV_DonViTinh'])) ?></td>
                                 <td><?= (int) $d['DV_SoLuong'] ?></td>
-                                <td><span class="badge <?= $dang_ban ? 'badge-xac-nhan' : 'badge-khoa' ?>"><?= $dang_ban ? 'Đang hiển thị' : 'Đang ẩn' ?></span></td>
+                                <td>
+                                    <span class="badge <?= $dang_ban ? 'badge-xac-nhan' : 'badge-khoa' ?>">
+                                        <?= h($trang_thai_chi_tiet) ?>
+                                    </span>
+                                </td>
                                 <td class="row-actions">
                                     <a href="dich-vu-form.php?id=<?= (int) $d['DV_Ma'] ?>">Sửa</a>
-                                    <form method="post">
+                                    <form method="post" style="display:inline-block;">
                                         <?= csrf_input() ?>
                                         <input type="hidden" name="ma" value="<?= (int) $d['DV_Ma'] ?>">
                                         <input type="hidden" name="ve" value="<?= h($_SERVER['QUERY_STRING'] ?? '') ?>">
                                         <input type="hidden" name="hanh_dong" value="<?= $dang_ban ? 'an' : 'hien' ?>">
                                         <button type="submit"><?= $dang_ban ? 'Ẩn' : 'Hiện' ?></button>
                                     </form>
+
+                                    <?php if ($la_nhan_vien_hoac_admin) : ?>
+                                        <?php if ($dang_ban) : ?>
+                                            <form method="post" style="display:inline-block; margin-left: 4px;" onsubmit="return confirm('Xác nhận cập nhật trạng thái sản phẩm?');">
+                                                <?= csrf_input() ?>
+                                                <input type="hidden" name="ma" value="<?= (int) $d['DV_Ma'] ?>">
+                                                <input type="hidden" name="ve" value="<?= h($_SERVER['QUERY_STRING'] ?? '') ?>">
+                                                <input type="hidden" name="hanh_dong" value="khoa_bao_tri">
+                                                <select name="ly_do" style="padding: 2px 4px; font-size: 12px; border-radius: 3px;">
+                                                    <option value="Đang bảo trì">Đang bảo trì</option>
+                                                    <option value="Hư hỏng">Hư hỏng</option>
+                                                </select>
+                                                <button type="submit" style="color: #dc2626; background: none; border: none; cursor: pointer; font-weight: 500; text-decoration: underline;">Khóa</button>
+                                            </form>
+                                        <?php else : ?>
+                                            <form method="post" style="display:inline-block; margin-left: 4px;" onsubmit="return confirm('Mở khóa sản phẩm này hoạt động trở lại?');">
+                                                <?= csrf_input() ?>
+                                                <input type="hidden" name="ma" value="<?= (int) $d['DV_Ma'] ?>">
+                                                <input type="hidden" name="ve" value="<?= h($_SERVER['QUERY_STRING'] ?? '') ?>">
+                                                <input type="hidden" name="hanh_dong" value="mo_khoa">
+                                                <button type="submit" style="color: #16a34a; background: none; border: none; cursor: pointer; font-weight: 500; text-decoration: underline;">Mở khóa</button>
+                                            </form>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
