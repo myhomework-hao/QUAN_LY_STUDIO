@@ -10,9 +10,12 @@ $danh_muc_chinh = [
     'phu_kien'   => 'Phụ kiện - đạo cụ',
 ];
 
+// Lấy tất cả sản phẩm (cả sản phẩm đang khóa/bảo trì) để sản phẩm không bị biến mất khỏi trang khách hàng
+$dieu_kien_ban = "1 = 1";
+
 $sql = "SELECT dv.DV_Ma AS id, dv.DV_Ten AS ten, dv.DV_Loai AS loai, dv.DV_GiaThue AS gia,
                dv.DV_DonViTinh AS don_vi, dv.DV_MoTa AS mo_ta, dv.DV_HinhAnh AS anh,
-               dv.DV_SoLuong AS tong_kho,
+               dv.DV_SoLuong AS tong_kho, dv.DV_DangBan AS dang_ban,
                (SELECT COALESCE(SUM(c.CTD_SoLuong), 0) 
                 FROM chitietdon c 
                 JOIN dondatlich d ON d.DDL_Ma = c.DDL_Ma 
@@ -22,7 +25,7 @@ $sql = "SELECT dv.DV_Ma AS id, dv.DV_Ten AS ten, dv.DV_Loai AS loai, dv.DV_GiaTh
                (SELECT AVG(dg.DG_SoSao) FROM danhgia dg WHERE dg.DV_Ma = dv.DV_Ma) AS diem_tb,
                (SELECT COUNT(*) FROM danhgia dg WHERE dg.DV_Ma = dv.DV_Ma) AS so_danh_gia
         FROM dichvu dv
-        WHERE dv.DV_DangBan = 1
+        WHERE $dieu_kien_ban
         ORDER BY dv.DV_Ma DESC";
 
 $ds_dich_vu = [];
@@ -45,11 +48,11 @@ $loai_chon = $_GET['loai'] ?? 'all';
 $tieu_de_trang = 'Sản phẩm cho thuê - VIBE STUDIO';
 $trang_hien_tai = 'san-pham';
 $css_rieng = [
-    BASE_URL . 'assets/css/at.css' // Phải có BASE_URL để trỏ đúng về gốc
+    BASE_URL . 'assets/css/at.css'
 ];
 
 $js_rieng = [
-    BASE_URL . 'assets/js/at.js?v=' . time() // Phải có BASE_URL ở đây nữa
+    BASE_URL . 'assets/js/at.js?v=' . time()
 ];
 require_once '../includes/header.php';
 ?>
@@ -109,7 +112,20 @@ require_once '../includes/header.php';
                             <?php 
                                 $link = 'service-detail.php?id=' . (int) $dv['id'];
                                 $link_chat = 'chat.php?product_id=' . (int) $dv['id'];
+                                $dang_ban = (int) $dv['dang_ban'] === 1;
                                 $con_lai = max(0, (int) $dv['tong_kho'] - (int) $dv['da_dat']);
+
+                                // Lấy nhãn hiển thị trạng thái (nếu khóa thì hiện lý do bảo trì/hư hỏng do nhân viên ghi)
+                                if ($dang_ban) {
+                                    $nhan_trang_thai = $con_lai > 0 ? 'Còn ' . $con_lai . ' sản phẩm' : 'Hết hàng';
+                                } else {
+                                    $nhan_trang_thai = 'Đang bảo trì';
+                                    if ($dv['loai'] === 'phong_chup') {
+                                        $nhan_trang_thai = gia_tri($conn, "SELECT PC_TrangThai FROM phongchup WHERE DV_Ma = ?", [$dv['id']]) ?: 'Đang bảo trì';
+                                    } elseif ($dv['loai'] === 'thiet_bi') {
+                                        $nhan_trang_thai = gia_tri($conn, "SELECT TB_TinhTrang FROM thietbi WHERE DV_Ma = ?", [$dv['id']]) ?: 'Đang bảo trì';
+                                    }
+                                }
                             ?>
 
                             <article class="product-card" data-category="<?= h($ma_loai) ?>">
@@ -127,8 +143,8 @@ require_once '../includes/header.php';
 
                                 <div class="product-info">
                                     <div class="product-tags">
-                                        <span class="product-status-tag <?= $con_lai == 0 ? 'out-of-stock' : '' ?>">
-                                            <?= $con_lai > 0 ? 'Còn ' . $con_lai . ' sản phẩm' : 'Hết hàng' ?>
+                                        <span class="product-status-tag <?= (!$dang_ban || $con_lai == 0) ? 'out-of-stock' : '' ?>">
+                                            <?= h($nhan_trang_thai) ?>
                                         </span>
                                     </div>
 
@@ -155,7 +171,12 @@ require_once '../includes/header.php';
                                     </div>
 
                                     <div class="product-actions">
-                                        <a href="<?= $link ?>" class="btn-action btn-rent <?= $con_lai == 0 ? 'disabled' : '' ?>">Thuê ngay</a>
+                                        <?php if ($dang_ban): ?>
+                                            <a href="<?= $link ?>" class="btn-action btn-rent <?= $con_lai == 0 ? 'disabled' : '' ?>">Thuê ngay</a>
+                                        <?php else: ?>
+                                            <!-- Khóa nút thuê và hiển thị rõ lý do bảo trì/hư hỏng -->
+                                            <button type="button" class="btn-action btn-rent disabled" style="background-color: #9ca3af; cursor: not-allowed; border: none; width: 100%;" disabled><?= h($nhan_trang_thai) ?></button>
+                                        <?php endif; ?>
                                         <a href="<?= $link_chat ?>" class="btn-action btn-chat">
                                             <i class="fa-regular fa-comment"></i> Chat
                                         </a>
