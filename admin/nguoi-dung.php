@@ -36,7 +36,7 @@ if ($ma_xem > 0) {
     }
     $don = lay_nhieu(
         $conn,
-        "SELECT DDL_Ma, DDL_TongTien, DDL_TrangThai, DDL_NgayTao FROM dondatlich
+        "SELECT DDL_Ma, DDL_TongTien, DDL_TrangThai, DDL_NgayTao, DDL_TrangThaiHoanTien, DDL_SoTienHoan FROM dondatlich
          WHERE ND_Ma = ? ORDER BY DDL_Ma DESC LIMIT 20",
         [$ma_xem]
     );
@@ -73,7 +73,13 @@ if ($ma_xem > 0) {
                             <td><?= h(ma_don_hien_thi((int) $d['DDL_Ma'])) ?></td>
                             <td><?= h(dinh_dang_ngay_gio($d['DDL_NgayTao'])) ?></td>
                             <td><?= h(dinh_dang_tien($d['DDL_TongTien'])) ?></td>
-                            <td><span class="badge <?= lop_badge_don($d['DDL_TrangThai']) ?>"><?= h($d['DDL_TrangThai']) ?></span></td>
+                            <td>
+                                <span class="badge <?= lop_badge_don($d['DDL_TrangThai']) ?>"><?= h($d['DDL_TrangThai']) ?></span>
+                                <?php $tt_hoan = (string) ($d['DDL_TrangThaiHoanTien'] ?? HOAN_TIEN_KHONG); ?>
+                                <?php if ($tt_hoan === HOAN_TIEN_CHO || $tt_hoan === HOAN_TIEN_DA) : ?>
+                                    <br><span class="muted"><?= h($tt_hoan) ?><?php if (isset($d['DDL_SoTienHoan']) && $d['DDL_SoTienHoan'] !== null && $d['DDL_SoTienHoan'] !== '') : ?> (<?= h(dinh_dang_tien($d['DDL_SoTienHoan'])) ?>)<?php endif; ?></span>
+                                <?php endif; ?>
+                            </td>
                             <td class="row-actions"><a href="<?= BASE_URL ?>user/order-detail.php?id=<?= (int) $d['DDL_Ma'] ?>">Chi tiết</a></td>
                         </tr>
                     <?php endforeach; ?>

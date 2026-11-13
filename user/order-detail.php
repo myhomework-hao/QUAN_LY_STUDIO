@@ -54,20 +54,37 @@ if ($don && $la_chu_don && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $loai_thong_bao = 'error';
 
         } else {
+            try {
+                $conn->beginTransaction();
+                $stmt = $conn->prepare("UPDATE dondatlich
+                                        SET DDL_TrangThai = ?, DDL_ThoiDiemHuy = ?, DDL_LyDoHuy = ?
+                                        WHERE DDL_Ma = ? AND ND_Ma = ? AND DDL_TrangThai = ?");
+                $stmt->execute([
+                    TRANG_THAI_DA_HUY, date('Y-m-d H:i:s'), $ly_do !== '' ? $ly_do : null,
+                    $ma_don, $ma_nguoi_dung, TRANG_THAI_CHO_DUYET,
+                ]);
 
-            $stmt = $conn->prepare("UPDATE dondatlich
-                                    SET DDL_TrangThai = ?, DDL_ThoiDiemHuy = ?, DDL_LyDoHuy = ?
-                                    WHERE DDL_Ma = ? AND ND_Ma = ? AND DDL_TrangThai = ?");
-            $stmt->execute([
-                TRANG_THAI_DA_HUY, date('Y-m-d H:i:s'), $ly_do !== '' ? $ly_do : null,
-                $ma_don, $ma_nguoi_dung, TRANG_THAI_CHO_DUYET,
-            ]);
-
-            if ($stmt->rowCount() > 0) {
-                $thong_bao = 'Đã hủy đơn thuê.';
-                $loai_thong_bao = 'success';
-            } else {
-                $thong_bao = 'Chỉ có thể hủy đơn đang chờ duyệt.';
+                if ($stmt->rowCount() > 0) {
+                    $kq_hoan_tien = phat_sinh_cho_hoan_tien($conn, $ma_don);
+                    $conn->commit();
+                    if (!empty($kq_hoan_tien['co_hoan_tien'])) {
+                        $thong_bao = 'Đã hủy đơn thuê. Đơn đang chờ hoàn tiền (' . dinh_dang_tien($kq_hoan_tien['so_tien']) . ').';
+                    } else {
+                        $thong_bao = 'Đã hủy đơn thuê. Không phát sinh hoàn tiền.';
+                    }
+                    $loai_thong_bao = 'success';
+                } else {
+                    if ($conn->inTransaction()) {
+                        $conn->rollBack();
+                    }
+                    $thong_bao = 'Chỉ có thể hủy đơn đang chờ duyệt.';
+                    $loai_thong_bao = 'error';
+                }
+            } catch (Throwable $e) {
+                if ($conn->inTransaction()) {
+                    $conn->rollBack();
+                }
+                $thong_bao = 'Không thể hủy đơn thuê, vui lòng thử lại.';
                 $loai_thong_bao = 'error';
             }
         }
@@ -198,11 +215,25 @@ require_once '../includes/header.php';
                 </p>
             <?php endif; ?>
 
+            <?php $tt_hoan = (string) ($don['DDL_TrangThaiHoanTien'] ?? HOAN_TIEN_KHONG); ?>
+            <?php if ($tt_hoan === HOAN_TIEN_CHO) : ?>
+                <p class="dh-ghi" style="background:#fff8e6;border:1px solid #f0d58c;color:#7a5b00;padding:10px 12px;border-radius:8px;">
+                    <b>Hoàn tiền:</b> Chờ hoàn tiền<?php if (isset($don['DDL_SoTienHoan']) && $don['DDL_SoTienHoan'] !== null && $don['DDL_SoTienHoan'] !== '') : ?> · Số tiền dự kiến: <?= dinh_dang_tien($don['DDL_SoTienHoan']) ?><?php endif; ?>. Studio sẽ liên hệ và hoàn tiền cho bạn.
+                </p>
+            <?php elseif ($tt_hoan === HOAN_TIEN_DA) : ?>
+                <p class="dh-ghi" style="background:#eefaf1;border:1px solid #bfe3c8;color:#1e6b34;padding:10px 12px;border-radius:8px;">
+                    <b>Hoàn tiền:</b> Đã hoàn tiền<?php if (isset($don['DDL_SoTienHoan']) && $don['DDL_SoTienHoan'] !== null && $don['DDL_SoTienHoan'] !== '') : ?> · Số tiền: <?= dinh_dang_tien($don['DDL_SoTienHoan']) ?><?php endif; ?><?php if (!empty($don['DDL_ThoiDiemHoanTien'])) : ?> · Lúc <?= htmlspecialchars(dinh_dang_ngay_gio($don['DDL_ThoiDiemHoanTien'])) ?><?php endif; ?>.
+                </p>
+            <?php elseif (in_array($don['DDL_TrangThai'], [TRANG_THAI_DA_HUY, TRANG_THAI_TU_CHOI], true)) : ?>
+                <p class="dh-ghi"><b>Hoàn tiền:</b> Không phát sinh hoàn tiền.</p>
+            <?php endif; ?>
+
             <div class="dh-thong-tin">
                 <div>
                     <h3>Người thuê</h3>
                     <p><b>Họ tên:</b> <?= htmlspecialchars($don['DDL_TenNguoiThue'] ?: $don['ND_Ten']) ?></p>
                     <?php if ($don['DDL_SDTNguoiThue']) : ?><p><b>Điện thoại:</b> <?= htmlspecialchars($don['DDL_SDTNguoiThue']) ?></p><?php endif; ?>
+                    <?php if (!empty($don['DDL_CCCD'])) : ?><p><b>CCCD/CMND:</b> <?= htmlspecialchars($don['DDL_CCCD']) ?></p><?php endif; ?>
                     <?php if ($don['DDL_DiaChi']) : ?><p><b>Địa chỉ:</b> <?= htmlspecialchars($don['DDL_DiaChi']) ?></p><?php endif; ?>
                     <p><b>Tài khoản đặt:</b> <?= htmlspecialchars($don['ND_Ten']) ?> (<?= htmlspecialchars($don['ND_Email']) ?>)</p>
                 </div>

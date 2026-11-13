@@ -69,10 +69,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($ly_do === '' || mb_strlen($ly_do) > 255) {
             dat_thong_bao('Vui lòng nhập lý do từ chối (tối đa 255 ký tự).', 'error');
         } else {
-            $stmt = $conn->prepare("UPDATE dondatlich SET DDL_TrangThai = ?, NV_Ma = ?, DDL_ThoiDiemXuLy = ?, DDL_LyDoTuChoi = ? WHERE DDL_Ma = ? AND DDL_TrangThai = ?");
-            $stmt->execute([TRANG_THAI_TU_CHOI, $ma_nhan_vien, $bay_gio, $ly_do, $ma_don, TRANG_THAI_CHO_DUYET]);
-            $thanh_cong = $stmt->rowCount() === 1;
-            dat_thong_bao($thanh_cong ? "Đã từ chối đơn $ten_don." : "Đơn $ten_don không còn ở trạng thái chờ duyệt.", $thanh_cong ? 'success' : 'error');
+            $conn->beginTransaction();
+            try {
+                $stmt = $conn->prepare("UPDATE dondatlich SET DDL_TrangThai = ?, NV_Ma = ?, DDL_ThoiDiemXuLy = ?, DDL_LyDoTuChoi = ? WHERE DDL_Ma = ? AND DDL_TrangThai = ?");
+                $stmt->execute([TRANG_THAI_TU_CHOI, $ma_nhan_vien, $bay_gio, $ly_do, $ma_don, TRANG_THAI_CHO_DUYET]);
+                if ($stmt->rowCount() === 1) {
+                    $kq_hoan_tien = phat_sinh_cho_hoan_tien($conn, $ma_don);
+                    $conn->commit();
+                    if (!empty($kq_hoan_tien['co_hoan_tien'])) {
+                        dat_thong_bao("Đã từ chối đơn $ten_don. Đơn chuyển sang chờ hoàn tiền (" . dinh_dang_tien($kq_hoan_tien['so_tien']) . ").", 'success');
+                    } else {
+                        dat_thong_bao("Đã từ chối đơn $ten_don. Không phát sinh hoàn tiền.", 'success');
+                    }
+                } else {
+                    $conn->rollBack();
+                    dat_thong_bao("Đơn $ten_don không còn ở trạng thái chờ duyệt.", 'error');
+                }
+            } catch (Throwable $e) {
+                if ($conn->inTransaction()) {
+                    $conn->rollBack();
+                }
+                dat_thong_bao("Không thể từ chối đơn $ten_don, vui lòng thử lại.", 'error');
+            }
+        }
+    } elseif ($hanh_dong === 'huy') {
+        $ly_do = trim((string) ($_POST['ly_do'] ?? ''));
+        if ($ly_do === '' || mb_strlen($ly_do) > 255) {
+            dat_thong_bao('Vui lòng nhập lý do hủy (tối đa 255 ký tự).', 'error');
+        } else {
+            $conn->beginTransaction();
+            try {
+                $stmt = $conn->prepare("UPDATE dondatlich
+                                        SET DDL_TrangThai = ?, NV_Ma = ?, DDL_ThoiDiemXuLy = ?, DDL_ThoiDiemHuy = ?, DDL_LyDoHuy = ?
+                                        WHERE DDL_Ma = ? AND DDL_TrangThai = ?");
+                $stmt->execute([TRANG_THAI_DA_HUY, $ma_nhan_vien, $bay_gio, $bay_gio, $ly_do, $ma_don, TRANG_THAI_DA_DUYET]);
+                if ($stmt->rowCount() === 1) {
+                    $kq_hoan_tien = phat_sinh_cho_hoan_tien($conn, $ma_don);
+                    $conn->commit();
+                    if (!empty($kq_hoan_tien['co_hoan_tien'])) {
+                        dat_thong_bao("Đã hủy đơn $ten_don. Đơn chuyển sang chờ hoàn tiền (" . dinh_dang_tien($kq_hoan_tien['so_tien']) . ").", 'success');
+                    } else {
+                        dat_thong_bao("Đã hủy đơn $ten_don. Không phát sinh hoàn tiền.", 'success');
+                    }
+                } else {
+                    $conn->rollBack();
+                    dat_thong_bao("Đơn $ten_don không còn ở trạng thái đã duyệt.", 'error');
+                }
+            } catch (Throwable $e) {
+                if ($conn->inTransaction()) {
+                    $conn->rollBack();
+                }
+                dat_thong_bao("Không thể hủy đơn $ten_don, vui lòng thử lại.", 'error');
+            }
         }
     } elseif ($hanh_dong === 'hoan_thanh') {
         $bat_dau_som_nhat = gia_tri($conn, "SELECT MIN(CTD_BatDau) FROM chitietdon WHERE DDL_Ma = ?", [$ma_don]);
@@ -121,7 +169,8 @@ $gioi_han = SO_DONG_MOI_TRANG;
 
 $ds = lay_nhieu(
     $conn,
-    "SELECT d.DDL_Ma, d.DDL_TrangThai, d.DDL_TongTien, d.DDL_NgayTao, d.DDL_LyDoTuChoi, nd.ND_Ten, d.DDL_TenNguoiThue, d.DDL_SDTNguoiThue,
+    "SELECT d.DDL_Ma, d.DDL_TrangThai, d.DDL_TongTien, d.DDL_NgayTao, d.DDL_LyDoTuChoi, nd.ND_Ten, d.DDL_TenNguoiThue, d.DDL_SDTNguoiThue, d.DDL_CCCD,
+            d.DDL_TrangThaiHoanTien, d.DDL_SoTienHoan,
             (SELECT MIN(c.CTD_BatDau) FROM chitietdon c WHERE c.DDL_Ma = d.DDL_Ma) AS bat_dau,
             (SELECT dv.DV_Ten FROM chitietdon c JOIN dichvu dv ON dv.DV_Ma = c.DV_Ma WHERE c.DDL_Ma = d.DDL_Ma ORDER BY c.CTD_Ma LIMIT 1) AS ten_dau,
             (SELECT COUNT(*) FROM chitietdon c WHERE c.DDL_Ma = d.DDL_Ma) AS so_dich_vu
@@ -157,17 +206,26 @@ nv_dau('Đơn thuê', 'don');
                         <?php foreach ($ds as $d) : ?>
                             <tr>
                                 <td><?= h(ma_don_hien_thi((int) $d['DDL_Ma'])) ?></td>
-                                <td><?= h($d['DDL_TenNguoiThue'] ?: $d['ND_Ten']) ?><?php if ($d['DDL_SDTNguoiThue']) : ?><br><span class="muted"><?= h($d['DDL_SDTNguoiThue']) ?></span><?php endif; ?></td>
+                                <td><?= h($d['DDL_TenNguoiThue'] ?: $d['ND_Ten']) ?><?php if ($d['DDL_SDTNguoiThue']) : ?><br><span class="muted"><?= h($d['DDL_SDTNguoiThue']) ?></span><?php endif; ?><?php if (!empty($d['DDL_CCCD'])) : ?><br><span class="muted">CCCD: <?= h($d['DDL_CCCD']) ?></span><?php endif; ?></td>
                                 <td><?= h($d['ten_dau']) ?><?php if ((int) $d['so_dich_vu'] > 1) : ?> <span class="muted">+<?= (int) $d['so_dich_vu'] - 1 ?></span><?php endif; ?></td>
                                 <td><?= h(dinh_dang_ngay_gio($d['bat_dau'])) ?></td>
                                 <td><?= h(dinh_dang_tien($d['DDL_TongTien'])) ?></td>
                                 <td>
                                     <span class="badge <?= lop_badge_don($d['DDL_TrangThai']) ?>"><?= h($d['DDL_TrangThai']) ?></span>
+                                    <?php $tt_hoan = (string) ($d['DDL_TrangThaiHoanTien'] ?? HOAN_TIEN_KHONG); ?>
+                                    <?php if ($tt_hoan === HOAN_TIEN_CHO || $tt_hoan === HOAN_TIEN_DA) : ?>
+                                        <br><span class="muted">Hoàn tiền: <?= h($tt_hoan) ?><?php if (isset($d['DDL_SoTienHoan']) && $d['DDL_SoTienHoan'] !== null && $d['DDL_SoTienHoan'] !== '') : ?> (<?= h(dinh_dang_tien($d['DDL_SoTienHoan'])) ?>)<?php endif; ?></span>
+                                    <?php elseif (in_array($d['DDL_TrangThai'], [TRANG_THAI_DA_HUY, TRANG_THAI_TU_CHOI], true)) : ?>
+                                        <br><span class="muted">Không phát sinh hoàn tiền</span>
+                                    <?php endif; ?>
                                     <?php if ($d['DDL_LyDoTuChoi']) : ?><br><span class="muted"><?= h($d['DDL_LyDoTuChoi']) ?></span><?php endif; ?>
                                 </td>
                                 <td class="row-actions">
                                     <!-- Đã chỉnh sửa đường dẫn trỏ đúng vị trí file order-detail.php -->
                                     <a href="<?= BASE_URL ?>user/order-detail.php?id=<?= (int) $d['DDL_Ma'] ?>">Chi tiết</a>
+                                    <?php if (($d['DDL_TrangThaiHoanTien'] ?? HOAN_TIEN_KHONG) === HOAN_TIEN_CHO) : ?>
+                                        <a href="hoan-tien.php?ma=<?= (int) $d['DDL_Ma'] ?>">Xử lý hoàn tiền</a>
+                                    <?php endif; ?>
                                     <?php if ($d['DDL_TrangThai'] === TRANG_THAI_CHO_DUYET) : ?>
                                         <form method="post" onsubmit="return confirm('Duyệt đơn này?')">
                                             <?= csrf_input() ?>
@@ -191,6 +249,14 @@ nv_dau('Đơn thuê', 'don');
                                             <input type="hidden" name="ve" value="<?= h($_SERVER['QUERY_STRING'] ?? '') ?>">
                                             <input type="hidden" name="hanh_dong" value="hoan_thanh">
                                             <button type="submit">Hoàn thành</button>
+                                        </form>
+                                        <form method="post" onsubmit="var l=prompt('Nhập lý do hủy đơn đã duyệt:'); if(!l||!l.trim()){return false;} this.ly_do.value=l;">
+                                            <?= csrf_input() ?>
+                                            <input type="hidden" name="ma" value="<?= (int) $d['DDL_Ma'] ?>">
+                                            <input type="hidden" name="ve" value="<?= h($_SERVER['QUERY_STRING'] ?? '') ?>">
+                                            <input type="hidden" name="hanh_dong" value="huy">
+                                            <input type="hidden" name="ly_do" value="">
+                                            <button type="submit">Hủy đơn</button>
                                         </form>
                                     <?php endif; ?>
                                 </td>

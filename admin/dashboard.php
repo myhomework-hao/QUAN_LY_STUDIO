@@ -50,7 +50,7 @@ $doanh_thu_max = max(1, max(array_column($doanh_thu_6_thang, 'tien')));
 
 $don_gan_day = lay_nhieu(
     $conn,
-    "SELECT d.DDL_Ma, d.DDL_TrangThai, d.DDL_TongTien, d.DDL_NgayTao, nd.ND_Ten,
+    "SELECT d.DDL_Ma, d.DDL_TrangThai, d.DDL_TongTien, d.DDL_NgayTao, d.DDL_TrangThaiHoanTien, d.DDL_SoTienHoan, nd.ND_Ten,
             (SELECT dv.DV_Ten FROM chitietdon c JOIN dichvu dv ON dv.DV_Ma = c.DV_Ma
               WHERE c.DDL_Ma = d.DDL_Ma ORDER BY c.CTD_Ma LIMIT 1) AS ten_dau,
             (SELECT COUNT(*) FROM chitietdon c WHERE c.DDL_Ma = d.DDL_Ma) AS so_dich_vu
@@ -160,7 +160,13 @@ admin_dau('Quản lý Studio', 'tong-quan');
                                 </td>
                                 <td><?= h(dinh_dang_ngay_gio($don['DDL_NgayTao'])) ?></td>
                                 <td><?= h(dinh_dang_tien($don['DDL_TongTien'])) ?></td>
-                                <td><span class="badge <?= lop_badge_don($don['DDL_TrangThai']) ?>"><?= h($don['DDL_TrangThai']) ?></span></td>
+                                <td>
+                                    <span class="badge <?= lop_badge_don($don['DDL_TrangThai']) ?>"><?= h($don['DDL_TrangThai']) ?></span>
+                                    <?php $tt_hoan = (string) ($don['DDL_TrangThaiHoanTien'] ?? HOAN_TIEN_KHONG); ?>
+                                    <?php if ($tt_hoan === HOAN_TIEN_CHO || $tt_hoan === HOAN_TIEN_DA) : ?>
+                                        <br><span class="muted"><?= h($tt_hoan) ?><?php if (isset($don['DDL_SoTienHoan']) && $don['DDL_SoTienHoan'] !== null && $don['DDL_SoTienHoan'] !== '') : ?> (<?= h(dinh_dang_tien($don['DDL_SoTienHoan'])) ?>)<?php endif; ?></span>
+                                    <?php endif; ?>
+                                </td>
                                 <td class="row-actions">
                                     <!-- Trỏ đường dẫn chi tiết đơn hàng chuẩn chỉnh -->
                                     <a href="<?= BASE_URL ?>user/order-detail.php?id=<?= (int) $don['DDL_Ma'] ?>">Chi tiết</a>

@@ -81,3 +81,19 @@ function tang_luot_dung_ma(PDO $conn, string $code): void
         throw new DomainException('Mã giảm giá vừa hết lượt sử dụng, vui lòng bỏ mã hoặc dùng mã khác.');
     }
 }
+
+/**
+ * Trả 1 lượt dùng mã — gọi TRONG cùng transaction khi đơn hủy/từ chối phát sinh hoàn tiền.
+ * Giảm MG_DaDung nếu đang > 0 (không để âm).
+ */
+function tra_luot_dung_ma(PDO $conn, string $code): void
+{
+    $code = strtoupper(trim($code));
+    if ($code === '') {
+        return;
+    }
+    $stmt = $conn->prepare(
+        "UPDATE ma_giam_gia SET MG_DaDung = CASE WHEN MG_DaDung > 0 THEN MG_DaDung - 1 ELSE 0 END WHERE MG_Code = ?"
+    );
+    $stmt->execute([$code]);
+}

@@ -10,7 +10,7 @@ $ma_nguoi_dung = ma_nguoi_dung_hien_tai();
 
 // Lấy danh sách đơn đặt lịch của khách hàng hiện tại kèm thông tin dịch vụ đầu tiên
 $stmt = $conn->prepare("
-    SELECT d.DDL_Ma, d.DDL_TongTien, d.DDL_TrangThai, d.DDL_NgayTao,
+    SELECT d.DDL_Ma, d.DDL_TongTien, d.DDL_TrangThai, d.DDL_NgayTao, d.DDL_TrangThaiHoanTien, d.DDL_SoTienHoan,
            (SELECT COUNT(*) FROM chitietdon c WHERE c.DDL_Ma = d.DDL_Ma) AS so_dich_vu,
            (SELECT dv.DV_Ten FROM chitietdon c JOIN dichvu dv ON dv.DV_Ma = c.DV_Ma
              WHERE c.DDL_Ma = d.DDL_Ma ORDER BY c.CTD_Ma LIMIT 1) AS ten_dau_tien,
@@ -58,9 +58,21 @@ require_once '../includes/header.php';
                                     Đặt lúc <?= htmlspecialchars(dinh_dang_ngay_gio($don['DDL_NgayTao'])) ?>
                                 </p>
                             </div>
-                            <span class="dh-nhan dh-<?= lop_trang_thai($don['DDL_TrangThai']) ?>" style="padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600;">
-                                <?= htmlspecialchars($don['DDL_TrangThai']) ?>
-                            </span>
+                            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+                                <span class="dh-nhan dh-<?= lop_trang_thai($don['DDL_TrangThai']) ?>" style="padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600;">
+                                    <?= htmlspecialchars($don['DDL_TrangThai']) ?>
+                                </span>
+                                <?php $tt_hoan = (string) ($don['DDL_TrangThaiHoanTien'] ?? HOAN_TIEN_KHONG); ?>
+                                <?php if ($tt_hoan === HOAN_TIEN_CHO) : ?>
+                                    <span class="dh-nhan" style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;background:#fff8e6;color:#7a5b00;border:1px solid #f0d58c;">
+                                        Chờ hoàn tiền<?php if (isset($don['DDL_SoTienHoan']) && $don['DDL_SoTienHoan'] !== null && $don['DDL_SoTienHoan'] !== '') : ?> (<?= dinh_dang_tien($don['DDL_SoTienHoan']) ?>)<?php endif; ?>
+                                    </span>
+                                <?php elseif ($tt_hoan === HOAN_TIEN_DA) : ?>
+                                    <span class="dh-nhan" style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;background:#eefaf1;color:#1e6b34;border:1px solid #bfe3c8;">
+                                        Đã hoàn tiền<?php if (isset($don['DDL_SoTienHoan']) && $don['DDL_SoTienHoan'] !== null && $don['DDL_SoTienHoan'] !== '') : ?> (<?= dinh_dang_tien($don['DDL_SoTienHoan']) ?>)<?php endif; ?>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
                         </div>
 
                         <!-- Thân thẻ đơn hàng -->

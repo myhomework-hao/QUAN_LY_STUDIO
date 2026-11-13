@@ -49,9 +49,22 @@ $dat_hang_thanh_cong = false;
 $ma_don              = 0;
 $phuong_thuc_da_chon = '';
 $loi_form            = '';
-$ten_nguoi_thue = trim($_POST['ten']     ?? ($khach['ND_Ten'] ?? ''));
-$sdt_nguoi_thue = trim($_POST['sdt']     ?? ($khach['ND_SDT'] ?? ''));
-$dia_chi        = trim($_POST['dia_chi'] ?? '');
+$ten_nguoi_thue  = trim($_POST['ten']     ?? ($khach['ND_Ten'] ?? ''));
+$sdt_nguoi_thue  = trim($_POST['sdt']     ?? ($khach['ND_SDT'] ?? ''));
+$cccd_nguoi_thue = trim($_POST['cccd']    ?? '');
+$dia_chi         = trim($_POST['dia_chi'] ?? '');
+
+// A2: sau khi xác nhận thanh toán/cọc thành công sẽ quay về với thông báo.
+if (isset($_GET['ok'], $_SESSION['dat_hang_ket_qua']) && is_array($_SESSION['dat_hang_ket_qua'])) {
+    $kq = $_SESSION['dat_hang_ket_qua'];
+    if (isset($kq['ma_don'], $kq['phuong_thuc'])) {
+        $dat_hang_thanh_cong = true;
+        $ma_don = (int) $kq['ma_don'];
+        $phuong_thuc_da_chon = (string) $kq['phuong_thuc'];
+        $ten_nguoi_thue = (string) ($kq['ten_nguoi_thue'] ?? $ten_nguoi_thue);
+    }
+    unset($_SESSION['dat_hang_ket_qua']);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
 
@@ -84,6 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
             $loi_form = 'Vui lòng nhập họ tên người thuê (tối đa 100 ký tự).';
         } elseif (!preg_match('/^0[0-9]{9,10}$/', $sdt_nguoi_thue)) {
             $loi_form = 'Số điện thoại không hợp lệ (bắt đầu bằng 0, gồm 10 hoặc 11 chữ số).';
+        } elseif (!preg_match('/^(\d{9}|\d{12})$/', $cccd_nguoi_thue)) {
+            $loi_form = 'Vui lòng nhập số CCCD/CMND hợp lệ (9 hoặc 12 chữ số).';
         } elseif ($dia_chi === '' || mb_strlen($dia_chi) > 255) {
             $loi_form = 'Vui lòng nhập địa chỉ (tối đa 255 ký tự).';
         } elseif (!isset($cac_phuong_thuc[$ma_phuong_thuc])) {
@@ -112,8 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
 
     if ($loi_form === '') {
         try {
-            $conn->beginTransaction();
-
+            // Kiểm tra nhanh còn chỗ trước khi chuyển sang bước cọc/thanh toán (A2: chưa tạo đơn).
             foreach ($cac_dong as $dong) {
                 kiem_tra_con_cho(
                     $conn, (int) $dong['item']['id'], $dong['item']['ten'],
@@ -122,75 +136,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
                 );
             }
 
-            // INSERT đơn — CÓ mã giảm giá + số tiền giảm
-            $stmt = $conn->prepare(
-                "INSERT INTO dondatlich
-                    (ND_Ma, DDL_TongTien, DDL_MaGiamGia, DDL_SoTienGiam, DDL_TienCoc, DDL_TrangThai,
-                     DDL_NgayTao, DDL_GhiChu, DDL_TenNguoiThue, DDL_SDTNguoiThue, DDL_DiaChi)
-                 VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)"
-            );
-            $stmt->execute([
-                $ma_nguoi_dung,
-                $totals['total'],
-                $coupon_code !== '' ? $coupon_code : null,
-                $discount,
-                TRANG_THAI_CHO_DUYET,
-                date('Y-m-d H:i:s'),
-                $ghi_chu !== '' ? $ghi_chu : null,
-                $ten_nguoi_thue,
-                $sdt_nguoi_thue,
-                $dia_chi,
-            ]);
-            $ma_don = (int) $conn->lastInsertId();
+            $tong_can_thu = (float) $totals['total'];
+            // Tiền mặt: cọc 25%. Chuyển khoản QR giả lập: thu đủ 100% qua trang xác nhận.
+            $so_tien_can_thu = ($ma_phuong_thuc === 'tien_mat')
+                ? (float) round($tong_can_thu * 0.25)
+                : $tong_can_thu;
 
-            $stmt_ct = $conn->prepare(
-                "INSERT INTO chitietdon (DDL_Ma, DV_Ma, CTD_SoLuong, CTD_KichCo, CTD_BatDau, CTD_KetThuc, CTD_DonGia, CTD_ThanhTien)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-            );
+            $snapshot = [];
             foreach ($cac_dong as $dong) {
-                $kich_co = !empty($dong['item']['kich_co']) ? $dong['item']['kich_co'] : null;
-                $stmt_ct->execute([
-                    $ma_don,
-                    $dong['item']['id'],
-                    $dong['item']['qty'],
-                    $kich_co,
-                    $dong['tg']['bat_dau'],
-                    $dong['tg']['ket_thuc'],
-                    $dong['item']['gia'],
-                    $dong['item']['subtotal'],
-                ]);
+                $snapshot[] = [
+                    'id'       => (int) $dong['item']['id'],
+                    'ten'      => (string) $dong['item']['ten'],
+                    'qty'      => (int) $dong['item']['qty'],
+                    'kich_co'  => (string) ($dong['item']['kich_co'] ?? ''),
+                    'bat_dau'  => $dong['tg']['bat_dau'],
+                    'ket_thuc' => $dong['tg']['ket_thuc'],
+                    'gia'      => (float) $dong['item']['gia'],
+                    'subtotal' => (float) $dong['item']['subtotal'],
+                    'don_vi'   => (string) $dong['item']['don_vi'],
+                    'so_don_vi'=> (int) ($dong['item']['so_don_vi'] ?? 1),
+                ];
             }
 
-            $da_thanh_toan = $ma_phuong_thuc === 'qr';
-            $stmt_tt = $conn->prepare(
-                "INSERT INTO thanhtoan (DDL_Ma, TT_Loai, TT_SoTien, TT_PhuongThuc, TT_MaThamChieu, TT_TrangThai, TT_ThoiDiem)
-                 VALUES (?, 'Thanh toán đủ', ?, ?, ?, ?, ?)"
-            );
-            $stmt_tt->execute([
-                $ma_don, $totals['total'], $cac_phuong_thuc[$ma_phuong_thuc],
-                $da_thanh_toan ? 'QR-' . date('ymdHis') . '-' . $ma_don : null,
-                $da_thanh_toan ? 'Thành công' : 'Chờ',
-                date('Y-m-d H:i:s'),
-            ]);
+            $_SESSION['pending_checkout'] = [
+                'token'            => bin2hex(random_bytes(16)),
+                'created_at'       => time(),
+                'cart_items'       => $snapshot,
+                'totals'           => $totals,
+                'coupon_code'      => $coupon_code !== '' ? $coupon_code : '',
+                'discount'         => $discount,
+                'payment'          => $ma_phuong_thuc,
+                'payment_label'    => $cac_phuong_thuc[$ma_phuong_thuc],
+                'note'             => $ghi_chu !== '' ? $ghi_chu : null,
+                'ten_nguoi_thue'   => $ten_nguoi_thue,
+                'sdt_nguoi_thue'   => $sdt_nguoi_thue,
+                'cccd_nguoi_thue'  => $cccd_nguoi_thue,
+                'dia_chi'          => $dia_chi,
+                'so_tien_can_thu'  => $so_tien_can_thu,
+                'la_dat_coc'       => ($ma_phuong_thuc === 'tien_mat'),
+            ];
 
-            // Tăng lượt dùng mã TRONG cùng transaction: hết lượt/quota thì
-            // kèm điều kiện UPDATE không khớp → ném lỗi → rollback cả đơn.
-            if ($coupon_code !== '' && $discount > 0) {
-                tang_luot_dung_ma($conn, $coupon_code);
-            }
-
-            $conn->commit();
-            unset($_SESSION['cart'], $_SESSION['coupon_code']);
-
-            $dat_hang_thanh_cong = true;
-            $phuong_thuc_da_chon = $cac_phuong_thuc[$ma_phuong_thuc];
+            header('Location: thanh-toan.php');
+            exit;
 
         } catch (DomainException $e) {
-            if ($conn->inTransaction()) $conn->rollBack();
             $loi_form = $e->getMessage();
         } catch (Exception $e) {
-            if ($conn->inTransaction()) $conn->rollBack();
-            $loi_form = 'Không thể lưu đơn thuê, vui lòng thử lại.';
+            $loi_form = 'Không thể chuyển sang bước thanh toán, vui lòng thử lại.';
         }
     }
 }
@@ -223,7 +215,7 @@ require_once '../includes/header.php';
     <?php if ($dat_hang_thanh_cong) : ?>
         <div class="card success" style="text-align: center; padding: 40px 20px;">
             <h1>ĐẶT THUÊ<br><i>THÀNH CÔNG.</i></h1>
-            <p>Cảm ơn <?= htmlspecialchars($ten_nguoi_thue) ?>! Đơn thuê của bạn đang chờ VIBE Studio xét duyệt. Bạn có thể theo dõi trạng thái trong mục đơn hàng của tôi.</p>
+            <p>Cảm ơn <?= htmlspecialchars($ten_nguoi_thue) ?>! Thanh toán/cọc đã được xác nhận (giả lập). Đơn thuê của bạn đang chờ VIBE Studio xét duyệt. Bạn có thể theo dõi trạng thái trong mục đơn hàng của tôi.</p>
             <div class="order-code" style="margin: 15px 0; font-weight: bold; font-size: 1.2rem;">MÃ ĐƠN: <?= htmlspecialchars(ma_don_hien_thi($ma_don)) ?></div>
             <p>Phương thức thanh toán: <?= htmlspecialchars($phuong_thuc_da_chon) ?></p>
 
@@ -263,6 +255,9 @@ require_once '../includes/header.php';
                             </label>
                             <label class="field full">Số điện thoại
                                 <input type="tel" name="sdt" maxlength="11" inputmode="numeric" required value="<?= htmlspecialchars($sdt_nguoi_thue) ?>" placeholder="Ví dụ: 0901234567">
+                            </label>
+                            <label class="field full">Số CCCD/CMND
+                                <input type="text" name="cccd" maxlength="12" inputmode="numeric" required value="<?= htmlspecialchars($cccd_nguoi_thue) ?>" placeholder="Nhập 9 hoặc 12 chữ số">
                             </label>
                             <label class="field full">Địa chỉ
                                 <input type="text" name="dia_chi" maxlength="255" required value="<?= htmlspecialchars($dia_chi) ?>" placeholder="Số nhà, đường, phường/xã, tỉnh/thành">
@@ -317,22 +312,24 @@ require_once '../includes/header.php';
                         <p class="none">Chưa có sản phẩm nào.</p>
                     <?php else : ?>
                         <?php foreach ($cart_items as $item) : ?>
-                            <div class="summary-row">
-                                <span>
-                                    <?= htmlspecialchars($item['ten']) ?> × <?= (int) $item['qty'] ?>
-                                    <?php if (!empty($item['kich_co'])) : ?>
-                                        <br><small style="color:#d9534f; font-weight:600;">Size: <?= htmlspecialchars($item['kich_co']) ?></small>
-                                    <?php endif; ?>
-                                    <br>
-                                    <small style="color:#777;">
-                                        <?= htmlspecialchars(dinh_dang_ngay_gio($item['bat_dau'])) ?>
-                                        <?php if (!la_don_vi_luot((string) $item['don_vi'])) : ?>
-                                            → <?= htmlspecialchars(dinh_dang_ngay_gio($item['ket_thuc'])) ?>
+                            <div class="summary-row summary-item">
+                                <div class="summary-item-left">
+                                    <img class="summary-item-img" src="<?= htmlspecialchars(duong_dan_anh($item['anh'] ?: 'default.png')) ?>" alt="<?= htmlspecialchars($item['ten']) ?>">
+                                    <div class="summary-item-info">
+                                        <span class="summary-item-name"><?= htmlspecialchars($item['ten']) ?> × <?= (int) $item['qty'] ?></span>
+                                        <?php if (!empty($item['kich_co'])) : ?>
+                                            <small class="summary-item-size">Size: <?= htmlspecialchars($item['kich_co']) ?></small>
                                         <?php endif; ?>
-                                        (<?= (int) $item['so_don_vi'] ?> <?= htmlspecialchars(nhan_don_vi((string) $item['don_vi'])) ?>)
-                                    </small>
-                                </span>
-                                <span><?= dinh_dang_tien($item['subtotal']) ?></span>
+                                        <small class="summary-item-time">
+                                            <?= htmlspecialchars(dinh_dang_ngay_gio($item['bat_dau'])) ?>
+                                            <?php if (!la_don_vi_luot((string) $item['don_vi'])) : ?>
+                                                → <?= htmlspecialchars(dinh_dang_ngay_gio($item['ket_thuc'])) ?>
+                                            <?php endif; ?>
+                                            (<?= (int) $item['so_don_vi'] ?> <?= htmlspecialchars(nhan_don_vi((string) $item['don_vi'])) ?>)
+                                        </small>
+                                    </div>
+                                </div>
+                                <span class="summary-item-price"><?= dinh_dang_tien($item['subtotal']) ?></span>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
