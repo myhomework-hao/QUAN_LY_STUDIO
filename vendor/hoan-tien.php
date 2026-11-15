@@ -199,7 +199,7 @@ nv_dau('Hoàn tiền ' . $ten_don, 'don');
                         </div>
                         <div class="field">
                             <label for="so_tien_hoan">Số tiền hoàn (VND, ≤ <?= h(dinh_dang_tien($tong_da_thu)) ?>)</label>
-                            <input id="so_tien_hoan" name="so_tien_hoan" type="number" min="1" step="1000" max="<?= (int) round($tong_da_thu) ?>" required value="<?= h((string) (int) round($so_tien_hoan)) ?>" <?= $tt_hoan !== HOAN_TIEN_CHO ? 'disabled' : '' ?>>
+                            <input id="so_tien_hoan" name="so_tien_hoan" type="number" min="1" step="1" max="<?= (int) round($tong_da_thu) ?>" required value="<?= h((string) (int) round($so_tien_hoan)) ?>" <?= $tt_hoan !== HOAN_TIEN_CHO ? 'disabled' : '' ?>>
                         </div>
 
                         <div style="display:flex;gap:10px;flex-wrap:wrap;">

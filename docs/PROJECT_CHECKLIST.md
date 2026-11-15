@@ -75,7 +75,7 @@
 | Quản lý dịch vụ (kho chung) | `vendor/my-services.php`, `dich-vu-form.php` | `dichvu` + bảng con | [x] | 15/11: quyền qua `vai_tro_hien_tai()`, whitelist lý do, transaction; upload thêm `getimagesize()` + random 8 byte | php-l; upload chưa-test |
 | Duyệt đơn trong transaction + kiểm kho lại (đúng size) | `vendor/vendor-orders.php` | `dondatlich`, `chitietdon` | [x] | Loại trừ chính đơn qua `$ma_don_bo_qua` | đọc-code |
 | Từ chối / hủy / hoàn thành — UPDATE có điều kiện trạng thái + rowCount | `vendor/vendor-orders.php` | `dondatlich`, `thanhtoan` | [x] | Hủy đơn đã duyệt **ghi đè NV_Ma** (`:102-105`) — `[?]` cần cột riêng, nhóm duyệt schema | đọc-code |
-| Hoàn tiền | `vendor/hoan-tien.php`, `includes/donhang.php:81-119` | 8 cột DDL_*HoanTien | `[?]` | Luồng có thật (15/11 xác minh); chưa đối chiếu dữ liệu đơn 3/9 đã có bản ghi hoàn tiền chưa | đọc-code |
+| Hoàn tiền | `vendor/hoan-tien.php`, `includes/donhang.php:81-119` | 8 cột DDL_*HoanTien | `[!]→[x]` | **Lỗi ±1 đồng đã sửa 15/11**: input `step="1000" min="1"` khiến trình duyệt chỉ nhận số kết thúc 001 (1 + n×1000) → nhân viên bị chặn submit số tròn, spinner tụt về (số tròn − 999). Sửa thành `step="1"`. Dữ liệu cũ đơn 21/22/23 (449.001, 1.214.001, 8.400.001) vẫn lệch trong DB — cần đối soát lại tiền | php-l; **http** (trang render, step mới vào HTML) |
 | Chat nhân viên tiếp nhận | `vendor/chat.php`, `api/chat_nv_api.php` | `chat_hoi_thoai` | [x] | Giao diện đổi tông chat_widget 15/11; render bằng textContent (chống XSS) | php-l; gửi/nhận chưa-test |
 | Dashboard nhân viên (đơn mới, lịch hôm nay, bàn giao…) | — | — | `[ ]` | Thiếu — prompt 4.1 (hiện vendor vào thẳng my-services) | — |
 | Quản lý lịch phòng (calendar) | — | — | `[ ]` | Thiếu — prompt 4.3 | — |
@@ -92,7 +92,7 @@
 | Quản lý nhân viên (khóa/mở, đổi mật khẩu) | `admin/nhan-vien.php` | `nhanvien`, `nguoidung` | [x] | 15/11: thêm try/catch rollback cho khóa/mở | php-l |
 | Thống kê (lọc ngày, nhóm ngày/tháng) | `admin/thong-ke.php` | `dondatlich`, `chitietdon` | [x] | Doanh thu theo thời điểm hoàn thành; top dịch vụ theo ngày tạo — hai mốc khác nhau (lưu ý đối soát) | php-l |
 | **Xuất CSV: báo cáo tổng quan + danh sách đơn** | `admin/thong-ke-xuat.php` (mới 15/11) | — | [x] | E2E thật bằng session admin: 2 loại file + redirect tham số sai đúng | **http** |
-| Trang quản lý ĐƠN HÀNG riêng | — | — | `[ ]` | Thiếu — prompt 5.4 (ưu tiên 1) | — |
+| Trang quản lý ĐƠN HÀNG riêng | `admin/don-hang.php` (mới 15/11) | `dondatlich`, `chitietdon`, `thanhtoan` | [x] | Lọc theo mã/khách/trạng thái/ngày + phân trang + chi tiết đầy đủ (cọc, hoàn tiền, lý do); **chỉ xem, không ghi** | **http** (danh sách, chi tiết, 3 bộ lọc, chặn khách-la 302) |
 | Trang quản lý MÃ GIẢM GIÁ | — | — | `[ ]` | Thiếu — mã hiện chỉ sửa trong DB (ưu tiên 2) | — |
 | Trang quản lý THANH TOÁN / đối soát | — | — | `[ ]` | Thiếu — prompt 5.7 | — |
 | Quản lý banner / khuyến mãi | — | — | `[ ]` | Thiếu — prompt 5.8 | — |

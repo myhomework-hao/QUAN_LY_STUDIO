@@ -42,7 +42,7 @@ require_once '../includes/header.php';
         <p>Số tiền đã xác nhận: <strong><?= dinh_dang_tien($so_tien_da_thu) ?></strong><?php if ($la_dat_coc && $tong_don > 0) : ?> · Tổng đơn: <?= dinh_dang_tien($tong_don) ?> · Còn lại: <?= dinh_dang_tien(max(0, $tong_don - $so_tien_da_thu)) ?><?php endif; ?></p>
 
         <div style="margin-top:25px;display:flex;gap:15px;justify-content:center;flex-wrap:wrap;">
-            <a href="index.php" class="btn-dark" style="text-decoration:none;padding:10px 20px;">VỀ TRANG CHỦ</a>
+            <a href="../index.php" class="btn-dark" style="text-decoration:none;padding:10px 20px;">VỀ TRANG CHỦ</a>
             <a href="order-detail.php?id=<?= $ma_don ?>" class="btn-dark" style="text-decoration:none;padding:10px 20px;background-color:#333;color:#fff;">XEM ĐƠN THUÊ</a>
         </div>
     </div>

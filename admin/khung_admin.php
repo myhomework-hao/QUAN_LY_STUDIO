@@ -132,6 +132,7 @@ function admin_dau(string $tieu_de, string $muc_chon): void
 {
     $menu = [
         'tong-quan' => ['Tổng quan', 'dashboard.php'],
+        'don-hang' => ['Đơn hàng', 'don-hang.php'],
         'nguoi-dung' => ['Người dùng', 'nguoi-dung.php'],
         'nhan-vien' => ['Nhân viên', 'nhan-vien.php'],
         'dich-vu' => ['Dịch vụ', 'dich-vu.php'],
