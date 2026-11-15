@@ -93,7 +93,7 @@
 | Thống kê (lọc ngày, nhóm ngày/tháng) | `admin/thong-ke.php` | `dondatlich`, `chitietdon` | [x] | Doanh thu theo thời điểm hoàn thành; top dịch vụ theo ngày tạo — hai mốc khác nhau (lưu ý đối soát) | php-l |
 | **Xuất CSV: báo cáo tổng quan + danh sách đơn** | `admin/thong-ke-xuat.php` (mới 15/11) | — | [x] | E2E thật bằng session admin: 2 loại file + redirect tham số sai đúng | **http** |
 | Trang quản lý ĐƠN HÀNG riêng | `admin/don-hang.php` (mới 15/11) | `dondatlich`, `chitietdon`, `thanhtoan` | [x] | Lọc theo mã/khách/trạng thái/ngày + phân trang + chi tiết đầy đủ (cọc, hoàn tiền, lý do); **chỉ xem, không ghi** | **http** (danh sách, chi tiết, 3 bộ lọc, chặn khách-la 302) |
-| Trang quản lý MÃ GIẢM GIÁ | — | — | `[ ]` | Thiếu — mã hiện chỉ sửa trong DB (ưu tiên 2) | — |
+| Trang quản lý MÃ GIẢM GIÁ | `admin/ma-giam-gia.php` (mới 15/11) | `ma_giam_gia` | [x] | Thêm/sửa/bật-tắt (không có nút xóa — đơn lưu mã dạng chuỗi); mã UNIQUE chặn trùng; lọc + phân trang; nhãn trạng thái thực tế (hết hạn/hết lượt/chưa đến hạn). **Không đổi schema** | **http** (danh sách, form sửa prefill, lọc, INSERT thật + trùng UNIQUE + toggle 2 chiều, CSRF sai bị chặn) |
 | Trang quản lý THANH TOÁN / đối soát | — | — | `[ ]` | Thiếu — prompt 5.7 | — |
 | Quản lý banner / khuyến mãi | — | — | `[ ]` | Thiếu — prompt 5.8 | — |
 | Nhật ký hoạt động | — | — | `[ ]` | Thiếu — prompt 5.4.9 (ưu tiên sau) | — |

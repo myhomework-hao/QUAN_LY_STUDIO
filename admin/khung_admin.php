@@ -137,6 +137,7 @@ function admin_dau(string $tieu_de, string $muc_chon): void
         'nhan-vien' => ['Nhân viên', 'nhan-vien.php'],
         'dich-vu' => ['Dịch vụ', 'dich-vu.php'],
         'thong-ke' => ['Thống kê', 'thong-ke.php'],
+        'ma-giam-gia' => ['Mã giảm giá', 'ma-giam-gia.php'],
     ];
     $thong_bao = $_SESSION['admin_thong_bao'] ?? null;
     unset($_SESSION['admin_thong_bao']);
