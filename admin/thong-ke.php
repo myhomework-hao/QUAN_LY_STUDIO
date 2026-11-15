@@ -63,6 +63,11 @@ $tong_don = array_sum(array_column($theo_trang_thai, 'so'));
 $cao_nhat = $doanh_thu ? max($doanh_thu) : 1;
 $nhieu_cot = count($doanh_thu) > 14;
 
+// Link tải báo cáo CSV giữ nguyên bộ lọc hiện tại
+$truy_van_xuat = ['tu' => $tu, 'den' => $den, 'kieu' => $kieu];
+$lien_ket_xuat_tq = 'thong-ke-xuat.php?' . http_build_query($truy_van_xuat) . '&loai=tong_quan';
+$lien_ket_xuat_don = 'thong-ke-xuat.php?' . http_build_query($truy_van_xuat) . '&loai=don';
+
 admin_dau('Thống kê', 'thong-ke');
 ?>
         <section class="panel">
@@ -77,6 +82,10 @@ admin_dau('Thống kê', 'thong-ke');
                     </select>
                 </div>
                 <button class="btn-solid" type="submit">Xem thống kê</button>
+                <?php if (!$loi) : ?>
+                    <a class="btn-line" href="<?= h($lien_ket_xuat_tq) ?>">Tải báo cáo (.csv)</a>
+                    <a class="btn-line" href="<?= h($lien_ket_xuat_don) ?>">Tải danh sách đơn (.csv)</a>
+                <?php endif; ?>
             </form>
             <?php if ($loi) : ?><p class="flash flash-error"><?= h($loi) ?></p><?php endif; ?>
         </section>
