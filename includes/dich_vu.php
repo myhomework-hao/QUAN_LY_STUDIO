@@ -10,11 +10,10 @@ function h(?string $chuoi): string
 function thong_tin_loai(string $loai): array
 {
     $bang = [
-        'may_anh'    => ['nhan' => 'MÁY ẢNH',    'ten' => 'Máy ảnh'],
-        'studio'     => ['nhan' => 'STUDIO',     'ten' => 'Chỗ chụp ảnh'],
+        'thiet_bi'   => ['nhan' => 'MÁY ẢNH',    'ten' => 'Máy ảnh'],
+        'phong_chup' => ['nhan' => 'STUDIO',     'ten' => 'Chỗ chụp ảnh'],
         'trang_phuc' => ['nhan' => 'TRANG PHỤC', 'ten' => 'Bộ đồ'],
         'phu_kien'   => ['nhan' => 'PHỤ KIỆN',   'ten' => 'Phụ kiện'],
-        'tho_chup'   => ['nhan' => 'THỢ CHỤP',   'ten' => 'Thợ chụp'],
     ];
     return $bang[$loai] ?? ['nhan' => strtoupper($loai), 'ten' => $loai];
 }

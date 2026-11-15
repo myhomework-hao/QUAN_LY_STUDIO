@@ -1,9 +1,8 @@
 <?php
 require_once __DIR__ . '/khung_nv.php';
 
-// Kiểm tra quyền nhân viên hoặc admin
-$vai_tro_hien_tai = $_SESSION['ND_VaiTro'] ?? $_SESSION['vai_tro'] ?? $_SESSION['quyen'] ?? '';
-$la_nhan_vien_hoac_admin = in_array($vai_tro_hien_tai, ['admin', 'nhan_vien', 'Admin', 'NhanVien'], true) || !empty($ma_nhan_vien);
+// Kiểm tra quyền nhân viên (khung_nv đã chặn vai trò trước, đây là lớp phòng thủ thêm)
+$la_nhan_vien_hoac_admin = in_array(vai_tro_hien_tai(), ['nhanvien', 'admin'], true);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dich = ve_trang_truoc('my-services.php');
@@ -25,19 +24,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $trang_thai_moi = ($hanh_dong === 'mo_khoa') ? 1 : 0;
         
-        // Lấy chính xác giá trị do nhân viên chọn từ thẻ <select name="ly_do"> (Đang bảo trì hoặc Hư hỏng)
-        $ly_do = trim((string) ($_POST['ly_do'] ?? 'Đang bảo trì')); 
+        // Lấy lý do từ thẻ <select name="ly_do"> và chặn giá trị lạ (chế tay POST được lưu tùy ý nếu không whitelist)
+        $ly_do_goc = trim((string) ($_POST['ly_do'] ?? 'Đang bảo trì'));
+        $ly_do = in_array($ly_do_goc, ['Đang bảo trì', 'Hư hỏng'], true) ? $ly_do_goc : 'Đang bảo trì';
 
-        // Cập nhật trạng thái bán (0: khóa không cho khách đặt, 1: mở bán)
-        $conn->prepare("UPDATE dichvu SET DV_DangBan = ? WHERE DV_Ma = ?")->execute([$trang_thai_moi, $ma]);
+        // Khóa/mở dịch vụ và đồng bộ bảng con trong MỘT transaction: lệch một nửa là khách đặt nhầm dịch vụ đã hỏng
+        $conn->beginTransaction();
+        try {
+            // Cập nhật trạng thái bán (0: khóa không cho khách đặt, 1: mở bán)
+            $conn->prepare("UPDATE dichvu SET DV_DangBan = ? WHERE DV_Ma = ?")->execute([$trang_thai_moi, $ma]);
 
-        // Đồng bộ lý do vào bảng phòng chụp hoặc thiết bị tương ứng
-        if ($dv['DV_Loai'] === 'phong_chup') {
-            $tt_pc = ($trang_thai_moi === 0) ? $ly_do : 'Sẵn sàng';
-            $conn->prepare("UPDATE phongchup SET PC_TrangThai = ? WHERE DV_Ma = ?")->execute([$tt_pc, $ma]);
-        } elseif ($dv['DV_Loai'] === 'thiet_bi') {
-            $tt_tb = ($trang_thai_moi === 0) ? $ly_do : 'Tốt';
-            $conn->prepare("UPDATE thietbi SET TB_TinhTrang = ? WHERE DV_Ma = ?")->execute([$tt_tb, $ma]);
+            // Đồng bộ lý do vào bảng phòng chụp hoặc thiết bị tương ứng
+            if ($dv['DV_Loai'] === 'phong_chup') {
+                $tt_pc = ($trang_thai_moi === 0) ? $ly_do : 'Sẵn sàng';
+                $conn->prepare("UPDATE phongchup SET PC_TrangThai = ? WHERE DV_Ma = ?")->execute([$tt_pc, $ma]);
+            } elseif ($dv['DV_Loai'] === 'thiet_bi') {
+                $tt_tb = ($trang_thai_moi === 0) ? $ly_do : 'Tốt';
+                $conn->prepare("UPDATE thietbi SET TB_TinhTrang = ? WHERE DV_Ma = ?")->execute([$tt_tb, $ma]);
+            }
+
+            $conn->commit();
+        } catch (Throwable $e) {
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
+            dat_thong_bao('Không thể cập nhật trạng thái dịch vụ, vui lòng thử lại.', 'error');
+            chuyen_huong($dich);
         }
 
         $thong_bao_text = ($trang_thai_moi === 0) ? "Đã cập nhật trạng thái thành '$ly_do' cho: " : "Đã mở khóa hoạt động trở lại cho: ";

@@ -5,6 +5,7 @@ require_once '../config/auth.php';
 require_once '../config/db.php';
 require_once '../includes/dich_vu.php';
 require_once '../includes/cart_helper.php';
+require_once '../includes/donhang.php'; // dùng hằng TRANG_THAI_* thay chuỗi cứng
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -40,9 +41,9 @@ $sql_dat = "SELECT COALESCE(SUM(c.CTD_SoLuong), 0) AS da_dat
      FROM chitietdon c
      JOIN dondatlich d ON d.DDL_Ma = c.DDL_Ma
      WHERE c.DV_Ma = ?
-       AND d.DDL_TrangThai IN ('Chờ duyệt', 'Đã duyệt')
+       AND d.DDL_TrangThai IN (?, ?)
        AND NOT (c.CTD_KetThuc <= ? OR c.CTD_BatDau >= ?)";
-$tham_so_dat = [$ma_dv, $tg['ket_thuc'], $tg['bat_dau']];
+$tham_so_dat = [$ma_dv, TRANG_THAI_CHO_DUYET, TRANG_THAI_DA_DUYET, $tg['ket_thuc'], $tg['bat_dau']];
 
 $tong_kho = (int) $dv['DV_SoLuong'];
 

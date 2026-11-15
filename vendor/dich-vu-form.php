@@ -51,10 +51,16 @@ function luu_anh(array $tep, ?string &$loi): ?string
         $loi = 'Ảnh phải có định dạng JPG, PNG hoặc WEBP.';
         return null;
     }
+    // finfo chỉ đọc header; giải mã thật bằng getimagesize để chặn file giả mạo định dạng ảnh
+    if (getimagesize($tep['tmp_name']) === false) {
+        $loi = 'Tệp tải lên không phải ảnh hợp lệ.';
+        return null;
+    }
     if (!is_dir(THU_MUC_ANH)) {
         mkdir(THU_MUC_ANH, 0755, true);
     }
-    $ten_tep = 'dv_' . date('ymdHis') . '_' . bin2hex(random_bytes(3)) . '.' . $dang_cho_phep[$mime];
+    // 8 byte ngẫu nhiên chuẩn AGENTS: khó đoán, không dùng tên gốc của người dùng
+    $ten_tep = 'dv_' . date('ymdHis') . '_' . bin2hex(random_bytes(8)) . '.' . $dang_cho_phep[$mime];
     if (!move_uploaded_file($tep['tmp_name'], THU_MUC_ANH . $ten_tep)) {
         $loi = 'Không thể lưu ảnh lên máy chủ.';
         return null;

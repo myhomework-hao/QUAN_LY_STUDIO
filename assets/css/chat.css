@@ -1,8 +1,11 @@
 
+/* Giao diện trang chat khách dùng chung bảng màu với chat_widget:
+   --vc-ink #111111, --vc-muted #888888, --vc-line #dddddd, --vc-soft #f5f5f5, --vc-accent #555555 */
+
 .chat-page {
     padding: 40px 20px 64px;
-    background: #f6f2eb;
-    color: #29241f;
+    background: #f5f5f5;
+    color: #111111;
     min-height: 650px;
 }
 
@@ -12,16 +15,16 @@
     margin: 0 auto;
     display: grid;
     grid-template-columns: 290px minmax(0, 1fr);
-    background: #fffdf9;
-    border: 1px solid #e7dfd3;
-    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 0;
     overflow: hidden;
-    box-shadow: 0 18px 55px rgba(47, 36, 25, 0.09);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 .chat-sidebar {
-    background: #30271f;
-    color: #fffaf3;
+    background: #111111;
+    color: #ffffff;
     padding: 28px 22px;
     display: flex;
     flex-direction: column;
@@ -40,8 +43,8 @@
     height: 44px;
     display: grid;
     place-items: center;
-    background: #bda17d;
-    border-radius: 13px;
+    background: #333333;
+    border-radius: 50%;
     font-size: 20px;
 }
 
@@ -49,20 +52,21 @@
 .chat-welcome strong {
     margin: 0;
     font-size: 15px;
+    letter-spacing: 2px;
 }
 
 .chat-brand p,
 .chat-welcome p {
     margin: 5px 0 0;
-    color: #d2c3b2;
+    color: #bbbbbb;
     font-size: 12px;
 }
 
 .chat-welcome {
     margin-top: 36px;
     padding: 16px 12px;
-    border: 1px solid #55483b;
-    border-radius: 12px;
+    border: 1px solid #333333;
+    border-radius: 0;
 }
 
 .chat-online-dot {
@@ -90,17 +94,17 @@
     gap: 12px;
     padding: 13px 10px;
     margin-bottom: 8px;
-    color: #f5eadd;
+    color: #ffffff;
     background: transparent;
     border: 1px solid transparent;
-    border-radius: 10px;
+    border-radius: 0;
     text-align: left;
     cursor: pointer;
 }
 
 .chat-suggestion:hover {
-    background: #44372b;
-    border-color: #665442;
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #333333;
 }
 
 .chat-sidebar-note {
@@ -108,7 +112,7 @@
     padding-top: 28px;
     display: flex;
     gap: 10px;
-    color: #d2c3b2;
+    color: #bbbbbb;
     font-size: 12px;
     line-height: 1.7;
 }
@@ -126,7 +130,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    border-bottom: 1px solid #eee7dc;
+    border-bottom: 1px solid #dddddd;
 }
 
 .chat-avatar,
@@ -137,8 +141,8 @@
     display: grid;
     place-items: center;
     border-radius: 50%;
-    color: #fffaf3;
-    background: #594635;
+    color: #ffffff;
+    background: #111111;
 }
 
 .chat-header h1 {
@@ -151,12 +155,12 @@
     display: flex;
     align-items: center;
     gap: 7px;
-    color: #777067;
+    color: #888888;
     font-size: 12px;
 }
 
 .chat-mode-label {
-    color: #725b43;
+    color: #555555;
     font-size: 12px;
 }
 
@@ -166,9 +170,10 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #f3ebdf;
-    border-radius: 10px;
-    color: #604a35;
+    background: #eeeeee;
+    border: 1px solid #dddddd;
+    border-radius: 0;
+    color: #555555;
     font-size: 13px;
 }
 
@@ -200,25 +205,26 @@
 .message-sender {
     display: block;
     margin-bottom: 7px;
-    color: #776b5e;
+    color: #888888;
     font-size: 11px;
 }
 
 .message-bubble {
-    padding: 13px 15px;
-    border-radius: 4px 14px 14px;
-    background: #f1ece4;
-    color: #30271f;
+    padding: 12px 14px;
+    border-radius: 0;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    color: #111111;
     font-size: 14px;
-    line-height: 1.65;
+    line-height: 1.55;
     overflow-wrap: anywhere;
     white-space: pre-wrap;
 }
 
 .message-content time {
     display: block;
-    margin-top: 6px;
-    color: #91877c;
+    margin-top: 4px;
+    color: #888888;
     font-size: 10px;
 }
 
@@ -231,9 +237,9 @@
 }
 
 .user-message .message-bubble {
-    color: #fffaf3;
-    background: #594635;
-    border-radius: 14px 4px 14px 14px;
+    color: #ffffff;
+    background: #111111;
+    border-color: #111111;
 }
 
 .user-message .message-sender,
@@ -249,28 +255,30 @@
 }
 
 .chat-quick-actions button {
-    padding: 9px 13px;
-    border: 1px solid #d9c8b4;
-    border-radius: 20px;
-    background: #fffdf9;
-    color: #634d38;
+    padding: 7px 12px;
+    border: 1px solid #dddddd;
+    border-radius: 0;
+    background: #ffffff;
+    color: #111111;
     cursor: pointer;
     font-size: 12px;
 }
 
 .chat-quick-actions button:hover {
-    background: #f1e7d9;
+    color: #ffffff;
+    background: #111111;
+    border-color: #111111;
 }
 
 .chat-input-area {
     display: flex;
     align-items: flex-end;
-    gap: 12px;
+    gap: 10px;
     margin: 0 24px;
     padding: 12px;
-    border: 1px solid #dfd5c8;
-    border-radius: 14px;
-    background: white;
+    border: 1px solid #dddddd;
+    border-radius: 0;
+    background: #ffffff;
 }
 
 .chat-input-area textarea {
@@ -282,7 +290,7 @@
     border: 0;
     outline: none;
     background: transparent;
-    color: #30271f;
+    color: #111111;
     font: inherit;
     font-size: 14px;
 }
@@ -292,14 +300,14 @@
     height: 42px;
     flex-shrink: 0;
     border: 0;
-    border-radius: 12px;
-    background: #594635;
+    border-radius: 0;
+    background: #111111;
     color: white;
     cursor: pointer;
 }
 
 .chat-input-area button:hover {
-    background: #3d3024;
+    background: #333333;
 }
 
 .chat-input-area button:disabled {
@@ -310,7 +318,7 @@
 .chat-footer-note {
     margin: 13px 24px 18px;
     text-align: center;
-    color: #91877c;
+    color: #888888;
     font-size: 11px;
 }
 
@@ -334,7 +342,6 @@
     .chat-container {
         grid-template-columns: 1fr;
         min-height: 600px;
-        border-radius: 14px;
     }
 
     .chat-sidebar {
@@ -384,10 +391,10 @@
 .chat-handoff-notice {
     margin: 8px 0 18px 42px;
     padding: 10px 12px;
-    border: 1px solid #e1d0b8;
-    border-radius: 10px;
-    background: #f8f0e4;
-    color: #70563b;
+    border: 1px solid #dddddd;
+    border-radius: 0;
+    background: #f5f5f5;
+    color: #555555;
     font-size: 12px;
     line-height: 1.6;
 }

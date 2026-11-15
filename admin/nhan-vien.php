@@ -29,11 +29,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dat_thong_bao('Không tìm thấy nhân viên.', 'error');
         } else {
             $gia_tri_moi = $hanh_dong === 'mo' ? 1 : 0;
+            // Hai bảng phải cùng trạng thái: lỗi giữa chừng thì rollback cả hai
             $conn->beginTransaction();
-            $conn->prepare("UPDATE nhanvien SET NV_TrangThai = ? WHERE NV_Ma = ?")->execute([$gia_tri_moi, $nv['NV_Ma']]);
-            $conn->prepare("UPDATE nguoidung SET ND_TrangThai = ? WHERE ND_Ma = ?")->execute([$gia_tri_moi, $nv['ND_Ma']]);
-            $conn->commit();
-            dat_thong_bao(($gia_tri_moi ? 'Đã mở khóa ' : 'Đã khóa ') . $nv['ND_Ten'] . '.');
+            try {
+                $conn->prepare("UPDATE nhanvien SET NV_TrangThai = ? WHERE NV_Ma = ?")->execute([$gia_tri_moi, $nv['NV_Ma']]);
+                $conn->prepare("UPDATE nguoidung SET ND_TrangThai = ? WHERE ND_Ma = ?")->execute([$gia_tri_moi, $nv['ND_Ma']]);
+                $conn->commit();
+                dat_thong_bao(($gia_tri_moi ? 'Đã mở khóa ' : 'Đã khóa ') . $nv['ND_Ten'] . '.');
+            } catch (Throwable $e) {
+                if ($conn->inTransaction()) {
+                    $conn->rollBack();
+                }
+                dat_thong_bao('Không thể cập nhật trạng thái nhân viên, vui lòng thử lại.', 'error');
+            }
         }
         chuyen_huong('nhan-vien.php');
     }

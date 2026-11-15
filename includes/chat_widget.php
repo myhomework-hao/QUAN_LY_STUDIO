@@ -15,9 +15,12 @@ if (!$la_trang_chat && $duoc_hien_thi_chat):
 
     $js_chat = __DIR__ . '/../assets/js/chat_widget.js';
     $phien_ban_chat = is_file($js_chat) ? (string) filemtime($js_chat) : '1';
+    // CSS có version riêng theo mtime của chính nó, sửa CSS là trình duyệt nạp bản mới
+    $css_chat = __DIR__ . '/../assets/css/chat_widget.css';
+    $phien_ban_css_chat = is_file($css_chat) ? (string) filemtime($css_chat) : '1';
 ?>
 
-<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/chat_widget.css?v=<?= $phien_ban_chat ?>">
+<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/chat_widget.css?v=<?= $phien_ban_css_chat ?>">
 
 <div class="vibe-chat-widget" id="vibe-chat-widget">
     <!-- Nút mở chat -->
@@ -86,59 +89,10 @@ window.VIBE_WIDGET_CONFIG = {
     apiUrl: <?= json_encode(BASE_URL . 'api/chat_api.php') ?>,
     csrf: <?= json_encode(csrf_token()) ?>,
     productId: <?= json_encode(isset($chat_product_id) ? (int) $chat_product_id : null) ?>,
-    loginUrl: <?= json_encode(BASE_URL . 'user/login.php') ?>
+    loginUrl: <?= json_encode(BASE_URL . 'user/login.php') ?>,
+    loggedIn: <?= json_encode(function_exists('da_dang_nhap') ? da_dang_nhap() : false) ?>
 };
 
-// Kéo thả widget, vẫn cho phép bấm mở chat bình thường
-document.addEventListener('DOMContentLoaded', function () {
-    var widget = document.getElementById('vibe-chat-widget');
-    if (!widget) { return; }
-
-    var dangKeo = false, daDiChuyen = false, xDau, yDau, xGoc, yGoc;
-
-    widget.addEventListener('pointerdown', function (e) {
-        if (e.target.closest('.vibe-chat-panel')) { return; }
-        dangKeo = true;
-        daDiChuyen = false;
-        xDau = e.clientX;
-        yDau = e.clientY;
-        var rect = widget.getBoundingClientRect();
-        xGoc = rect.left;
-        yGoc = rect.top;
-    });
-
-    widget.addEventListener('pointermove', function (e) {
-        if (!dangKeo) { return; }
-        var dx = e.clientX - xDau;
-        var dy = e.clientY - yDau;
-
-        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
-            if (!daDiChuyen) {
-                daDiChuyen = true;
-                widget.setPointerCapture(e.pointerId);
-                widget.style.bottom = 'auto';
-                widget.style.right = 'auto';
-            }
-            widget.style.left = (xGoc + dx) + 'px';
-            widget.style.top = (yGoc + dy) + 'px';
-        }
-    });
-
-    widget.addEventListener('pointerup', function (e) {
-        if (!dangKeo) { return; }
-        dangKeo = false;
-        if (daDiChuyen) {
-            try { widget.releasePointerCapture(e.pointerId); } catch (err) {}
-        }
-    });
-
-    widget.addEventListener('click', function (e) {
-        if (daDiChuyen) {
-            e.stopImmediatePropagation();
-            e.preventDefault();
-        }
-    }, true);
-});
 </script>
 
 <script src="<?= BASE_URL ?>assets/js/chat_widget.js?v=<?= $phien_ban_chat ?>" defer></script>

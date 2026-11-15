@@ -142,6 +142,13 @@
 
     function moDau() {
         if (st.daMo) { return; }
+        // Khách vãng lai: API bắt buộc đăng nhập, báo ngay trong khung chat thay vì gọi API chắc chắn nhận 401
+        if (cfg.loggedIn === false) {
+            st.daMo = true;
+            st.dangNhap = false;
+            nhacDangNhap();
+            return;
+        }
         st.daMo = true;
         goi({ action: 'open' }).then(function (d) {
             if (d._status === 401 || d._status === 403) { st.dangNhap = false; st.daMo = false; return; }

@@ -127,16 +127,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($bat_dau_som_nhat && $bat_dau_som_nhat > $bay_gio) {
             dat_thong_bao("Đơn $ten_don chưa đến thời gian thuê nên chưa thể hoàn thành.", 'error');
         } else {
+            // Đơn + thanh toán phải cùng trạng thái: lỗi giữa chừng thì rollback cả hai
             $conn->beginTransaction();
-            $stmt = $conn->prepare("UPDATE dondatlich SET DDL_TrangThai = ?, NV_MaHoanThanh = ?, DDL_ThoiDiemHoanThanh = ? WHERE DDL_Ma = ? AND DDL_TrangThai = ?");
-            $stmt->execute([TRANG_THAI_HOAN_THANH, $ma_nhan_vien, $bay_gio, $ma_don, TRANG_THAI_DA_DUYET]);
-            if ($stmt->rowCount() === 1) {
-                $conn->prepare("UPDATE thanhtoan SET TT_TrangThai = 'Thành công' WHERE DDL_Ma = ? AND TT_TrangThai = 'Chờ'")->execute([$ma_don]);
-                $conn->commit();
-                dat_thong_bao("Đã hoàn thành đơn $ten_don.");
-            } else {
-                $conn->rollBack();
-                dat_thong_bao("Đơn $ten_don không còn ở trạng thái đã duyệt.", 'error');
+            try {
+                $stmt = $conn->prepare("UPDATE dondatlich SET DDL_TrangThai = ?, NV_MaHoanThanh = ?, DDL_ThoiDiemHoanThanh = ? WHERE DDL_Ma = ? AND DDL_TrangThai = ?");
+                $stmt->execute([TRANG_THAI_HOAN_THANH, $ma_nhan_vien, $bay_gio, $ma_don, TRANG_THAI_DA_DUYET]);
+                if ($stmt->rowCount() === 1) {
+                    $conn->prepare("UPDATE thanhtoan SET TT_TrangThai = 'Thành công' WHERE DDL_Ma = ? AND TT_TrangThai = 'Chờ'")->execute([$ma_don]);
+                    $conn->commit();
+                    dat_thong_bao("Đã hoàn thành đơn $ten_don.");
+                } else {
+                    $conn->rollBack();
+                    dat_thong_bao("Đơn $ten_don không còn ở trạng thái đã duyệt.", 'error');
+                }
+            } catch (Throwable $e) {
+                if ($conn->inTransaction()) {
+                    $conn->rollBack();
+                }
+                dat_thong_bao("Không thể hoàn thành đơn $ten_don, vui lòng thử lại.", 'error');
             }
         }
     } else {

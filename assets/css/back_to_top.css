@@ -6,7 +6,8 @@
 .back-to-top {
     position: fixed;
     right: 28px;
-    bottom: 100px;
+    /* Nâng lên 120px để cách thoáng với nút chat (chat chiếm tới 88px từ đáy) */
+    bottom: 32px;
     z-index: 1100;
 
     width: 48px;
@@ -61,7 +62,7 @@
 @media (max-width: 600px) {
     .back-to-top {
         right: 16px;
-        bottom: 82px;
+        bottom: 96px;
         width: 44px;
         height: 44px;
     }

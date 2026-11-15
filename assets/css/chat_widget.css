@@ -5,8 +5,9 @@
     --vc-soft: #f5f5f5;
     --vc-accent: #555555;
     position: fixed;
-    right: 24px;
-    bottom: 24px;
+    /* Cố định DƯỚI nút "lên đầu trang" (back-to-top: right 28px, bottom 120px, cao 48px → đáy nút chat ở 32px) */
+    right: 28px;
+    bottom: 32px;
     z-index: 1200;
     font-family: inherit;
 }
@@ -50,7 +51,8 @@
     width: 370px;
     max-width: calc(100vw - 32px);
     height: 540px;
-    max-height: calc(100vh - 48px);
+    /* Widget neo ở bottom 32px + nút 56px: chặn panel tràn ra trên cùng màn hình thấp */
+    max-height: calc(100vh - 104px);
     overflow: hidden;
     background: #ffffff;
     border: 1px solid var(--vc-line);
@@ -148,7 +150,9 @@
 .vibe-chat-link { padding: 0; font: inherit; font-size: 10px; color: var(--vc-muted); text-decoration: underline; background: none; border: 0; cursor: pointer; }
 .vibe-chat-link[hidden] { display: none; }
 
-@media (max-width: 520px) {
-    .vibe-chat-widget { right: 12px; bottom: 12px; }
-    .vibe-chat-panel { width: calc(100vw - 24px); height: calc(100vh - 24px); }
+@media (max-width: 600px) {
+    /* Mobile: breakpoint khớp với back-to-top (600px ở common.css + back_to_top.css);
+       back-to-top ở right 16px / bottom 96px → nút chat nằm dưới nó */
+    .vibe-chat-widget { right: 16px; bottom: 18px; }
+    .vibe-chat-panel { width: calc(100vw - 24px); height: calc(100vh - 82px); }
 }
