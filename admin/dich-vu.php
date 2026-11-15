@@ -1,6 +1,22 @@
 <?php
 require_once __DIR__ . '/khung_admin.php';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_hop_le()) {
+        dat_thong_bao('Phiên làm việc không hợp lệ, vui lòng thử lại.', 'error');
+        chuyen_huong('dich-vu.php');
+    }
+
+    $ma_dich_vu = (int) ($_POST['ma_dich_vu'] ?? 0);
+    $trang_thai_moi = (int) ($_POST['trang_thai_moi'] ?? -1);
+    if ($ma_dich_vu > 0 && in_array($trang_thai_moi, [0, 1], true)) {
+        $stmt = $conn->prepare('UPDATE dichvu SET DV_DangBan = ? WHERE DV_Ma = ?');
+        $stmt->execute([$trang_thai_moi, $ma_dich_vu]);
+        dat_thong_bao($trang_thai_moi === 1 ? 'Đã mở lại dịch vụ.' : 'Đã ẩn dịch vụ khỏi khách hàng.');
+    }
+    chuyen_huong('dich-vu.php');
+}
+
 $ma_xem = (int) ($_GET['id'] ?? 0);
 
 if ($ma_xem > 0) {
@@ -29,7 +45,7 @@ if ($ma_xem > 0) {
     admin_dau('Chi tiết dịch vụ', 'dich-vu');
     ?>
     <section class="panel">
-        <div class="panel-head"><h2><?= h($dv['DV_Ten']) ?></h2><a href="dich-vu.php" class="panel-link">← Danh sách</a></div>
+        <div class="panel-head"><h2><?= h($dv['DV_Ten']) ?></h2><div><a href="dich-vu-form.php?id=<?= $ma_xem ?>" class="panel-link">Sửa dịch vụ</a> <a href="dich-vu.php" class="panel-link">← Danh sách</a></div></div>
         <dl class="detail-grid">
             <dt>Loại</dt><dd><?= h(ten_loai_dich_vu($dv['DV_Loai'])) ?></dd>
             <dt>Giá thuê</dt><dd><?= h(gia_hien_thi($dv['DV_GiaThue'], $dv['DV_DonViTinh'])) ?></dd>
@@ -108,7 +124,7 @@ $ds = lay_nhieu(
 admin_dau('Dịch vụ', 'dich-vu');
 ?>
         <section class="panel">
-            <div class="panel-head"><h2>Danh sách dịch vụ (<?= $tong ?>)</h2></div>
+            <div class="panel-head"><h2>Danh sách dịch vụ (<?= $tong ?>)</h2><a href="dich-vu-form.php" class="btn-solid">Thêm dịch vụ</a></div>
             <?php if ($loi_gia) : ?><p class="flash flash-error"><?= h($loi_gia) ?></p><?php endif; ?>
 
             <form class="filter" method="get">
@@ -148,7 +164,16 @@ admin_dau('Dịch vụ', 'dich-vu');
                                 <td><?= h(gia_hien_thi($d['DV_GiaThue'], $d['DV_DonViTinh'])) ?></td>
                                 <td><?= (int) $d['DV_SoLuong'] ?></td>
                                 <td><span class="badge <?= (int) $d['DV_DangBan'] === 1 ? 'badge-xac-nhan' : 'badge-khoa' ?>"><?= (int) $d['DV_DangBan'] === 1 ? 'Đang hiển thị' : 'Đang ẩn' ?></span></td>
-                                <td class="row-actions"><a href="?id=<?= (int) $d['DV_Ma'] ?>">Chi tiết</a></td>
+                                <td class="row-actions">
+                                    <a href="?id=<?= (int) $d['DV_Ma'] ?>">Chi tiết</a>
+                                    <a href="dich-vu-form.php?id=<?= (int) $d['DV_Ma'] ?>">Sửa</a>
+                                    <form method="post" style="display:inline">
+                                        <?= csrf_input() ?>
+                                        <input type="hidden" name="ma_dich_vu" value="<?= (int) $d['DV_Ma'] ?>">
+                                        <input type="hidden" name="trang_thai_moi" value="<?= (int) $d['DV_DangBan'] === 1 ? 0 : 1 ?>">
+                                        <button type="submit" class="panel-link"><?= (int) $d['DV_DangBan'] === 1 ? 'Ẩn/khóa' : 'Mở lại' ?></button>
+                                    </form>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
