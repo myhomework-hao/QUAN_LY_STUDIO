@@ -74,7 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $conn->prepare("UPDATE dondatlich SET DDL_TrangThai = ?, NV_Ma = ?, DDL_ThoiDiemXuLy = ?, DDL_LyDoTuChoi = ? WHERE DDL_Ma = ? AND DDL_TrangThai = ?");
                 $stmt->execute([TRANG_THAI_TU_CHOI, $ma_nhan_vien, $bay_gio, $ly_do, $ma_don, TRANG_THAI_CHO_DUYET]);
                 if ($stmt->rowCount() === 1) {
-                    $kq_hoan_tien = phat_sinh_cho_hoan_tien($conn, $ma_don);
+                    // Studio từ chối đơn (lỗi phía studio) nên hoàn 100% số đã thu.
+                    $kq_hoan_tien = phat_sinh_cho_hoan_tien($conn, $ma_don, true);
                     $conn->commit();
                     if (!empty($kq_hoan_tien['co_hoan_tien'])) {
                         dat_thong_bao("Đã từ chối đơn $ten_don. Đơn chuyển sang chờ hoàn tiền (" . dinh_dang_tien($kq_hoan_tien['so_tien']) . ").", 'success');
@@ -104,7 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         WHERE DDL_Ma = ? AND DDL_TrangThai = ?");
                 $stmt->execute([TRANG_THAI_DA_HUY, $ma_nhan_vien, $bay_gio, $bay_gio, $ly_do, $ma_don, TRANG_THAI_DA_DUYET]);
                 if ($stmt->rowCount() === 1) {
-                    $kq_hoan_tien = phat_sinh_cho_hoan_tien($conn, $ma_don);
+                    // Studio chủ động hủy đơn đã duyệt nên hoàn 100% số đã thu.
+                    $kq_hoan_tien = phat_sinh_cho_hoan_tien($conn, $ma_don, true);
                     $conn->commit();
                     if (!empty($kq_hoan_tien['co_hoan_tien'])) {
                         dat_thong_bao("Đã hủy đơn $ten_don. Đơn chuyển sang chờ hoàn tiền (" . dinh_dang_tien($kq_hoan_tien['so_tien']) . ").", 'success');

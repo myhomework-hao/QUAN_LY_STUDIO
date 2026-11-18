@@ -36,8 +36,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $loi === '' && $pending) {
         $loi = 'Phiên làm việc đã hết hạn, vui lòng thử lại.';
     } else {
         $so_tien_nhap = (float) str_replace([',', ' '], '', (string) ($_POST['so_tien'] ?? ''));
+        // Thông tin nhận hoàn tiền đã nhập ở bước checkout (dùng lại 3 cột hoàn tiền của bảng dondatlich).
+        $ds_ngan_hang   = danh_sach_ngan_hang();
+        $ngan_hang_nhan = (string) ($pending['ngan_hang'] ?? '');
+        $so_tk_nhan     = (string) ($pending['so_tk'] ?? '');
+        $chu_tk_nhan    = (string) ($pending['chu_tk'] ?? '');
         // Đối chiếu với số tiền đã tính lúc tạo phiên thanh toán (nguồn kỳ vọng).
-        if (abs($so_tien_nhap - $so_tien_can_thu) > 0.5) {
+        if (!isset($ds_ngan_hang[$ngan_hang_nhan])
+            || !preg_match('/^[0-9A-Za-z]{4,30}$/', $so_tk_nhan)
+            || $chu_tk_nhan === '' || mb_strlen($chu_tk_nhan) > 100) {
+            $loi = 'Thông tin ngân hàng nhận hoàn tiền không hợp lệ. Vui lòng quay lại trang thanh toán và nhập lại.';
+        } elseif (abs($so_tien_nhap - $so_tien_can_thu) > 0.5) {
             $loi = 'Số tiền xác nhận không khớp với số tiền cần thanh toán (' . dinh_dang_tien($so_tien_can_thu) . ').';
         } else {
             $so_tien_xac_nhan = $so_tien_can_thu;
@@ -49,6 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $loi === '' && $pending) {
                 $discount = (float) ($pending['discount'] ?? 0);
                 $ma_phuong_thuc = (string) ($pending['payment'] ?? 'tien_mat');
                 $phuong_thuc_label = (string) ($pending['payment_label'] ?? 'Tiền mặt');
+
+                // Tính lại combo từ giỏ đã chốt; mã giảm giá và 5% online tính trên số còn lại.
+                $combo_tinh = tinh_giam_combo($pending['cart_items']);
+                $sau_combo  = max(0, (float) ($pending['totals']['subtotal'] ?? 0) - (float) $combo_tinh['tong_giam']);
+                $tong       = max(0, $sau_combo - $discount);
 
                 // Kiểm tra lại còn chỗ tại thời điểm xác nhận (A2: lúc này mới tạo đơn)
                 foreach ($pending['cart_items'] as $item) {
@@ -65,13 +79,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $loi === '' && $pending) {
 
                 // Re-check coupon ngay trước khi tạo đơn
                 if ($coupon_code !== '') {
-                    $kq_recheck = kiem_tra_ma_giam_gia($conn, $coupon_code, (float) ($pending['totals']['subtotal'] ?? 0));
+                    $kq_recheck = kiem_tra_ma_giam_gia($conn, $coupon_code, $sau_combo);
                     if (!$kq_recheck['ok']) {
                         throw new DomainException('Mã giảm giá không còn hiệu lực: ' . $kq_recheck['message']);
                     }
                     $discount = (float) $kq_recheck['discount'];
-                    $tong = max(0, (float) ($pending['totals']['subtotal'] ?? 0) - $discount);
-                    $so_tien_can_thu = $la_dat_coc ? (float) round($tong * 0.25) : $tong;
+                    $tong = max(0, $sau_combo - $discount);
+                }
+
+                // Thanh toán 100% online: giảm thêm 5% trên số tiền sau mã giảm giá.
+                // Tiền mặt: đặt cọc 25% nên không có ưu đãi này, tổng đơn giữ nguyên.
+                $giam_online = 0.0;
+                if ($la_dat_coc) {
+                    $so_tien_can_thu = (float) round($tong * 0.25);
+                    $tong_ghi_nhan   = $tong;
+                } else {
+                    $giam_online     = giam_thanh_toan_online($tong);
+                    $so_tien_can_thu = $tong - $giam_online;
+                    $tong_ghi_nhan   = $so_tien_can_thu;
                 }
 
                 $tien_coc_ghi_nhan = $la_dat_coc ? $so_tien_can_thu : 0.0;
@@ -79,12 +104,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $loi === '' && $pending) {
                 $stmt = $conn->prepare(
                     "INSERT INTO dondatlich
                         (ND_Ma, DDL_TongTien, DDL_MaGiamGia, DDL_SoTienGiam, DDL_TienCoc, DDL_TrangThai,
-                         DDL_NgayTao, DDL_GhiChu, DDL_TenNguoiThue, DDL_SDTNguoiThue, DDL_CCCD, DDL_DiaChi)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                         DDL_NgayTao, DDL_GhiChu, DDL_TenNguoiThue, DDL_SDTNguoiThue, DDL_CCCD, DDL_DiaChi,
+                         DDL_NganHangHoan, DDL_SoTKHoan, DDL_ChuTKHoan)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 );
                 $stmt->execute([
                     $ma_nguoi_dung,
-                    $tong,
+                    $tong_ghi_nhan,
                     $coupon_code !== '' ? $coupon_code : null,
                     $discount,
                     $tien_coc_ghi_nhan,
@@ -95,6 +121,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $loi === '' && $pending) {
                     (string) ($pending['sdt_nguoi_thue'] ?? ''),
                     (string) ($pending['cccd_nguoi_thue'] ?? ''),
                     (string) ($pending['dia_chi'] ?? ''),
+                    $ngan_hang_nhan,
+                    $so_tk_nhan,
+                    $chu_tk_nhan,
                 ]);
                 $ma_don = (int) $conn->lastInsertId();
 
@@ -142,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $loi === '' && $pending) {
                     'ten_nguoi_thue' => (string) ($pending['ten_nguoi_thue'] ?? ''),
                     'so_tien_da_thu' => $so_tien_xac_nhan,
                     'la_dat_coc' => $la_dat_coc,
-                    'tong_don' => $tong,
+                    'tong_don' => $tong_ghi_nhan,
                 ];
                 unset($_SESSION['pending_checkout'], $_SESSION['cart'], $_SESSION['coupon_code']);
 

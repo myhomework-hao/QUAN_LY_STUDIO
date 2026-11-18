@@ -24,6 +24,54 @@ function so_luong_toi_da(PDO $conn, int $ma_dich_vu): int
     return $so === false ? 0 : min(SO_LUONG_TOI_DA_MOI_DICH_VU, (int) $so);
 }
 
+// Gợi ý món còn thiếu để đủ điều kiện combo, kèm liên kết lọc đúng loại ở trang sản phẩm.
+function goi_y_combo(array $cart_items): array
+{
+    $co_loai = [];
+    foreach ($cart_items as $item) {
+        $loai = (string) ($item['loai'] ?? '');
+        if ($loai !== '') {
+            $co_loai[$loai] = true;
+        }
+    }
+
+    $ds = [];
+    if (isset($co_loai['phong_chup']) && !isset($co_loai['trang_phuc'])) {
+        $ds[] = [
+            'noi_dung' => 'Thêm 1 bộ trang phục bất kì khi thuê studio là được giảm '
+                        . COMBO_TRANG_PHUC_PHONG_CHUP_PHAN_TRAM . '% trên combo — giá sẽ bất ngờ đấy!',
+            'nhan'     => 'XEM TRANG PHỤC',
+            'loai'     => 'trang_phuc',
+        ];
+    }
+    if (isset($co_loai['trang_phuc']) && !isset($co_loai['phong_chup'])) {
+        $ds[] = [
+            'noi_dung' => 'Thêm 1 phòng chụp khi thuê trang phục là được giảm '
+                        . COMBO_TRANG_PHUC_PHONG_CHUP_PHAN_TRAM . '% trên combo — giá sẽ bất ngờ đấy!',
+            'nhan'     => 'XEM STUDIO',
+            'loai'     => 'phong_chup',
+        ];
+    }
+    if (isset($co_loai['thiet_bi']) && !isset($co_loai['phu_kien'])) {
+        $ds[] = [
+            'noi_dung' => 'Thêm 1 phụ kiện - đạo cụ khi thuê máy ảnh là được giảm '
+                        . COMBO_THIET_BI_PHU_KIEN_PHAN_TRAM . '% trên combo — giá sẽ bất ngờ đấy!',
+            'nhan'     => 'XEM PHỤ KIỆN',
+            'loai'     => 'phu_kien',
+        ];
+    }
+    if (isset($co_loai['phu_kien']) && !isset($co_loai['thiet_bi'])) {
+        $ds[] = [
+            'noi_dung' => 'Thêm 1 máy ảnh khi thuê phụ kiện là được giảm '
+                        . COMBO_THIET_BI_PHU_KIEN_PHAN_TRAM . '% trên combo — giá sẽ bất ngờ đấy!',
+            'nhan'     => 'XEM MÁY ẢNH',
+            'loai'     => 'thiet_bi',
+        ];
+    }
+
+    return $ds;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_hop_le()) {
         $_SESSION['thong_bao_dat'] = 'Phiên làm việc đã hết hạn, vui lòng tải lại trang và thử lại.';
@@ -120,7 +168,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $items_tmp = lay_gio_hang($conn);
             $st_tmp    = tinh_tong_gio_hang($items_tmp);
-            $kq        = kiem_tra_ma_giam_gia($conn, $code, (float) $st_tmp['subtotal']);
+            // Mã giảm giá tính trên số tiền còn lại sau khi trừ combo.
+            $combo_tmp = tinh_giam_combo($items_tmp);
+            $sau_combo_tmp = max(0, (float) $st_tmp['subtotal'] - (float) $combo_tmp['tong_giam']);
+            $kq        = kiem_tra_ma_giam_gia($conn, $code, $sau_combo_tmp);
             if ($kq['ok']) {
                 $_SESSION['coupon_code']    = strtoupper($code);
                 $_SESSION['thong_bao_dat']  = 'Đã áp dụng mã ' . strtoupper($code) . '.';
@@ -142,12 +193,18 @@ unset($_SESSION['thong_bao_dat']);
 
 $cart_items = lay_gio_hang($conn);
 $totals = tinh_tong_gio_hang($cart_items);
+
+// Combo giảm trên tiền các món thuộc combo; mã giảm giá tính trên số còn lại sau combo.
+$combo = tinh_giam_combo($cart_items);
+$giam_combo = (float) $combo['tong_giam'];
+$sau_combo  = max(0, (float) $totals['subtotal'] - $giam_combo);
+
 $coupon_code = $_SESSION['coupon_code'] ?? '';
 $coupon_info = null;
 $discount    = 0.0;
 
 if ($coupon_code !== '') {
-    $kq_coupon = kiem_tra_ma_giam_gia($conn, $coupon_code, (float) $totals['subtotal']);
+    $kq_coupon = kiem_tra_ma_giam_gia($conn, $coupon_code, $sau_combo);
     if ($kq_coupon['ok']) {
         $coupon_info = $kq_coupon['coupon'];
         $discount    = (float) $kq_coupon['discount'];
@@ -157,9 +214,11 @@ if ($coupon_code !== '') {
     }
 }
 
+$totals['combo']    = $giam_combo;
 $totals['discount'] = $discount;
-$totals['total']    = max(0, (float) $totals['total'] - $discount);
+$totals['total']    = max(0, $sau_combo - $discount);
 $tong_so_luong = array_sum(array_column($cart_items, 'qty'));
+$ds_goi_y_combo = goi_y_combo($cart_items);
 
 $co_loi = false;
 foreach ($cart_items as $k => $item) {
@@ -272,6 +331,17 @@ require_once '../includes/header.php';
                 <?php endif; ?>
             </div>
 
+            <?php if (!empty($ds_goi_y_combo)) : ?>
+                <div style="padding:14px 18px;border-top:1px solid #eee;background:#fffbea;">
+                    <?php foreach ($ds_goi_y_combo as $gy) : ?>
+                        <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:6px 0;">
+                            <p style="margin:0;font-size:13px;color:#8a6d00;">💡 <?= htmlspecialchars($gy['noi_dung']) ?></p>
+                            <a href="services.php?loai=<?= htmlspecialchars($gy['loai']) ?>" class="btn-dark" style="text-decoration:none;padding:8px 14px;font-size:12px;"><?= htmlspecialchars($gy['nhan']) ?></a>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
             <div class="card-foot">
                 <a href="services.php" class="continue">← TIẾP TỤC CHỌN DỊCH VỤ</a>
                 <?php if (!empty($cart_items)) : ?>
@@ -288,6 +358,16 @@ require_once '../includes/header.php';
             <p class="panel-title">Tóm tắt đơn thuê</p>
 
             <div class="summary-row"><span>Tạm tính</span><span><?= dinh_dang_tien($totals['subtotal']) ?></span></div>
+
+            <?php foreach ($combo['danh_sach'] as $c) : ?>
+                <div class="summary-row">
+                    <span><?= htmlspecialchars($c['ten']) ?> (−<?= (int) $c['phan_tram'] ?>%)</span>
+                    <span style="color: var(--success); font-weight: 700;">−<?= dinh_dang_tien($c['giam']) ?></span>
+                </div>
+            <?php endforeach; ?>
+            <?php if ($giam_combo > 0) : ?>
+                <p class="ship-note" style="color: var(--success);">Bạn thuê cả hai cùng lúc nên combo đã được áp dụng — giá bất ngờ đấy!</p>
+            <?php endif; ?>
 
             <!-- ====================== COUPON ====================== -->
             <div class="coupon-box">

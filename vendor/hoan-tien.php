@@ -21,39 +21,30 @@ $tong_da_thu = tong_da_thu_don($conn, $ma_don);
 $tt_hoan = (string) ($don['DDL_TrangThaiHoanTien'] ?? HOAN_TIEN_KHONG);
 $ten_don = ma_don_hien_thi($ma_don);
 
-$ds_ngan_hang = [
-    '970436' => 'Vietcombank (VCB)',
-    '970415' => 'VietinBank (CTG)',
-    '970418' => 'BIDV',
-    '970405' => 'Agribank',
-    '970407' => 'Techcombank (TCB)',
-    '970422' => 'MBBank (MB)',
-    '970416' => 'ACB',
-    '970432' => 'VPBank',
-    '970423' => 'TPBank',
-    '970403' => 'Sacombank (STB)',
-    '970437' => 'HDBank',
-    '970448' => 'OCB',
-    '970429' => 'SCB',
-    '970441' => 'VIB',
-    '970443' => 'SHB',
-    '970426' => 'MSB',
-    '970431' => 'Eximbank',
-    '970438' => 'BaoViet Bank',
-    '970449' => 'LienVietPostBank',
-    '970454' => 'VietCapitalBank',
-];
+// Danh sách ngân hàng dùng chung với trang đặt đơn (includes/donhang.php).
+$ds_ngan_hang = danh_sach_ngan_hang();
+
+// Mức hoàn theo chính sách 48h/24h, dùng làm số tiền gợi ý khi đơn chưa có số tiền hoàn được ghi.
+$muc_hoan = tinh_muc_hoan_tien($conn, $ma_don);
+$so_tien_goi_y = (float) ($don['DDL_SoTienHoan'] ?? 0);
+if ($so_tien_goi_y <= 0) {
+    $so_tien_goi_y = (float) $muc_hoan['so_tien'];
+}
+
+// Tỷ lệ hiển thị: ưu tiên tính từ số tiền đã ghi trên đơn (đã áp chính sách lúc hủy),
+// vì đơn do studio hủy/từ chối được hoàn 100% dù thời điểm hủy sát giờ.
+$ty_le_hien_thi = (int) $muc_hoan['ty_le'];
+if ($tong_da_thu > 0 && (float) ($don['DDL_SoTienHoan'] ?? 0) > 0) {
+    $ty_le_hien_thi = (int) round((float) $don['DDL_SoTienHoan'] / $tong_da_thu * 100);
+}
 
 $nguon = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
 $ngan_hang = trim((string) ($nguon['ngan_hang'] ?? ($don['DDL_NganHangHoan'] ?? '')));
 $so_tk = trim((string) ($nguon['so_tk'] ?? ($don['DDL_SoTKHoan'] ?? '')));
 $chu_tk = trim((string) ($nguon['chu_tk'] ?? ($don['DDL_ChuTKHoan'] ?? '')));
 $thong_tin = trim((string) ($nguon['thong_tin'] ?? ($don['DDL_ThongTinHoan'] ?? '')));
-$so_tien_hoan_raw = $nguon['so_tien_hoan'] ?? ($don['DDL_SoTienHoan'] ?? $tong_da_thu);
+$so_tien_hoan_raw = $nguon['so_tien_hoan'] ?? $so_tien_goi_y;
 $so_tien_hoan = (float) str_replace([',', '.', ' '], '', (string) $so_tien_hoan_raw);
-if ($so_tien_hoan <= 0 && $tong_da_thu > 0) {
-    $so_tien_hoan = $tong_da_thu;
-}
 
 $loi = '';
 $xac_nhan = ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['xac_nhan']));
@@ -170,7 +161,14 @@ nv_dau('Hoàn tiền ' . $ten_don, 'don');
                     <p><strong>Khách hàng:</strong> <?= h($don['ND_Ten']) ?> (<?= h($don['ND_Email']) ?>)</p>
                     <p><strong>Trạng thái đơn:</strong> <?= h($don['DDL_TrangThai']) ?></p>
                     <p><strong>Tổng đã thu (thành công):</strong> <?= h(dinh_dang_tien($tong_da_thu)) ?></p>
-                    <p class="muted" style="margin:10px 0 16px;">Nhập thông tin nhận hoàn do khách cung cấp, kiểm tra số tiền và quét mã QR (cần Internet) hoặc chuyển theo thông tin chữ, sau đó bấm xác nhận đã hoàn tiền.</p>
+                    <p><strong>Thời điểm hủy:</strong> <?= h($muc_hoan['moc_huy'] ? dinh_dang_ngay_gio($muc_hoan['moc_huy']) : '—') ?></p>
+                    <p><strong>Bắt đầu thuê:</strong> <?= h($muc_hoan['bat_dau'] ? dinh_dang_ngay_gio($muc_hoan['bat_dau']) : '—') ?></p>
+                    <p><strong>Mức hoàn theo chính sách:</strong> <?= $ty_le_hien_thi ?>%
+                        <?php if ($muc_hoan['so_gio'] !== null) : ?>
+                            (cách giờ bắt đầu thuê <?= h(number_format(abs((float) $muc_hoan['so_gio']), 1, ',', '.')) ?> giờ<?= $muc_hoan['so_gio'] < 0 ? ', đã qua giờ bắt đầu' : '' ?>)
+                        <?php endif; ?>
+                    </p>
+                    <p class="muted" style="margin:10px 0 16px;">Thông tin ngân hàng bên dưới được điền sẵn theo tài khoản khách nhập lúc đặt đơn; số tiền điền sẵn theo chính sách (hủy trước 48 giờ hoàn 100%, 24-48 giờ hoàn 50%, dưới 24 giờ không hoàn; studio tự hủy/từ chối thì hoàn 100%). Có thể sửa lại nếu cần, nhưng không vượt quá số đã thu.</p>
 
                     <form method="post" class="stack" style="display:flex;flex-direction:column;gap:12px;max-width:520px;">
                         <?= csrf_input() ?>
@@ -181,7 +179,7 @@ nv_dau('Hoàn tiền ' . $ten_don, 'don');
                             <select id="ngan_hang" name="ngan_hang" required <?= $tt_hoan !== HOAN_TIEN_CHO ? 'disabled' : '' ?>>
                                 <option value="">-- Chọn ngân hàng --</option>
                                 <?php foreach ($ds_ngan_hang as $bin => $ten) : ?>
-                                    <option value="<?= h($bin) ?>" <?= $ngan_hang === $bin ? 'selected' : '' ?>><?= h($ten) ?> (<?= h($bin) ?>)</option>
+                                    <option value="<?= h($bin) ?>" <?= $ngan_hang === (string) $bin ? 'selected' : '' ?>><?= h($ten) ?> (<?= h($bin) ?>)</option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

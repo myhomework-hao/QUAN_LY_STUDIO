@@ -16,6 +16,11 @@ if (!$pending || !is_array($pending) || empty($pending['token'])) {
 $token = (string) $pending['token'];
 $xac_nhan_url = BASE_URL . 'user/xac-nhan-thanh-toan.php?token=' . urlencode($token);
 $so_tien = (float) ($pending['so_tien_can_thu'] ?? 0);
+$giam_online = (float) ($pending['giam_online'] ?? 0);
+$ds_combo = is_array($pending['danh_sach_combo'] ?? null) ? $pending['danh_sach_combo'] : [];
+$tam_tinh = (float) (($pending['totals']['subtotal'] ?? 0));
+$ma_giam_gia = (string) ($pending['coupon_code'] ?? '');
+$giam_ma = (float) ($pending['discount'] ?? 0);
 $la_dat_coc = !empty($pending['la_dat_coc']);
 $tieu_de_khoan = $la_dat_coc ? 'ĐẶT CỌC (25%)' : 'THANH TOÁN ĐỦ';
 $phuong_thuc = (string) ($pending['payment_label'] ?? '');
@@ -77,7 +82,28 @@ require_once '../includes/header.php';
                     </div>
                 <?php endforeach; ?>
             </div>
-            <div class="summary-row total"><span>Tổng đơn</span><span><?= dinh_dang_tien((float) (($pending['totals']['total'] ?? 0))) ?></span></div>
+            <div class="summary-row"><span>Tạm tính</span><span><?= dinh_dang_tien($tam_tinh) ?></span></div>
+            <?php foreach ($ds_combo as $c) : ?>
+                <div class="summary-row">
+                    <span><?= htmlspecialchars((string) ($c['ten'] ?? 'Combo')) ?> (−<?= (int) ($c['phan_tram'] ?? 0) ?>%)</span>
+                    <span style="color: var(--success); font-weight: 700;">−<?= dinh_dang_tien((float) ($c['giam'] ?? 0)) ?></span>
+                </div>
+            <?php endforeach; ?>
+            <?php if ($giam_ma > 0) : ?>
+                <div class="summary-row">
+                    <span>Giảm giá (<?= htmlspecialchars($ma_giam_gia) ?>)</span>
+                    <span style="color: var(--success); font-weight: 700;">−<?= dinh_dang_tien($giam_ma) ?></span>
+                </div>
+            <?php endif; ?>
+            <?php if (!empty($ds_combo) || $giam_ma > 0) : ?>
+                <div class="summary-row total"><span>Tổng đơn</span><span><?= dinh_dang_tien((float) (($pending['totals']['total'] ?? 0))) ?></span></div>
+            <?php endif; ?>
+            <?php if ($giam_online > 0) : ?>
+                <div class="summary-row">
+                    <span>Giảm <?= (int) GIAM_THANH_TOAN_ONLINE_PHAN_TRAM ?>% thanh toán online</span>
+                    <span style="color: var(--success); font-weight: 700;">−<?= dinh_dang_tien($giam_online) ?></span>
+                </div>
+            <?php endif; ?>
             <div class="summary-row"><span><strong>Cần thanh toán lúc này</strong></span><span><strong><?= dinh_dang_tien($so_tien) ?></strong></span></div>
             <p class="ship-note"><a href="checkout.php" style="border-bottom:1px solid #888">Quay lại chỉnh sửa thông tin</a></p>
         </aside>

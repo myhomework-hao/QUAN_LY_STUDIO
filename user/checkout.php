@@ -19,13 +19,18 @@ $khach = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['ND_Ten' => '', 'ND_Email' => '', 'N
 $cart_items = lay_gio_hang($conn);
 $totals     = tinh_tong_gio_hang($cart_items);
 
+// Combo giảm trên tiền các món thuộc combo; mã giảm giá tính trên số còn lại sau combo.
+$combo      = tinh_giam_combo($cart_items);
+$giam_combo = (float) $combo['tong_giam'];
+$sau_combo  = max(0, (float) $totals['subtotal'] - $giam_combo);
+
 // ===== COUPON =====
 $coupon_code = $_SESSION['coupon_code'] ?? '';
 $coupon_info = null;
 $discount    = 0.0;
 
 if ($coupon_code !== '') {
-    $kq = kiem_tra_ma_giam_gia($conn, $coupon_code, (float) $totals['subtotal']);
+    $kq = kiem_tra_ma_giam_gia($conn, $coupon_code, $sau_combo);
     if ($kq['ok']) {
         $coupon_info = $kq['coupon'];
         $discount    = (float) $kq['discount'];
@@ -34,8 +39,9 @@ if ($coupon_code !== '') {
         $coupon_code = '';
     }
 }
+$totals['combo']    = $giam_combo;
 $totals['discount'] = $discount;
-$totals['total']    = max(0, (float) $totals['total'] - $discount);
+$totals['total']    = max(0, $sau_combo - $discount);
 // ==================
 
 $empty = empty($cart_items);
@@ -45,6 +51,9 @@ $cac_phuong_thuc = [
     'qr'       => 'Chuyển khoản QR giả lập',
 ];
 
+// Ngân hàng nhận hoàn tiền khi đơn bị hủy (danh sách dùng chung với trang hoàn tiền của nhân viên).
+$ds_ngan_hang = danh_sach_ngan_hang();
+
 $dat_hang_thanh_cong = false;
 $ma_don              = 0;
 $phuong_thuc_da_chon = '';
@@ -53,6 +62,10 @@ $ten_nguoi_thue  = trim($_POST['ten']     ?? ($khach['ND_Ten'] ?? ''));
 $sdt_nguoi_thue  = trim($_POST['sdt']     ?? ($khach['ND_SDT'] ?? ''));
 $cccd_nguoi_thue = trim($_POST['cccd']    ?? '');
 $dia_chi         = trim($_POST['dia_chi'] ?? '');
+// Thông tin nhận hoàn tiền (bắt buộc với mọi đơn để nhân viên có căn cứ chuyển hoàn).
+$ngan_hang_nhan  = trim($_POST['ngan_hang'] ?? '');
+$so_tk_nhan      = trim($_POST['so_tk']     ?? '');
+$chu_tk_nhan     = trim($_POST['chu_tk']    ?? ($ten_nguoi_thue !== '' ? $ten_nguoi_thue : ''));
 
 // A2: sau khi xác nhận thanh toán/cọc thành công sẽ quay về với thông báo.
 if (isset($_GET['ok'], $_SESSION['dat_hang_ket_qua']) && is_array($_SESSION['dat_hang_ket_qua'])) {
@@ -74,14 +87,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
 
     // ===== RE-VALIDATE COUPON NGAY TRƯỚC KHI XỬ LÝ =====
     if ($loi_form === '' && $coupon_code !== '') {
-        $kq_recheck = kiem_tra_ma_giam_gia($conn, $coupon_code, (float) $totals['subtotal']);
+        $kq_recheck = kiem_tra_ma_giam_gia($conn, $coupon_code, $sau_combo);
         if (!$kq_recheck['ok']) {
             $loi_form = 'Mã giảm giá không còn hiệu lực: ' . $kq_recheck['message']
                       . ' Vui lòng bỏ mã hoặc thử mã khác.';
         } else {
             $discount           = (float) $kq_recheck['discount'];
             $totals['discount'] = $discount;
-            $totals['total']    = max(0, (float) $totals['subtotal'] - $discount);
+            $totals['total']    = max(0, $sau_combo - $discount);
         }
     }
     // ===================================================
@@ -103,6 +116,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
             $loi_form = 'Vui lòng nhập địa chỉ (tối đa 255 ký tự).';
         } elseif (!isset($cac_phuong_thuc[$ma_phuong_thuc])) {
             $loi_form = 'Phương thức thanh toán không hợp lệ.';
+        } elseif (!isset($ds_ngan_hang[$ngan_hang_nhan])) {
+            $loi_form = 'Vui lòng chọn ngân hàng nhận hoàn tiền.';
+        } elseif ($so_tk_nhan === '' || !preg_match('/^[0-9A-Za-z]{4,30}$/', $so_tk_nhan)) {
+            $loi_form = 'Số tài khoản nhận hoàn tiền không hợp lệ (4-30 ký tự, chữ hoặc số).';
+        } elseif ($chu_tk_nhan === '' || mb_strlen($chu_tk_nhan) > 100) {
+            $loi_form = 'Vui lòng nhập tên chủ tài khoản nhận hoàn tiền (tối đa 100 ký tự).';
         } elseif (mb_strlen($ghi_chu) > 1000) {
             $loi_form = 'Ghi chú không được dài quá 1000 ký tự.';
         } else {
@@ -137,16 +156,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
             }
 
             $tong_can_thu = (float) $totals['total'];
-            // Tiền mặt: cọc 25%. Chuyển khoản QR giả lập: thu đủ 100% qua trang xác nhận.
-            $so_tien_can_thu = ($ma_phuong_thuc === 'tien_mat')
-                ? (float) round($tong_can_thu * 0.25)
-                : $tong_can_thu;
+            // Tiền mặt: cọc 25%. Chuyển khoản QR giả lập: thu đủ 100% và giảm thêm 5% vì thanh toán toàn bộ online.
+            $giam_online = 0.0;
+            if ($ma_phuong_thuc === 'tien_mat') {
+                $so_tien_can_thu = (float) round($tong_can_thu * 0.25);
+            } else {
+                $giam_online     = giam_thanh_toan_online($tong_can_thu);
+                $so_tien_can_thu = $tong_can_thu - $giam_online;
+            }
 
             $snapshot = [];
             foreach ($cac_dong as $dong) {
                 $snapshot[] = [
                     'id'       => (int) $dong['item']['id'],
                     'ten'      => (string) $dong['item']['ten'],
+                    'loai'     => (string) ($dong['item']['loai'] ?? ''),
                     'qty'      => (int) $dong['item']['qty'],
                     'kich_co'  => (string) ($dong['item']['kich_co'] ?? ''),
                     'bat_dau'  => $dong['tg']['bat_dau'],
@@ -165,6 +189,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
                 'totals'           => $totals,
                 'coupon_code'      => $coupon_code !== '' ? $coupon_code : '',
                 'discount'         => $discount,
+                'giam_combo'       => $giam_combo,
+                'danh_sach_combo'  => $combo['danh_sach'],
                 'payment'          => $ma_phuong_thuc,
                 'payment_label'    => $cac_phuong_thuc[$ma_phuong_thuc],
                 'note'             => $ghi_chu !== '' ? $ghi_chu : null,
@@ -172,6 +198,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
                 'sdt_nguoi_thue'   => $sdt_nguoi_thue,
                 'cccd_nguoi_thue'  => $cccd_nguoi_thue,
                 'dia_chi'          => $dia_chi,
+                'ngan_hang'        => $ngan_hang_nhan,
+                'so_tk'            => $so_tk_nhan,
+                'chu_tk'           => $chu_tk_nhan,
+                'giam_online'      => $giam_online,
+                'tong_sau_ma'      => $tong_can_thu,
                 'so_tien_can_thu'  => $so_tien_can_thu,
                 'la_dat_coc'       => ($ma_phuong_thuc === 'tien_mat'),
             ];
@@ -298,6 +329,27 @@ require_once '../includes/header.php';
                         </div>
                     </div>
 
+                    <div class="card">
+                        <div class="card-head"><h2>Thông tin nhận hoàn tiền</h2></div>
+                        <div class="card-body">
+                            <p style="color:#777; font-size:.9rem;">Thông tin tài khoản để VIBE Studio hoàn tiền nếu đơn bị hủy: hủy trước 48 giờ hoàn 100%, từ 24 đến dưới 48 giờ hoàn 50%, hủy dưới 24 giờ không hoàn. Vui lòng nhập tài khoản chính chủ.</p>
+                            <label class="field full">Ngân hàng
+                                <select name="ngan_hang" required>
+                                    <option value="">-- Chọn ngân hàng --</option>
+                                    <?php foreach ($ds_ngan_hang as $bin => $ten_ngan_hang) : ?>
+                                        <option value="<?= htmlspecialchars((string) $bin, ENT_QUOTES, 'UTF-8') ?>" <?= $ngan_hang_nhan === (string) $bin ? 'selected' : '' ?>><?= htmlspecialchars($ten_ngan_hang, ENT_QUOTES, 'UTF-8') ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
+                            <label class="field full">Số tài khoản
+                                <input type="text" name="so_tk" maxlength="30" required value="<?= htmlspecialchars($so_tk_nhan, ENT_QUOTES, 'UTF-8') ?>" placeholder="Ví dụ: 0123456789">
+                            </label>
+                            <label class="field full">Chủ tài khoản
+                                <input type="text" name="chu_tk" maxlength="100" required value="<?= htmlspecialchars($chu_tk_nhan, ENT_QUOTES, 'UTF-8') ?>" placeholder="Tên in trên thẻ/tài khoản">
+                            </label>
+                        </div>
+                    </div>
+
                 </fieldset>
 
                 <div class="submit-row">
@@ -335,6 +387,13 @@ require_once '../includes/header.php';
                     <?php endif; ?>
                 </div>
 
+                <?php foreach ($combo['danh_sach'] as $c) : ?>
+                    <div class="summary-row">
+                        <span><?= htmlspecialchars($c['ten']) ?> (−<?= (int) $c['phan_tram'] ?>%)</span>
+                        <span style="color: var(--success); font-weight: 700;">−<?= dinh_dang_tien($c['giam']) ?></span>
+                    </div>
+                <?php endforeach; ?>
+
                 <?php if ($discount > 0) : ?>
                     <div class="summary-row">
                         <span>Giảm giá (<?= htmlspecialchars($coupon_code) ?>)</span>
@@ -343,6 +402,7 @@ require_once '../includes/header.php';
                 <?php endif; ?>
 
                 <div class="summary-row total"><span>Tổng cộng</span><span><?= dinh_dang_tien($totals['total']) ?></span></div>
+                <p class="ship-note" style="color: var(--success);">Thanh toán 100% online qua chuyển khoản QR được giảm thêm <?= (int) GIAM_THANH_TOAN_ONLINE_PHAN_TRAM ?>% ở bước thanh toán.</p>
                 <p class="ship-note"><a href="cart.php" style="border-bottom:1px solid #888">Chỉnh sửa giỏ hàng</a></p>
             </aside>
         </div>
