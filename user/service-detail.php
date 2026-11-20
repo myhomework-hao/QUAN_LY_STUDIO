@@ -159,7 +159,7 @@ require_once '../includes/header.php';
             </div>
 
             <p class="detail-price"><?= h(dinh_dang_gia((int) $dv['gia'], $dv['don_vi'])) ?></p>
-            <p class="detail-description"><?= h($dv['mo_ta']) ?></p>
+            
 
             <div class="detail-information">
                 <div class="information-item">
