@@ -6,6 +6,10 @@ const LOAI_HOP_LE = ['phong_chup', 'thiet_bi', 'trang_phuc', 'phu_kien'];
 const DON_VI_HOP_LE = ['giờ', 'ngày', 'lượt', 'bộ'];
 
 $ma_sua = (int) ($_GET['id'] ?? $_POST['ma_sua'] ?? 0);
+if ($ma_sua > 0) {
+    dat_thong_bao('Chỉ quản trị viên mới được sửa dịch vụ.', 'error');
+    chuyen_huong('my-services.php');
+}
 $dv_cu = null;
 if ($ma_sua > 0) {
     $dv_cu = lay_mot($conn, "SELECT * FROM dichvu WHERE DV_Ma = ?", [$ma_sua]);
@@ -90,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'gia' => trim((string) ($_POST['gia'] ?? '')),
         'don_vi' => nhan_don_vi((string) ($_POST['don_vi'] ?? '')),
         'so_luong' => trim((string) ($_POST['so_luong'] ?? '')),
-        'hien' => isset($_POST['hien']) ? 1 : 0,
+        'hien' => 1,
         'thuoc_tinh' => trim((string) ($_POST['thuoc_tinh'] ?? '')),
     ];
 
@@ -186,7 +190,6 @@ $loi_truong = function (string $khoa) use ($loi) {
                         <?php $loi_truong('anh'); ?>
                         <?php if ($dv_cu && $dv_cu['DV_HinhAnh']) : ?><img class="thumb" src="<?= h(duong_dan_anh($dv_cu['DV_HinhAnh'])) ?>" alt="Ảnh hiện tại"><?php endif; ?>
                     </div>
-                    <div class="field"><label><input type="checkbox" name="hien" value="1" <?= $du_lieu['hien'] ? 'checked' : '' ?>> Hiển thị cho khách thuê</label></div>
                 </div>
                 <div class="form-actions">
                     <button class="btn-solid" type="submit">Lưu</button>

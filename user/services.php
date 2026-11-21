@@ -120,12 +120,7 @@ require_once '../includes/header.php';
                                     $nhan_trang_thai = $con_lai > 0 ? 'Còn ' . $con_lai . ' sản phẩm' : 'Hết hàng';
                                 } else {
                                     $nhan_trang_thai = 'Đang bảo trì';
-                                    // Tình trạng riêng của phòng chụp/thiết bị (nhân viên ghi lý do khi khóa)
-                                    if ($dv['loai'] === 'phong_chup') {
-                                        $stmt_tt = $conn->prepare("SELECT PC_TrangThai FROM phongchup WHERE DV_Ma = ?");
-                                        $stmt_tt->execute([$dv['id']]);
-                                        $nhan_trang_thai = (string) ($stmt_tt->fetchColumn() ?: 'Đang bảo trì');
-                                    } elseif ($dv['loai'] === 'thiet_bi') {
+                                    if ($dv['loai'] === 'thiet_bi') {
                                         $stmt_tt = $conn->prepare("SELECT TB_TinhTrang FROM thietbi WHERE DV_Ma = ?");
                                         $stmt_tt->execute([$dv['id']]);
                                         $nhan_trang_thai = (string) ($stmt_tt->fetchColumn() ?: 'Đang bảo trì');

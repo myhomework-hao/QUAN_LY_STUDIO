@@ -171,6 +171,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
                     'id'       => (int) $dong['item']['id'],
                     'ten'      => (string) $dong['item']['ten'],
                     'loai'     => (string) ($dong['item']['loai'] ?? ''),
+                    'bo_phan'  => is_array($_SESSION['cart'][$dong['item']['cart_key']]['bo_phan'] ?? null)
+                        ? array_values($_SESSION['cart'][$dong['item']['cart_key']]['bo_phan'])
+                        : [],
                     'qty'      => (int) $dong['item']['qty'],
                     'kich_co'  => (string) ($dong['item']['kich_co'] ?? ''),
                     'bat_dau'  => $dong['tg']['bat_dau'],
@@ -371,6 +374,9 @@ require_once '../includes/header.php';
                                         <span class="summary-item-name"><?= htmlspecialchars($item['ten']) ?> × <?= (int) $item['qty'] ?></span>
                                         <?php if (!empty($item['kich_co'])) : ?>
                                             <small class="summary-item-size">Size: <?= htmlspecialchars($item['kich_co']) ?></small>
+                                        <?php endif; ?>
+                                        <?php if ($item['loai'] === 'phong_chup' && !empty($item['bo_phan'])) : ?>
+                                            <small class="summary-item-size">Món trong phòng: <?= htmlspecialchars(implode(', ', $item['bo_phan']), ENT_QUOTES, 'UTF-8') ?></small>
                                         <?php endif; ?>
                                         <small class="summary-item-time">
                                             <?= htmlspecialchars(dinh_dang_ngay_gio($item['bat_dau'])) ?>

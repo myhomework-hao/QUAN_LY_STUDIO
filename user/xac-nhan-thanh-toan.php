@@ -22,6 +22,7 @@ function pending_hop_le($pending, string $token): bool
 }
 
 $loi = '';
+$duong_dan_quay_lai = 'checkout.php';
 $thanh_cong = false;
 
 if (!pending_hop_le($pending, $token)) {
@@ -65,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $loi === '' && $pending) {
                 $tong       = max(0, $sau_combo - $discount);
 
                 // Kiểm tra lại còn chỗ tại thời điểm xác nhận (A2: lúc này mới tạo đơn)
-                foreach ($pending['cart_items'] as $item) {
+                foreach ($pending['cart_items'] as $vi_tri => $item) {
                     kiem_tra_con_cho(
                         $conn,
                         (int) $item['id'],
@@ -75,6 +76,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $loi === '' && $pending) {
                         (int) $item['qty'],
                         (string) ($item['kich_co'] ?? '')
                     );
+
+                    $bo_phan_chon = $item['bo_phan'] ?? [];
+                    if (!is_array($bo_phan_chon)) {
+                        throw new DomainException('Danh sách món trong phòng không hợp lệ. Vui lòng quay lại giỏ hàng.');
+                    }
+
+                    $stmt_dv = $conn->prepare("SELECT DV_Loai, DV_MoTaChiTiet FROM dichvu WHERE DV_Ma = ?");
+                    $stmt_dv->execute([(int) $item['id']]);
+                    $thong_tin_dv = $stmt_dv->fetch(PDO::FETCH_ASSOC);
+                    if (!$thong_tin_dv) {
+                        throw new DomainException('Một dịch vụ trong đơn không còn tồn tại. Vui lòng quay lại giỏ hàng.');
+                    }
+
+                    if ($thong_tin_dv['DV_Loai'] === 'phong_chup') {
+                        $ds_bo_phan = preg_split('/\R/u', (string) $thong_tin_dv['DV_MoTaChiTiet'], -1, PREG_SPLIT_NO_EMPTY);
+                        $ds_bo_phan = array_values(array_unique(array_filter(array_map('trim', $ds_bo_phan))));
+                        $bo_phan_chon_chuan = [];
+                        foreach ($bo_phan_chon as $ten_bo_phan) {
+                            if (!is_string($ten_bo_phan)) {
+                                throw new DomainException('Danh sách món trong phòng không hợp lệ.');
+                            }
+                            if (trim($ten_bo_phan) !== '') {
+                                $bo_phan_chon_chuan[] = trim($ten_bo_phan);
+                            }
+                        }
+                        $bo_phan_chon = array_values(array_unique($bo_phan_chon_chuan));
+
+                        $stmt_hu = $conn->prepare(
+                            "SELECT BCHH_BoPhan FROM baocao_huhong
+                             WHERE DV_Ma = ? AND BCHH_TrangThai <> ? AND BCHH_BoPhan IS NOT NULL"
+                        );
+                        $stmt_hu->execute([(int) $item['id'], 'Đã xử lý']);
+                        $ds_bo_phan_hu = array_values(array_unique(array_filter(array_map('trim', $stmt_hu->fetchAll(PDO::FETCH_COLUMN)))));
+
+                        if (!$ds_bo_phan || !$bo_phan_chon) {
+                            throw new DomainException('Vui lòng quay lại giỏ hàng và chọn món trong phòng.');
+                        }
+                        if (count(array_diff($bo_phan_chon, $ds_bo_phan)) > 0) {
+                            throw new DomainException('Danh sách món trong phòng đã thay đổi. Vui lòng quay lại giỏ hàng.');
+                        }
+                        if (count(array_intersect($bo_phan_chon, $ds_bo_phan_hu)) > 0) {
+                            throw new DomainException('Có món trong phòng đang bị báo hư. Vui lòng quay lại và chọn món khác.');
+                        }
+                        $pending['cart_items'][$vi_tri]['bo_phan'] = $bo_phan_chon;
+                    } elseif ($bo_phan_chon) {
+                        throw new DomainException('Thông tin món trong giỏ hàng không hợp lệ. Vui lòng quay lại giỏ hàng.');
+                    }
                 }
 
                 // Re-check coupon ngay trước khi tạo đơn
@@ -131,6 +179,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $loi === '' && $pending) {
                     "INSERT INTO chitietdon (DDL_Ma, DV_Ma, CTD_SoLuong, CTD_KichCo, CTD_BatDau, CTD_KetThuc, CTD_DonGia, CTD_ThanhTien)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
                 );
+                $stmt_ct_bo_phan = $conn->prepare(
+                    "INSERT INTO chitietdon_bophan (CTD_Ma, CTDBP_Ten) VALUES (?, ?)"
+                );
                 foreach ($pending['cart_items'] as $item) {
                     $stmt_ct->execute([
                         $ma_don,
@@ -142,6 +193,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $loi === '' && $pending) {
                         (float) $item['gia'],
                         (float) $item['subtotal'],
                     ]);
+                    $ma_chi_tiet_don = (int) $conn->lastInsertId();
+                    foreach (($item['bo_phan'] ?? []) as $bo_phan) {
+                        $stmt_ct_bo_phan->execute([$ma_chi_tiet_don, $bo_phan]);
+                    }
                 }
 
                 $tt_loai = $la_dat_coc ? 'Đặt cọc' : 'Thanh toán đủ';
@@ -181,6 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $loi === '' && $pending) {
             } catch (DomainException $e) {
                 if ($conn->inTransaction()) $conn->rollBack();
                 $loi = $e->getMessage();
+                $duong_dan_quay_lai = 'cart.php';
             } catch (Exception $e) {
                 if ($conn->inTransaction()) $conn->rollBack();
                 $loi = 'Không thể xác nhận thanh toán, vui lòng thử lại.';
@@ -207,7 +263,7 @@ require_once '../includes/header.php';
                     <div style="border:1px solid #ff4d4f;background:#fff2f2;color:#cf1322;padding:14px;border-radius:8px;margin-bottom:16px;">
                         <?= htmlspecialchars($loi) ?>
                     </div>
-                    <p><a href="checkout.php" class="btn-dark" style="max-width:260px;">Quay lại thanh toán</a></p>
+                    <p><a href="<?= htmlspecialchars($duong_dan_quay_lai, ENT_QUOTES, 'UTF-8') ?>" class="btn-dark" style="max-width:260px;"><?= $duong_dan_quay_lai === 'cart.php' ? 'Quay lại giỏ hàng' : 'Quay lại thanh toán' ?></a></p>
                 <?php else : ?>
                     <p>Phương thức: <strong><?= htmlspecialchars((string) ($pending['payment_label'] ?? '')) ?></strong></p>
                     <p style="font-size:24px;font-weight:700;margin:10px 0;">Số tiền cần xác nhận: <?= dinh_dang_tien($so_tien_can_thu) ?></p>

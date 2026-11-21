@@ -18,6 +18,7 @@ $stmt = $conn->prepare(
     "SELECT dv.DV_Ma AS id, dv.DV_Ten AS ten, dv.DV_Loai AS loai, dv.DV_GiaThue AS gia,
             dv.DV_DonViTinh AS don_vi, dv.DV_SoLuong AS so_luong, dv.DV_MoTa AS mo_ta,
             dv.DV_MoTaChiTiet AS mo_ta_chi_tiet, dv.DV_HinhAnh AS anh,
+            dv.DV_DangBan AS dang_ban,
             pc.PC_SucChua AS suc_chua, tb.TB_Loai AS loai_thiet_bi,
             tp.TP_KichCo AS kich_co, pk.PK_Loai AS loai_phu_kien
      FROM dichvu dv
@@ -25,7 +26,14 @@ $stmt = $conn->prepare(
      LEFT JOIN thietbi tb ON tb.DV_Ma = dv.DV_Ma
      LEFT JOIN trangphuc tp ON tp.DV_Ma = dv.DV_Ma
      LEFT JOIN phukien pk ON pk.DV_Ma = dv.DV_Ma
-     WHERE dv.DV_Ma = ? AND dv.DV_DangBan = 1"
+     WHERE dv.DV_Ma = ? AND (
+         dv.DV_DangBan = 1 OR (
+             dv.DV_Loai = 'phong_chup' AND EXISTS (
+                 SELECT 1 FROM baocao_huhong b
+                 WHERE b.DV_Ma = dv.DV_Ma AND b.BCHH_TrangThai <> 'Đã xử lý'
+             )
+         )
+     )"
 );
 $stmt->execute([$ma_dich_vu]);
 $dv = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -34,9 +42,35 @@ $thong_bao_dat = $_SESSION['thong_bao_dat'] ?? '';
 unset($_SESSION['thong_bao_dat']);
 
 $ds_danh_gia = [];
+$ds_bao_cao_hu_hong = [];
+$ds_bo_phan_phong = [];
+$ds_bo_phan_dang_hu = [];
+$ds_bo_phan_kha_dung = [];
 $diem_trung_binh = 0;
 
 if ($dv) {
+    if ($dv['loai'] === 'phong_chup') {
+        $stmt = $conn->prepare(
+            "SELECT BCHH_BoPhan AS bo_phan, BCHH_MoTa AS mo_ta, BCHH_TrangThai AS trang_thai, BCHH_NgayBao AS ngay_bao
+             FROM baocao_huhong
+             WHERE DV_Ma = ? AND BCHH_TrangThai <> ?
+             ORDER BY BCHH_NgayBao DESC, BCHH_Ma DESC"
+        );
+        $stmt->execute([$dv['id'], 'Đã xử lý']);
+        $ds_bao_cao_hu_hong = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $ds_bo_phan_phong = preg_split('/\R/u', (string) $dv['mo_ta_chi_tiet'], -1, PREG_SPLIT_NO_EMPTY);
+        $ds_bo_phan_phong = array_values(array_unique(array_filter(array_map('trim', $ds_bo_phan_phong))));
+        foreach ($ds_bao_cao_hu_hong as $bao_cao) {
+            $bo_phan_hu = trim((string) ($bao_cao['bo_phan'] ?? ''));
+            if ($bo_phan_hu !== '') {
+                $ds_bo_phan_dang_hu[] = $bo_phan_hu;
+            }
+        }
+        $ds_bo_phan_dang_hu = array_values(array_unique($ds_bo_phan_dang_hu));
+        $ds_bo_phan_kha_dung = array_values(array_diff($ds_bo_phan_phong, $ds_bo_phan_dang_hu));
+    }
+
     try {
         $stmt = $conn->prepare(
             "SELECT dg.DG_SoSao AS so_sao, dg.DG_NoiDung AS binh_luan, dg.DG_NgayTao AS ngay_tao, nd.ND_Ten AS name
@@ -66,6 +100,10 @@ if ($dv) {
     // Hiển thị tồn kho ban đầu theo sức chứa thực tế.
     // Tồn kho theo khung giờ sẽ do API kiểm tra khi khách chọn thời gian.
     $con_lai_ban_dau = (int) $dv['so_luong'];
+    $co_the_dat = (int) $dv['dang_ban'] === 1 && $con_lai_ban_dau > 0;
+    if ($dv['loai'] === 'phong_chup' && !$ds_bo_phan_kha_dung) {
+        $co_the_dat = false;
+    }
 
     // Mốc mặc định luôn ở tương lai để trang vừa mở đã tính được tạm tính.
     $khoa_don_vi = chuan_hoa_don_vi((string) $dv['don_vi']);
@@ -145,8 +183,8 @@ require_once '../includes/header.php';
         <div class="detail-info-card">
             <div class="product-tags">
                 <span class="product-category-tag"><?= h($ten_danh_muc) ?></span>
-                <span class="product-status-tag" id="nhan-trang-thai" style="<?= $con_lai_ban_dau == 0 ? 'background: #ff4d4f; color: #fff;' : '' ?>">
-                    <?= $con_lai_ban_dau > 0 ? 'Còn ' . $con_lai_ban_dau . ' sản phẩm' : 'Hết hàng' ?>
+                <span class="product-status-tag" id="nhan-trang-thai" style="<?= !$co_the_dat ? 'background: #ff4d4f; color: #fff;' : '' ?>">
+                    <?= (int) $dv['dang_ban'] !== 1 ? 'Đang bảo trì' : ($con_lai_ban_dau <= 0 ? 'Hết hàng' : ($dv['loai'] === 'phong_chup' && !$co_the_dat ? 'Không có món khả dụng' : 'Còn ' . $con_lai_ban_dau . ' sản phẩm')) ?>
                 </span>
             </div>
 
@@ -183,7 +221,7 @@ require_once '../includes/header.php';
             </div>
 
             <!-- Form gửi dữ liệu đặt thuê trỏ thẳng vào cart.php ở root -->
-            <form method="post" action="cart.php">
+            <form id="formDatThue" method="post" action="cart.php">
                 <?= csrf_input() ?>
                 <input type="hidden" name="service_id" value="<?= (int) $dv['id'] ?>">
                 <input type="hidden" name="so_luong" id="so-luong-gui" value="1"
@@ -246,7 +284,7 @@ require_once '../includes/header.php';
                 </div>
 
                 <div class="detail-buttons">
-                    <button type="submit" class="main-button rental-button" <?= $con_lai_ban_dau == 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '' ?>>
+                    <button type="submit" class="main-button rental-button" <?= !$co_the_dat ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '' ?>>
                         <i class="fa-solid fa-bag-shopping"></i> Đặt thuê
                     </button>
                     <a href="services.php" class="back-button">
@@ -261,11 +299,46 @@ require_once '../includes/header.php';
         </div>
     </section>
 
+    <?php if ($dv['loai'] === 'phong_chup' && $ds_bo_phan_dang_hu) : ?>
+        <section class="detail-description-section">
+            <p class="small-title">ROOM CONDITION</p>
+            <h2>Tình trạng <i>phòng studio</i></h2>
+            <p>Xin lỗi quý khách vì những món dưới đây hiện đang bị hư hỏng:</p>
+            <ul>
+                <?php foreach ($ds_bo_phan_dang_hu as $bo_phan) : ?>
+                    <li><?= h($bo_phan) ?></li>
+                <?php endforeach; ?>
+            </ul>
+            <p>Nếu có thắc mắc hoặc cần hỗ trợ, vui lòng liên hệ shop qua biểu tượng chat hỗ trợ.</p>
+        </section>
+    <?php endif; ?>
+
     <section class="detail-description-section">
         <p class="small-title">INFORMATION</p>
         <h2>Thông tin <i>sản phẩm</i></h2>
         <div class="detail-description-content">
-            <p><?= nl2br(h($dv['mo_ta_chi_tiet'] ?: $dv['mo_ta'])) ?></p>
+            <p><?= nl2br(h($dv['loai'] === 'phong_chup' ? $dv['mo_ta'] : ($dv['mo_ta_chi_tiet'] ?: $dv['mo_ta']))) ?></p>
+            <?php if ($dv['loai'] === 'phong_chup') : ?>
+                <fieldset style="border: 0; padding: 0; margin: 16px 0 0;">
+                    <legend style="font-weight: 600; margin-bottom: 8px; color: #333;">Chọn món trong phòng</legend>
+                    <?php if (!$ds_bo_phan_phong) : ?>
+                        <p role="status" style="color: #a66a00;">Phòng chưa có danh sách món. Vui lòng liên hệ studio để cập nhật thông tin.</p>
+                    <?php else : ?>
+                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-weight: 600;">
+                            <input type="checkbox" id="chon-tat-ca-bo-phan" <?= !$ds_bo_phan_kha_dung ? 'disabled' : '' ?>>
+                            <span>Chọn tất cả món còn hoạt động</span>
+                        </label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                            <?php foreach ($ds_bo_phan_phong as $bo_phan) : $bi_hu = in_array($bo_phan, $ds_bo_phan_dang_hu, true); ?>
+                                <label style="display: flex; align-items: flex-start; gap: 8px; padding: 12px; border: 1px solid <?= $bi_hu ? '#d0d0d0' : '#e5e5e5' ?>; border-radius: 8px; background: <?= $bi_hu ? '#eeeeee' : '#fff' ?>; color: <?= $bi_hu ? '#999' : '#333' ?>; cursor: <?= $bi_hu ? 'not-allowed' : 'pointer' ?>;">
+                                    <input form="formDatThue" type="checkbox" name="bo_phan[]" value="<?= h($bo_phan) ?>" <?= $bi_hu ? 'disabled' : '' ?> style="margin-top: 2px;">
+                                    <span><?= h($bo_phan) ?><?= $bi_hu ? ' (đang hư hỏng)' : '' ?></span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </fieldset>
+            <?php endif; ?>
         </div>
     </section>
 

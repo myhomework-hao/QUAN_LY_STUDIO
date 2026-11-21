@@ -173,6 +173,15 @@ CREATE TABLE `chitietdon` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
 
 --
+-- Table structure for table `chitietdon_bophan`
+--
+
+CREATE TABLE `chitietdon_bophan` (
+  `CTD_Ma` int(11) NOT NULL,
+  `CTDBP_Ten` varchar(120) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
+
+--
 -- Dumping data for table `chitietdon`
 --
 
@@ -297,6 +306,23 @@ INSERT INTO `dichvu` (`DV_Ma`, `DV_Ten`, `DV_Loai`, `DV_MoTa`, `DV_MoTaChiTiet`,
 (34, 'Len Nikon PC-E 45mm f2.8D ED', 'phu_kien', 'Len zoom cao cấp khẩu lớn chuyên nghiệp.', NULL, 400000, 'ngày', 'len2.png', 2, 1),
 (35, 'Len Canon EF 20-35mm f/2.8L USM', 'phu_kien', 'Len chuyên chụp phong cảnh, không gian rộng trong studio.', NULL, 450000, 'ngày', 'len3.png', 2, 1),
 (36, 'Len Fujifilm XF 500mm F5.6 LM', 'phu_kien', 'Len chuyên chụp cận cảnh chi tiết sản phẩm, trang sức.', NULL, 1300000, 'ngày', 'len4.png', 2, 1);
+
+--
+-- Mô tả riêng các món trong từng phòng.
+-- Có thể chạy riêng khối UPDATE này trên CSDL hiện có.
+--
+UPDATE `dichvu`
+SET `DV_MoTaChiTiet` = CASE `DV_Ma`
+  WHEN 9 THEN 'Phông nền trắng\nĐèn softbox bên trái\nĐèn softbox bên phải\nĐèn chiếu sáng trên ray trần\nBàn làm việc\nGhế đẩu\nMàn hình theo dõi'
+  WHEN 10 THEN 'Sofa xanh vintage\nBàn trà gỗ\nBàn ăn gỗ\nGhế ăn gỗ\nKhung tranh treo tường\nĐèn tản sáng studio\nRay trượt máy quay'
+  WHEN 11 THEN 'Sofa đen\nBàn trà nhỏ\nThảm khu chụp\nPhông nền trắng\nĐèn softbox\nĐèn đứng studio'
+  WHEN 12 THEN 'Phông nền cuộn trắng\nĐèn softbox\nĐèn tản sáng dạng lưới\nGiàn khung treo đèn\nXe đẩy máy quay\nMàn hình theo dõi'
+  WHEN 13 THEN 'Ghế bành trắng\nBàn đá lớn\nChậu cây trang trí\nKệ trang trí\nPhông nền trắng\nĐèn softbox'
+  WHEN 14 THEN 'Phông nền trắng\nGhế gỗ\nGhế đẩu gỗ\nĐèn softbox bên trái\nĐèn softbox bên phải\nMàn hình theo dõi'
+  WHEN 15 THEN 'Phông nền trắng\nĐèn softbox bên trái\nĐèn softbox bên phải\nMàn hình theo dõi\nGiá treo trang phục\nBàn làm việc\nGhế bàn'
+  WHEN 16 THEN 'Phông nền trắng\nĐèn softbox bên trái\nĐèn softbox bên phải\nMàn hình theo dõi\nGiá treo trang phục\nBàn dụng cụ'
+END
+WHERE `DV_Loai` = 'phong_chup' AND `DV_Ma` IN (9, 10, 11, 12, 13, 14, 15, 16);
 
 -- --------------------------------------------------------
 
@@ -729,6 +755,23 @@ INSERT INTO `nhanvien` (`NV_Ma`, `ND_Ma`, `NV_MaNhanVien`, `NV_ChucVu`, `NV_Ngay
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `baocao_huhong`
+--
+
+CREATE TABLE `baocao_huhong` (
+  `BCHH_Ma` int(11) NOT NULL,
+  `DV_Ma` int(11) NOT NULL,
+  `NV_Ma` int(11) NOT NULL,
+  `BCHH_BoPhan` varchar(120) DEFAULT NULL,
+  `BCHH_MoTa` text NOT NULL,
+  `BCHH_TrangThai` varchar(30) NOT NULL DEFAULT 'Chờ xử lý',
+  `BCHH_NgayBao` datetime NOT NULL DEFAULT current_timestamp(),
+  `BCHH_NgayCapNhat` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `phongchup`
 --
 
@@ -915,6 +958,12 @@ ALTER TABLE `chitietdon`
   ADD KEY `fk_ctd_ddl` (`DDL_Ma`);
 
 --
+-- Indexes for table `chitietdon_bophan`
+--
+ALTER TABLE `chitietdon_bophan`
+  ADD PRIMARY KEY (`CTD_Ma`,`CTDBP_Ten`);
+
+--
 -- Indexes for table `dangnhap_thatbai`
 --
 ALTER TABLE `dangnhap_thatbai`
@@ -1010,6 +1059,14 @@ ALTER TABLE `nhanvien`
   ADD PRIMARY KEY (`NV_Ma`),
   ADD UNIQUE KEY `uq_nv_nd` (`ND_Ma`),
   ADD UNIQUE KEY `uq_nv_ma` (`NV_MaNhanVien`);
+
+--
+-- Indexes for table `baocao_huhong`
+--
+ALTER TABLE `baocao_huhong`
+  ADD PRIMARY KEY (`BCHH_Ma`),
+  ADD KEY `ix_bchh_trangthai_ngay` (`BCHH_TrangThai`,`BCHH_NgayBao`),
+  ADD KEY `ix_bchh_dv` (`DV_Ma`);
 
 --
 -- Indexes for table `phongchup`
@@ -1137,6 +1194,12 @@ ALTER TABLE `nhanvien`
   MODIFY `NV_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `baocao_huhong`
+--
+ALTER TABLE `baocao_huhong`
+  MODIFY `BCHH_Ma` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `thanhtoan`
 --
 ALTER TABLE `thanhtoan`
@@ -1167,6 +1230,12 @@ ALTER TABLE `chat_tin_nhan`
 ALTER TABLE `chitietdon`
   ADD CONSTRAINT `fk_ctd_ddl` FOREIGN KEY (`DDL_Ma`) REFERENCES `dondatlich` (`DDL_Ma`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_ctd_dv` FOREIGN KEY (`DV_Ma`) REFERENCES `dichvu` (`DV_Ma`);
+
+--
+-- Constraints for table `chitietdon_bophan`
+--
+ALTER TABLE `chitietdon_bophan`
+  ADD CONSTRAINT `fk_ctdbp_ctd` FOREIGN KEY (`CTD_Ma`) REFERENCES `chitietdon` (`CTD_Ma`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `danhgia`
@@ -1221,6 +1290,13 @@ ALTER TABLE `nguoidung`
 --
 ALTER TABLE `nhanvien`
   ADD CONSTRAINT `fk_nv_nd` FOREIGN KEY (`ND_Ma`) REFERENCES `nguoidung` (`ND_Ma`);
+
+--
+-- Constraints for table `baocao_huhong`
+--
+ALTER TABLE `baocao_huhong`
+  ADD CONSTRAINT `fk_bchh_dv` FOREIGN KEY (`DV_Ma`) REFERENCES `dichvu` (`DV_Ma`),
+  ADD CONSTRAINT `fk_bchh_nv` FOREIGN KEY (`NV_Ma`) REFERENCES `nhanvien` (`NV_Ma`);
 
 --
 -- Constraints for table `phongchup`

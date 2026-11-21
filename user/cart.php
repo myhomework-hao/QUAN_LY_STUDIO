@@ -24,6 +24,23 @@ function so_luong_toi_da(PDO $conn, int $ma_dich_vu): int
     return $so === false ? 0 : min(SO_LUONG_TOI_DA_MOI_DICH_VU, (int) $so);
 }
 
+function tach_bo_phan_phong(string $mo_ta_chi_tiet): array
+{
+    $ds_bo_phan = preg_split('/\R/u', $mo_ta_chi_tiet, -1, PREG_SPLIT_NO_EMPTY);
+    return array_values(array_unique(array_filter(array_map('trim', $ds_bo_phan))));
+}
+
+function lay_bo_phan_hu_hong(PDO $conn, int $ma_dich_vu): array
+{
+    $stmt = $conn->prepare(
+        "SELECT BCHH_BoPhan FROM baocao_huhong
+         WHERE DV_Ma = ? AND BCHH_TrangThai <> ? AND BCHH_BoPhan IS NOT NULL"
+    );
+    $stmt->execute([$ma_dich_vu, 'Đã xử lý']);
+    $ds_bo_phan = array_map('trim', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    return array_values(array_unique(array_filter($ds_bo_phan)));
+}
+
 // Gợi ý món còn thiếu để đủ điều kiện combo, kèm liên kết lọc đúng loại ở trang sản phẩm.
 function goi_y_combo(array $cart_items): array
 {
@@ -95,9 +112,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $toi_da = so_luong_toi_da($conn, $ma);
         $dv = null;
         if ($toi_da > 0) {
-            $stmt = $conn->prepare("SELECT DV_DonViTinh FROM dichvu WHERE DV_Ma = ?");
+            $stmt = $conn->prepare("SELECT DV_DonViTinh, DV_Loai, DV_MoTaChiTiet FROM dichvu WHERE DV_Ma = ?");
             $stmt->execute([$ma]);
             $dv = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+
+        $bo_phan_chon = [];
+        $loi_bo_phan = '';
+        if (($dv['DV_Loai'] ?? '') === 'phong_chup') {
+            $ds_bo_phan = tach_bo_phan_phong((string) ($dv['DV_MoTaChiTiet'] ?? ''));
+            $ds_bo_phan_hu = lay_bo_phan_hu_hong($conn, $ma);
+            $bo_phan_gui = $_POST['bo_phan'] ?? [];
+            if (!is_array($bo_phan_gui)) {
+                $loi_bo_phan = 'Danh sách món trong phòng không hợp lệ.';
+            } else {
+                foreach ($bo_phan_gui as $ten_bo_phan) {
+                    if (is_string($ten_bo_phan) && trim($ten_bo_phan) !== '') {
+                        $bo_phan_chon[] = trim($ten_bo_phan);
+                    }
+                }
+                $bo_phan_chon = array_values(array_unique($bo_phan_chon));
+
+                if (!$ds_bo_phan) {
+                    $loi_bo_phan = 'Phòng chưa có danh sách món để đặt.';
+                } elseif (!$bo_phan_chon) {
+                    $loi_bo_phan = 'Vui lòng chọn ít nhất một món trong phòng.';
+                } elseif (count(array_diff($bo_phan_chon, $ds_bo_phan)) > 0) {
+                    $loi_bo_phan = 'Danh sách món đã thay đổi, vui lòng tải lại trang phòng.';
+                } elseif (count(array_intersect($bo_phan_chon, $ds_bo_phan_hu)) > 0) {
+                    $loi_bo_phan = 'Có món đang bị báo hư hỏng, vui lòng tải lại trang và chọn món khác.';
+                }
+            }
+        } elseif (!empty($_POST['bo_phan'])) {
+            $loi_bo_phan = 'Không thể chọn bộ phận cho dịch vụ này.';
         }
         
         // Bắt dữ liệu ngày và giờ gửi lên từ form
@@ -129,6 +176,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($toi_da === 0) {
             $_SESSION['thong_bao_dat'] = 'Dịch vụ này hiện không còn nhận thuê.';
+        } elseif ($loi_bo_phan !== '') {
+            $_SESSION['thong_bao_dat'] = $loi_bo_phan;
         } elseif ($tg === null) {
             $_SESSION['thong_bao_dat'] = 'Vui lòng chọn thời gian nhận và trả hợp lệ.';
         } elseif (strtotime($tg['bat_dau']) <= time()) {
@@ -149,6 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'bat_dau' => $tg['bat_dau'],
                 'ket_thuc' => $tg['ket_thuc'],
                 'kich_co' => $kich_co,
+                'bo_phan' => $bo_phan_chon,
             ];
             $_SESSION['thong_bao_dat'] = 'Đã thêm dịch vụ vào giỏ hàng.';
         }
@@ -225,6 +275,8 @@ foreach ($cart_items as $k => $item) {
     $tg = thoi_gian_thue((string) $item['don_vi'], (string) $item['bat_dau'], (string) $item['ket_thuc']);
     $cart_items[$k]['tg'] = $tg;
     $cart_items[$k]['canh_bao'] = '';
+    $bo_phan_gio = $_SESSION['cart'][$item['cart_key']]['bo_phan'] ?? [];
+    $cart_items[$k]['bo_phan'] = is_array($bo_phan_gio) ? $bo_phan_gio : [];
 
     if ($tg === null || strtotime($tg['bat_dau']) <= time() || strtotime($tg['ket_thuc']) <= time()) {
         $cart_items[$k]['canh_bao'] = 'Thời gian thuê không hợp lệ hoặc đã qua, vui lòng xóa và chọn lại.';
@@ -233,6 +285,15 @@ foreach ($cart_items as $k => $item) {
             kiem_tra_con_cho($conn, (int) $item['id'], $item['ten'], $tg['bat_dau'], $tg['ket_thuc'], (int) $item['qty'], (string) $item['kich_co']);
         } catch (DomainException $e) {
             $cart_items[$k]['canh_bao'] = $e->getMessage();
+        }
+    }
+    if ($cart_items[$k]['canh_bao'] === '' && $item['loai'] === 'phong_chup') {
+        $ds_bo_phan = tach_bo_phan_phong((string) $item['mo_ta_chi_tiet']);
+        $ds_bo_phan_hu = lay_bo_phan_hu_hong($conn, (int) $item['id']);
+        if (!$cart_items[$k]['bo_phan'] || count(array_diff($cart_items[$k]['bo_phan'], $ds_bo_phan)) > 0) {
+            $cart_items[$k]['canh_bao'] = 'Món trong phòng không còn hợp lệ. Vui lòng xóa và chọn lại phòng.';
+        } elseif (count(array_intersect($cart_items[$k]['bo_phan'], $ds_bo_phan_hu)) > 0) {
+            $cart_items[$k]['canh_bao'] = 'Có món trong phòng đang được báo hư. Vui lòng xóa và chọn lại phòng.';
         }
     }
     if ($cart_items[$k]['canh_bao'] !== '') {
@@ -287,6 +348,21 @@ require_once '../includes/header.php';
                                 
                                 <?php if (!empty($item['kich_co'])) : ?>
                                     <p class="unit" style="font-weight: 600; color: #d9534f; margin-bottom: 2px;">Kích cỡ (Size): <?= htmlspecialchars($item['kich_co']) ?></p>
+                                <?php endif; ?>
+
+                                <?php if ($item['loai'] === 'phong_chup') : ?>
+                                    <div class="unit" style="font-size: 12px; color: #555;">
+                                        <strong>Món đã chọn:</strong>
+                                        <?php if ($item['bo_phan']) : ?>
+                                            <ul style="margin: 4px 0 0; padding-left: 18px;">
+                                                <?php foreach ($item['bo_phan'] as $bo_phan) : ?>
+                                                    <li><?= htmlspecialchars($bo_phan, ENT_QUOTES, 'UTF-8') ?></li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        <?php else : ?>
+                                            Chưa chọn món
+                                        <?php endif; ?>
+                                    </div>
                                 <?php endif; ?>
 
                                 <p class="unit"><?= dinh_dang_tien($item['gia']) ?> / <?= htmlspecialchars(ten_don_vi_gio_hang((string) $item['don_vi'])) ?></p>

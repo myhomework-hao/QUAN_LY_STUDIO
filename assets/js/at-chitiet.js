@@ -8,6 +8,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!oSoLuong) return;
 
+    const chonTatCaBoPhan = document.getElementById('chon-tat-ca-bo-phan');
+    const dsBoPhanCoTheChon = Array.from(document.querySelectorAll('input[name="bo_phan[]"]:not(:disabled)'));
+
+    if (chonTatCaBoPhan) {
+        function capNhatChonTatCaBoPhan() {
+            const soDaChon = dsBoPhanCoTheChon.filter(function (oChon) {
+                return oChon.checked;
+            }).length;
+
+            chonTatCaBoPhan.checked = dsBoPhanCoTheChon.length > 0 && soDaChon === dsBoPhanCoTheChon.length;
+            chonTatCaBoPhan.indeterminate = soDaChon > 0 && soDaChon < dsBoPhanCoTheChon.length;
+        }
+
+        chonTatCaBoPhan.addEventListener('change', function () {
+            dsBoPhanCoTheChon.forEach(function (oChon) {
+                oChon.checked = chonTatCaBoPhan.checked;
+            });
+            capNhatChonTatCaBoPhan();
+        });
+
+        dsBoPhanCoTheChon.forEach(function (oChon) {
+            oChon.addEventListener('change', capNhatChonTatCaBoPhan);
+        });
+
+        capNhatChonTatCaBoPhan();
+    }
+
     const soLuongHienThi = document.getElementById('quantity');
     const nutTru = document.getElementById('quantity-minus');
     const nutCong = document.getElementById('quantity-plus');
