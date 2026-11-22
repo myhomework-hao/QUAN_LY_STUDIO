@@ -5,6 +5,7 @@ require_once '../config/app.php';
 require_once '../config/db.php';
 require_once '../config/auth.php';
 require_once '../includes/security.php';
+require_once '../includes/chat_goi_y.php';
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 header('Content-Type: application/json; charset=utf-8');
@@ -146,6 +147,7 @@ function chat_get_messages(PDO $conn, int $conversationId, int $afterId = 0): ar
 
     foreach ($rows as &$row) {
         $row['id'] = (int) $row['id'];
+        $row = chat_bo_sung_san_pham($conn, $row);
     }
 
     return $rows;
@@ -170,20 +172,39 @@ function chat_info(PDO $conn, int $conversationId): array
     return $stmt->fetch(PDO::FETCH_ASSOC) ?: ['status' => 'da_dong', 'mode' => 'bot', 'staff_name' => null];
 }
 
-function chat_make_reply(string $message): array
+function chat_make_reply(PDO $conn, string $message): array
 {
     $text = mb_strtolower(trim($message), 'UTF-8');
 
+    // Ưu tiên 1: yêu cầu gặp nhân viên (giữ hành vi cũ)
     if (
         str_contains($text, 'nhân viên') || str_contains($text, 'nhan vien') ||
-        str_contains($text, 'người thật') || str_contains($text, 'tư vấn trực tiếp')
+        str_contains($text, 'người thật') || str_contains($text, 'tu van truc tiep') ||
+        str_contains($text, 'tư vấn trực tiếp')
     ) {
         return [
             'reply' => 'Mình đã chuyển yêu cầu của bạn cho nhân viên VIBE STUDIO. '
                 . 'Nhân viên sẽ phản hồi ngay tại khung chat này, bạn vui lòng chờ trong giây lát nhé.',
-            'handoff' => true
+            'handoff' => true,
+            'san_pham' => [],
         ];
     }
+
+    // Ưu tiên 2: gợi ý sản phẩm từ CSDL
+    $goiY = chat_tim_san_pham($conn, $message);
+    if ($goiY !== null) {
+        $reply = $goiY['intro'];
+        if ($goiY['token'] !== '') {
+            $reply .= $goiY['token'];
+        }
+        return [
+            'reply' => $reply,
+            'handoff' => false,
+            'san_pham' => $goiY['san_pham'],
+        ];
+    }
+
+    // Ưu tiên 3: các kịch bản bot cũ
 
     if (str_contains($text, 'giá') || str_contains($text, 'bao nhiêu') || str_contains($text, 'chi phí')) {
         return [
@@ -244,6 +265,7 @@ try {
         }
 
         $conversationId = (int) $hoiThoai['CHT_Ma'];
+        chat_kiem_tra_cho_nv($conn, $conversationId, $userId);
         $messages = chat_get_messages($conn, $conversationId);
         chat_mark_read($conn, $conversationId);
 
@@ -260,6 +282,7 @@ try {
         chat_get_owned_conversation($conn, $conversationId, $userId);
 
         $afterId = $action === 'poll' ? (int) ($data['after_id'] ?? 0) : 0;
+        chat_kiem_tra_cho_nv($conn, $conversationId, $userId);
         $messages = chat_get_messages($conn, $conversationId, max(0, $afterId));
 
         if ($messages) {
@@ -329,7 +352,7 @@ try {
     $chuyenNhanVien = $dangChoNhanVien;
 
     if (!$dangChoNhanVien) {
-        $traLoi = chat_make_reply($message);
+        $traLoi = chat_make_reply($conn, $message);
         $moi[] = chat_save_message($conn, $conversationId, 'bot', $traLoi['reply']);
         $chuyenNhanVien = $traLoi['handoff'];
 
@@ -340,6 +363,13 @@ try {
     }
 
     $conn->commit();
+
+    $tinXinLoi = chat_kiem_tra_cho_nv($conn, $conversationId, $userId);
+    if ($tinXinLoi !== null) {
+        $moi[] = $tinXinLoi;
+    }
+
+    $moi = array_map(static fn (array $m): array => chat_bo_sung_san_pham($conn, $m), $moi);
 
     chat_json([
         'success' => true,

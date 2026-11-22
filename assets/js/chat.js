@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function addMessage(content, sender, time = formatTime()) {
+    function addMessage(content, sender, time = formatTime(), sanPham = null) {
         const isUser = sender === 'khach';
         const isStaff = sender === 'nhanvien';
 
@@ -69,6 +69,15 @@ document.addEventListener('DOMContentLoaded', () => {
         timeElement.textContent = time;
 
         contentBox.append(senderName, bubble, timeElement);
+
+        // Thẻ gợi ý sản phẩm (nếu có) — dựng bằng createElement/textContent, không innerHTML
+        if (!isUser && Array.isArray(sanPham) && sanPham.length > 0) {
+            const list = renderSanPham(sanPham);
+            if (list) {
+                contentBox.insertBefore(list, timeElement);
+            }
+        }
+
         wrapper.append(avatar, contentBox);
         messages.appendChild(wrapper);
 
@@ -79,6 +88,91 @@ document.addEventListener('DOMContentLoaded', () => {
     function formatMessageTime(gia_tri) {
         const thoiGian = new Date(String(gia_tri || '').replace(' ', 'T'));
         return Number.isNaN(thoiGian.getTime()) ? formatTime() : formatTime(thoiGian);
+    }
+
+    function formatTien(so) {
+        const n = Number(so);
+        if (Number.isNaN(n)) return '';
+        try {
+            return new Intl.NumberFormat('vi-VN').format(n) + '₫';
+        } catch (e) {
+            return String(Math.round(n)) + '₫';
+        }
+    }
+
+    function duongDanGoc() {
+        return String(config.apiUrl || '').replace(/api\/chat_api\.php.*$/, '');
+    }
+
+    function renderSanPham(sanPham) {
+        if (!Array.isArray(sanPham) || sanPham.length === 0) {
+            return null;
+        }
+        const base = duongDanGoc();
+        const container = document.createElement('div');
+        container.className = 'chat-product-list';
+
+        sanPham.forEach(sp => {
+            const card = document.createElement('a');
+            card.className = 'chat-product-card';
+            card.href = base + 'user/service-detail.php?id=' + encodeURIComponent(sp && sp.id ? sp.id : '');
+
+            const img = document.createElement('img');
+            img.className = 'chat-product-thumb';
+            img.src = base + 'assets/uploads/' + (sp && sp.anh ? sp.anh : 'default.png');
+            img.alt = sp && sp.ten ? sp.ten : '';
+            img.loading = 'lazy';
+            card.appendChild(img);
+
+            const info = document.createElement('div');
+            info.className = 'chat-product-info';
+
+            const name = document.createElement('strong');
+            name.className = 'chat-product-name';
+            name.textContent = sp && sp.ten ? sp.ten : '';
+            info.appendChild(name);
+
+            const meta = document.createElement('div');
+            meta.className = 'chat-product-meta';
+
+            const code = document.createElement('span');
+            code.className = 'chat-product-code';
+            code.textContent = sp && sp.ma ? sp.ma : '';
+            meta.appendChild(code);
+
+            const price = document.createElement('span');
+            price.className = 'chat-product-price';
+            price.textContent = formatTien(sp && sp.gia) + ' / ' + (sp && sp.don_vi ? sp.don_vi : '');
+            meta.appendChild(price);
+
+            info.appendChild(meta);
+
+            if (sp && sp.sizes) {
+                const size = document.createElement('div');
+                size.className = 'chat-product-size';
+                size.textContent = 'Size: ' + sp.sizes;
+                info.appendChild(size);
+            } else if (sp && sp.so_luong !== null && sp.so_luong !== undefined) {
+                const qty = document.createElement('div');
+                qty.className = 'chat-product-qty';
+                qty.textContent = (Number(sp.so_luong) > 0)
+                    ? ('Số lượng: ' + sp.so_luong)
+                    : 'Tạm hết';
+                info.appendChild(qty);
+            }
+
+            if (sp && sp.dong_phu) {
+                const sub = document.createElement('div');
+                sub.className = 'chat-product-sub';
+                sub.textContent = sp.dong_phu;
+                info.appendChild(sub);
+            }
+
+            card.appendChild(info);
+            container.appendChild(card);
+        });
+
+        return container;
     }
 
     // Ghi nhận mã tin nhắn đã xử lý để lần hỏi sau không vẽ trùng.
@@ -97,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         ghiNhan(m);
-        addMessage(m.content, m.sender || 'bot', formatMessageTime(m.created_at));
+        addMessage(m.content, m.sender || 'bot', formatMessageTime(m.created_at), m.san_pham);
     }
 
     // Dòng trạng thái (chờ nhân viên / đã kết thúc), chỉ giữ một dòng duy nhất.

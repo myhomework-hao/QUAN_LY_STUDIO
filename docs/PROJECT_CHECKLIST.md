@@ -63,8 +63,8 @@
 |---|---|---|---|---|---|
 | Widget chat nổi, cố định dưới nút lên-đầu-trang | `includes/chat_widget.php`, `chat_widget.js`, `chat_widget.css` | — | [x] | 15/11: bỏ kéo thả, chỉnh breakpoint 600px, `?v=` theo mtime đúng file | http (widget render, không còn script kéo) |
 | Khách vãng lai: báo đăng nhập ngay, không gọi API chắc chắn 401 | `chat_widget.js:143-152` + config `loggedIn` | — | [x] | 15/11 | http |
-| Chatbot trả lời theo kịch bản | `api/chat_api.php:173-219` | `chat_tin_nhan` | [x] | Chatbot không tự xác nhận thanh toán/hoàn tiền (đúng prompt 3.7) | đọc-code |
-| Trang chat toàn màn hình (khách) | `user/chat.php`, `chat.js`, `chat.css` | — | [x] | Đổi giao diện tông chat_widget 15/11; chưa bấm thử gửi tin thật | php-l, http (200) |
+| Chatbot trả lời theo kịch bản | `api/chat_api.php:173-219` | `chat_tin_nhan` | [x] | Chatbot không tự xác nhận thanh toán/hoàn tiền (đúng prompt 3.7) | đọc-code |\n| **Gợi ý sản phẩm từ CSDL (frontend thẻ)** | `assets/js/chat.js`, `assets/js/chat_widget.js`, `assets/css/chat.css`, `assets/css/chat_widget.css` (22/11) | `dichvu`, `dichvu_kichco` | [x] | Thẻ dựng bằng `createElement`/`textContent` (chống XSS), link `service-detail.php?id=`, ảnh `assets/uploads/` (fallback `default.png`), size cho trang phục, sức chứa phòng, số lượng/"Tạm hết". Widget xếp dọc, không tràn ngang. **Xin lỗi 5 phút (Lô 3) chưa làm** | **http** (trang chat + widget render, node --check JS sạch) |
+| Trang chat toàn màn hình (khách) | `user/chat.php`, `chat.js`, `chat.css` | — | [x] | Đổi giao diện tông chat_widget 15/11; chưa bấm thử gửi tin thật | php-l, http (200) |\n| **Xin lỗi sau 5 phút (backend)** | `includes/chat_goi_y.php`, `api/chat_api.php` (22/11) | `chat_hoi_thoai`, `chat_tin_nhan`, `cau_hinh` | [x] | Kiểm tra "lười" trong poll/open/history; transaction + `FOR UPDATE`; idempotency token `[[auto:cho-nv]]`; giờ làm việc đọc từ `cau_hinh`; tính thời gian bằng SQL (UTC+7). Hằng số 300s (test tạm 20s đã trả về 300) | **http** (xin lỗi xuất hiện đúng 1 lần, NV thấy không lộ token, idempotency pass) |
 | Chính sách hiển thị | `user/policy.php` | — | [x] | — | đọc-code |
 
 ## 3. NHÂN VIÊN

@@ -5,6 +5,7 @@ require_once '../config/app.php';
 require_once '../config/db.php';
 require_once '../config/auth.php';
 require_once '../includes/security.php';
+require_once '../includes/chat_goi_y.php';
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 header('Content-Type: application/json; charset=utf-8');
@@ -114,6 +115,7 @@ function nv_lay_tin(PDO $conn, int $maHoiThoai, int $sauMa = 0): array
 
     foreach ($rows as &$row) {
         $row['id'] = (int) $row['id'];
+        $row['content'] = chat_an_token_hien_thi($conn, (string) $row['content']);
     }
 
     return $rows;
@@ -176,7 +178,7 @@ try {
             $dong['id'] = (int) $dong['id'];
             $dong['unread'] = (int) $dong['unread'];
             $dong['staff_id'] = $dong['staff_id'] !== null ? (int) $dong['staff_id'] : null;
-            $dong['last_message'] = mb_substr((string) $dong['last_message'], 0, 80);
+            $dong['last_message'] = chat_xoa_token(mb_substr((string) $dong['last_message'], 0, 80));
         }
 
         $dem = ['cho' => 0, 'dang' => 0];

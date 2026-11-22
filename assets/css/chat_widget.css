@@ -150,6 +150,81 @@
 .vibe-chat-link { padding: 0; font: inherit; font-size: 10px; color: var(--vc-muted); text-decoration: underline; background: none; border: 0; cursor: pointer; }
 .vibe-chat-link[hidden] { display: none; }
 
+/* Thẻ gợi ý sản phẩm trong widget (xếp dọc, không tràn ngang) */
+.vibe-product-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    width: 100%;
+    max-width: 100%;
+}
+
+.vibe-product-card {
+    display: flex;
+    gap: 8px;
+    padding: 6px;
+    background: #ffffff;
+    border: 1px solid var(--vc-line);
+    border-radius: 0;
+    text-decoration: none;
+    color: var(--vc-ink);
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.vibe-product-card:hover {
+    background: var(--vc-soft);
+    border-color: var(--vc-ink);
+}
+
+.vibe-product-thumb {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    object-fit: cover;
+    border: 1px solid var(--vc-line);
+    background: #eeeeee;
+}
+
+.vibe-product-info {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.vibe-product-name {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.vibe-product-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--vc-muted);
+}
+
+.vibe-product-code {
+    font-weight: 600;
+}
+
+.vibe-product-price {
+    color: var(--vc-ink);
+    font-weight: 600;
+}
+
+.vibe-product-size,
+.vibe-product-qty,
+.vibe-product-sub {
+    font-size: 10px;
+    color: var(--vc-muted);
+    line-height: 1.3;
+}
+
 @media (max-width: 600px) {
     /* Mobile: breakpoint khớp với back-to-top (600px ở common.css + back_to_top.css);
        back-to-top ở right 16px / bottom 96px → nút chat nằm dưới nó */
