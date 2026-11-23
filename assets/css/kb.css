@@ -636,3 +636,123 @@
     .dh-the { padding: 18px; }
     .dh-tien { text-align: left; }
 }
+
+/* =========================================================
+   ĐÁNH GIÁ DỊCH VỤ TRONG CHI TIẾT ĐƠN (order-detail)
+   ========================================================= */
+.dh-the {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    margin-top: 20px;
+}
+
+.dh-muc-tieu-de {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 16px;
+}
+
+.dh-khong-lien {
+    margin-top: 0;
+}
+
+.dh-danh-gia {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.dh-danh-gia:last-child {
+    border-bottom: none;
+}
+
+.dh-dv-ten {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+}
+
+.dh-sao-hien {
+    color: #f4b400;
+    font-size: 18px;
+    margin-bottom: 6px;
+    letter-spacing: 2px;
+}
+
+.dh-sao-hien span {
+    color: #ddd;
+}
+
+.dh-danh-gia p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin: 6px 0;
+}
+
+.dh-phu {
+    font-size: 12px;
+    color: #999999;
+    margin-top: 6px;
+}
+
+.dh-sao-chon {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.dh-sao-chon input {
+    display: none;
+}
+
+.dh-sao-chon label {
+    font-size: 26px;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.dh-sao-chon input:checked ~ label,
+.dh-sao-chon label:hover,
+.dh-sao-chon label:hover ~ label {
+    color: #f4b400;
+}
+
+.dh-danh-gia textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    margin-bottom: 10px;
+}
+
+.dh-danh-gia textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.dh-danh-gia .dh-nut {
+    background: var(--accent);
+    color: #ffffff;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.dh-danh-gia .dh-nut:hover {
+    background: var(--accent-dark);
+}

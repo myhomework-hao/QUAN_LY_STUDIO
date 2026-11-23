@@ -6,6 +6,7 @@ require_once '../config/db.php';
 require_once '../config/auth.php';
 require_once '../includes/security.php';
 require_once '../includes/chat_goi_y.php';
+require_once '../includes/ai_chat.php';
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 header('Content-Type: application/json; charset=utf-8');
@@ -172,7 +173,7 @@ function chat_info(PDO $conn, int $conversationId): array
     return $stmt->fetch(PDO::FETCH_ASSOC) ?: ['status' => 'da_dong', 'mode' => 'bot', 'staff_name' => null];
 }
 
-function chat_make_reply(PDO $conn, string $message): array
+function chat_make_reply(PDO $conn, string $message): ?array
 {
     $text = mb_strtolower(trim($message), 'UTF-8');
 
@@ -193,6 +194,10 @@ function chat_make_reply(PDO $conn, string $message): array
     // Ưu tiên 2: gợi ý sản phẩm từ CSDL
     $goiY = chat_tim_san_pham($conn, $message);
     if ($goiY !== null) {
+        // Có ý định tìm sản phẩm nhưng không khớp → để AI trả lời (tránh báo "không tìm thấy" cứng)
+        if (empty($goiY['san_pham'])) {
+            return null;
+        }
         $reply = $goiY['intro'];
         if ($goiY['token'] !== '') {
             $reply .= $goiY['token'];
@@ -232,11 +237,8 @@ function chat_make_reply(PDO $conn, string $message): array
         ];
     }
 
-    return [
-        'reply' => 'Cảm ơn bạn đã liên hệ VIBE STUDIO. Mình chưa có đủ thông tin để trả lời chính xác. '
-            . 'Bạn có thể hỏi về giá thuê, cách đặt lịch hoặc nhắn “Gặp nhân viên” để được hỗ trợ trực tiếp.',
-        'handoff' => false
-    ];
+    // Không khớp rule nào → trả null để caller thử AI (gọi mạng ngoài transaction)
+    return null;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -349,10 +351,43 @@ try {
     $dangChoNhanVien = in_array($conversation['CHT_TrangThai'], ['cho_nhan_vien', 'dang_ho_tro'], true)
         || $conversation['CHT_CheDo'] === 'nhanvien';
 
+    // Commit tin nhắn khách trước, tránh giữ transaction trong lúc gọi AI (mạng).
+    $conn->commit();
+
     $chuyenNhanVien = $dangChoNhanVien;
 
     if (!$dangChoNhanVien) {
         $traLoi = chat_make_reply($conn, $message);
+
+        // Không khớp rule nào → thử AI (gọi mạng ngoài transaction)
+        if ($traLoi === null) {
+            $aiReply = ai_tra_loi($conn, $message);
+            $aiReply = $aiReply !== null ? $aiReply : 'Cảm ơn bạn đã liên hệ VIBE STUDIO. Mình chưa có đủ thông tin để trả lời chính xác. '
+                . 'Bạn có thể hỏi về giá thuê, cách đặt lịch hoặc nhắn “Gặp nhân viên” để được hỗ trợ trực tiếp.';
+
+            // Nếu AI chưa tự thêm token sản phẩm, thử ghép từ tìm kiếm từ khóa (dự phòng).
+            if (strpos($aiReply, '[[sp:') === false) {
+                $goiY = chat_tim_san_pham($conn, $message);
+                if ($goiY !== null && !empty($goiY['san_pham'])) {
+                    $ids = [];
+                    foreach ($goiY['san_pham'] as $sp) {
+                        $ids[] = (int) $sp['id'];
+                    }
+                    $ids = array_values(array_unique($ids));
+                    if ($ids) {
+                        $aiReply .= "\n[[sp:" . implode(',', $ids) . ']]';
+                    }
+                }
+            }
+
+            $traLoi = [
+                'reply' => $aiReply,
+                'handoff' => false,
+                'san_pham' => [],
+            ];
+        }
+
+        $conn->beginTransaction();
         $moi[] = chat_save_message($conn, $conversationId, 'bot', $traLoi['reply']);
         $chuyenNhanVien = $traLoi['handoff'];
 
@@ -360,9 +395,8 @@ try {
             $conn->prepare("UPDATE chat_hoi_thoai SET CHT_CheDo = 'nhanvien', CHT_TrangThai = 'cho_nhan_vien' WHERE CHT_Ma = ? AND ND_Ma = ?")
                 ->execute([$conversationId, $userId]);
         }
+        $conn->commit();
     }
-
-    $conn->commit();
 
     $tinXinLoi = chat_kiem_tra_cho_nv($conn, $conversationId, $userId);
     if ($tinXinLoi !== null) {

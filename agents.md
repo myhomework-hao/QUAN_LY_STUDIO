@@ -157,7 +157,7 @@ database/  studio.sql (chính), csdl.sql, chat.sql
 
 ### 6.4 Thanh toán (suy ra từ dữ liệu, chưa xác nhận)
 - Chuyển khoản QR (giả lập): `TT_TrangThai = 'Thành công'` ngay khi đặt. Tiền mặt: `'Chờ'` cho đến khi đơn `Hoàn thành` thì thành `'Thành công'`.
-- Chưa có cơ chế hoàn tiền (xem mục 8, điểm 4). KHÔNG tự thêm.
+- Cơ chế hoàn tiền ĐÃ CÓ (nhóm đã triển khai, xem mục 8, điểm 4). Không thêm mới.
 
 ### 6.5 Đánh giá
 - Chỉ khi đơn `'Hoàn thành'`; người đánh giá phải là chủ đơn (`danhgia.ND_Ma = dondatlich.ND_Ma`); DV_Ma phải nằm trong đơn đó; mỗi (đơn, dịch vụ) một lần (có UNIQUE; bắt lỗi trùng và báo thân thiện); sao 1 đến 5.
@@ -172,7 +172,7 @@ database/  studio.sql (chính), csdl.sql, chat.sql
 | Khách | đăng ký, đăng nhập, đăng xuất, hồ sơ, danh sách và chi tiết dịch vụ, giỏ hàng, thanh toán, đơn của tôi, chi tiết đơn (và đánh giá), chat, chính sách | quên mật khẩu, xác thực email |
 | Nhân viên | dịch vụ (xem, thêm/sửa), đơn thuê (duyệt, từ chối, hoàn thành), chat | lịch làm việc, phân công nhân sự |
 | Admin | dashboard, quản lý dịch vụ, người dùng, nhân viên, thống kê | trang quản lý đơn hàng riêng, trang quản lý mã giảm giá (mã hiện chỉ có trong CSDL) |
-| Chung | tìm kiếm, mã giảm giá (`coupon_helper.php`), chat widget | đặt cọc (cột `DDL_TienCoc` có nhưng luôn 0), giao ảnh, portfolio, hoàn tiền |
+| Chung | tìm kiếm, mã giảm giá (`coupon_helper.php`), chat widget, hoàn tiền | đặt cọc (cột `DDL_TienCoc` có nhưng luôn 0), giao ảnh, portfolio |
 
 Quyết định thiết kế của nhóm: nhân viên cùng quản lý TOÀN BỘ dịch vụ của studio. Không thêm cột chủ sở hữu vào `dichvu`.
 
@@ -233,7 +233,7 @@ Yêu cầu môn học đã xác minh với giảng viên (sinh viên điền; đ
 5. Tồn kho và mã giảm giá trong transaction: `user/checkout.php`, `api/kiem_tra_kho.php`, `includes/coupon_helper.php`, `includes/donhang.php` (mục 6.2, 6.3; điểm nghi vấn 1, 2, 3, 5). — **ĐÃ XONG (09/11, Lô A)**: tồn kho theo size (`dichvu_kichco`) cho trang phục, tăng lượt mã nằm trong transaction có UPDATE điều kiện + `rowCount()`.
 6. Quy trình đơn của nhân viên: điều kiện trạng thái trong UPDATE, kiểm tra lại tồn kho khi duyệt (`vendor/vendor-orders.php`). — **ĐÃ XONG (09/11, Lô B)**: duyệt nằm trong transaction, kiểm lại kho từng dòng (đúng size, loại trừ chính đơn đang duyệt qua `$ma_don_bo_qua`).
 7. Tìm kiếm popup: `includes/search.php`, `includes/search_popup.php` (cả lỗi `innerHTML`). — **ĐÃ XONG (11/11, Lô C)**: JS dựng kết quả bằng `textContent`/`createElement` (bản cũ đã đúng), còn sửa `buildPopup()` bỏ `innerHTML` + bỏ link `search.css` không tồn tại, `base` lấy từ `data-base` do PHP in.
-8. Doanh thu và hoàn tiền: `admin/thong-ke.php`, `admin/dashboard.php` (điểm nghi vấn 4). — **ĐÃ XÁC MINH (11/11, Lô D), KHÔNG cần sửa**: doanh thu mọi nơi đều tính trên đơn `Hoàn thành` (`doanh_thu_khoang()` trong `admin/khung_admin.php:78`, `thong-ke.php:33-36`); không chỗ nào đếm doanh thu từ `thanhtoan` (file này chỉ được đọc để hiển thị ở `user/order-detail.php:139`). Đơn hủy/từ chối đã "Thành công" 1.350.000 KHÔNG bị tính vào doanh thu. Chưa có cơ chế hoàn tiền — chờ nhóm quyết định (mục 8.4).
+8. Doanh thu và hoàn tiền: `admin/thong-ke.php`, `admin/dashboard.php` (điểm nghi vấn 4). — **ĐÃ XÁC MINH (11/11, Lô D), KHÔNG cần sửa**: doanh thu mọi nơi đều tính trên đơn `Hoàn thành` (`doanh_thu_khoang()` trong `admin/khung_admin.php:78`, `thong-ke.php:33-36`); không chỗ nào đếm doanh thu từ `thanhtoan` (file này chỉ được đọc để hiển thị ở `user/order-detail.php:139`). Đơn hủy/từ chối đã "Thành công" 1.350.000 KHÔNG bị tính vào doanh thu. Cơ chế hoàn tiền nhóm đã triển khai (mục 8.4), không cần thêm.
 
 ### Danh sách việc CÒN LẠI (làm theo từng lô, mỗi lô tối đa 5 file)
 
@@ -246,7 +246,7 @@ Yêu cầu môn học đã xác minh với giảng viên (sinh viên điền; đ
 - **Đồng bộ `database/studio.sql`:** CSDL thật đang có 21 bảng, file SQL chỉ có 18 — thiếu `cau_hinh` và `dangnhap_thatbai` (đã duyệt ở lô 1). Sinh viên xuất lại dump (cần làm sạch email/mật khẩu thật trước khi nộp, xem mục 8.8).
 - **Lịch sử khảo sát cũ mục 10:** đã đối chiếu xong, phần sai hướng không làm.
 
-Mục 11.3 (phân trang + link) và mục 11.7, 11.8 đã xong/xác minh — lộ trình gốc giờ chỉ còn việc chờ nhóm quyết định (hoàn tiền, trả lượt mã) và các mục "Phát hiện thêm".
+Mục 11.3 (phân trang + link) và mục 11.7, 11.8 đã xong/xác minh — lộ trình gốc giờ chỉ còn việc chờ nhóm quyết định (trả lượt mã) và các mục "Phát hiện thêm". (Hoàn tiền nhóm đã triển khai.)
 
 ## 12. KHÔNG LÀM, KIỂM TRA, BÁO CÁO
 
