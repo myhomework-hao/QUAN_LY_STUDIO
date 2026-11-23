@@ -4,6 +4,22 @@
    Trang chủ index.php
 ===================================================== */
 
+body,
+button,
+input,
+select,
+textarea {
+    font-family: "Montserrat", sans-serif;
+}
+
+.hero h1,
+.about-services h2,
+.featured h2,
+.about-services .service-item h3,
+.featured-card h3 {
+    font-family: "Bodoni Moda", serif;
+}
+
 
 /* =====================================================
    1. HERO
