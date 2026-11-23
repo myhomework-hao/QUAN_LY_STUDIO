@@ -21,6 +21,7 @@ $ds_combo = is_array($pending['danh_sach_combo'] ?? null) ? $pending['danh_sach_
 $tam_tinh = (float) (($pending['totals']['subtotal'] ?? 0));
 $ma_giam_gia = (string) ($pending['coupon_code'] ?? '');
 $giam_ma = (float) ($pending['discount'] ?? 0);
+$giam_dai_han = (float) ($pending['giam_may_anh'] ?? 0);
 $la_dat_coc = !empty($pending['la_dat_coc']);
 $tieu_de_khoan = $la_dat_coc ? 'ĐẶT CỌC (25%)' : 'THANH TOÁN ĐỦ';
 $phuong_thuc = (string) ($pending['payment_label'] ?? '');
@@ -89,6 +90,12 @@ require_once '../includes/header.php';
                     <span style="color: var(--success); font-weight: 700;">−<?= dinh_dang_tien((float) ($c['giam'] ?? 0)) ?></span>
                 </div>
             <?php endforeach; ?>
+            <?php if ($giam_dai_han > 0) : ?>
+                <div class="summary-row">
+                    <span>Giảm thuê dài hạn</span>
+                    <span style="color: var(--success); font-weight: 700;">−<?= dinh_dang_tien($giam_dai_han) ?></span>
+                </div>
+            <?php endif; ?>
             <?php if ($giam_ma > 0) : ?>
                 <div class="summary-row">
                     <span>Giảm giá (<?= htmlspecialchars($ma_giam_gia) ?>)</span>

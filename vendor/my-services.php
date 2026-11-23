@@ -183,7 +183,7 @@ nv_dau('Quản lý dịch vụ', 'dich-vu');
                 <input type="hidden" name="hanh_dong" value="bao_cao_hu_hong">
                 <input type="hidden" name="ve" value="<?= h($_SERVER['QUERY_STRING'] ?? '') ?>">
                 <div class="field wide">
-                    <label for="ma">Dịch vụ / món bị hư</label>
+                    <label for="dich-vu-bao-cao">Dịch vụ / món bị hư</label>
                     <select id="dich-vu-bao-cao" name="ma" required>
                         <option value="">-- Chọn dịch vụ --</option>
                         <?php foreach ($ds_dich_vu_bao_cao as $dv_bao_cao) : ?>
@@ -274,7 +274,7 @@ nv_dau('Quản lý dịch vụ', 'dich-vu');
         <section class="panel">
             <div class="panel-head">
                 <h2>Danh sách dịch vụ (<?= $tong ?>)</h2>
-                <a href="dich-vu-form.php" class="btn-solid">Thêm dịch vụ</a>
+                <!-- Nhân viên không thêm dịch vụ mới; admin quản lý thêm mới. -->
             </div>
 
             <form class="filter" method="get">
@@ -301,9 +301,9 @@ nv_dau('Quản lý dịch vụ', 'dich-vu');
 
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Ảnh</th><th>Tên dịch vụ</th><th>Loại</th><th>Giá thuê</th><th>Số lượng</th><th>Trạng thái</th></tr></thead>
+                    <thead><tr><th>Ảnh</th><th>Tên dịch vụ</th><th>Loại</th><th>Giá thuê</th><th>Số lượng</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
                     <tbody>
-                        <?php if (!$ds) : ?><tr><td colspan="6" class="empty">Không tìm thấy dịch vụ nào.</td></tr><?php endif; ?>
+                        <?php if (!$ds) : ?><tr><td colspan="7" class="empty">Không tìm thấy dịch vụ nào.</td></tr><?php endif; ?>
                         <?php foreach ($ds as $d) : 
                             $dang_ban = (int) $d['DV_DangBan'] === 1;
                             $so_mon_chua_khac_phuc = (int) $d['so_mon_chua_khac_phuc'];
@@ -330,6 +330,7 @@ nv_dau('Quản lý dịch vụ', 'dich-vu');
                                         <?= h($trang_thai_chi_tiet) ?>
                                     </span>
                                 </td>
+                                <td><a href="dich-vu-form.php?id=<?= (int) $d['DV_Ma'] ?>" class="panel-link">Sửa</a></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

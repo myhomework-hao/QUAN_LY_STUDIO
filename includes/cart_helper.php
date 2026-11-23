@@ -210,3 +210,33 @@ function tinh_tong_gio_hang($cart_items) {
         'free_ship_from' => 0
     ];
 }
+
+// Giảm giá khi thuê dài hạn: máy ảnh 2%, phòng chụp 5% (từ 2 giờ), phụ kiện 2% (từ 2 đơn vị).
+// Trang phục không giảm theo quy tắc này.
+function giam_thue_dai_han(array $cart_items): float
+{
+    $tong_giam = 0.0;
+    foreach ($cart_items as $item) {
+        $loai = (string) ($item['loai'] ?? '');
+        $so_don_vi = (int) ($item['so_don_vi'] ?? 0);
+        if ($so_don_vi < 2) {
+            continue;
+        }
+
+        $phan_tram = 0;
+        if ($loai === 'thiet_bi') {
+            $phan_tram = $so_don_vi < 2 ? 0 : min(10, $so_don_vi);
+        } elseif ($loai === 'phong_chup') {
+            $phan_tram = $so_don_vi < 2 ? 0 : min(10, 3 + $so_don_vi);
+        } elseif ($loai === 'phu_kien') {
+            $phan_tram = $so_don_vi < 2 ? 0 : min(10, $so_don_vi);
+        } elseif ($loai === 'trang_phuc') {
+            $phan_tram = $so_don_vi < 2 ? 0 : min(10, 3 + $so_don_vi);
+        }
+
+        if ($phan_tram > 0) {
+            $tong_giam += (float) ($item['subtotal'] ?? 0) * $phan_tram / 100;
+        }
+    }
+    return (float) round($tong_giam);
+}

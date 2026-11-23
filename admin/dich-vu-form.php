@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/khung_admin.php';
 
-const ADMIN_LOAI_DICH_VU = ['phong_chup', 'thiet_bi', 'trang_phuc', 'phu_kien'];
+const ADMIN_LOAI_DICH_VU = ['phong_chup', 'thiet_bi', 'trang_phuc', 'phu_kien', 'dich_vu', 'goi_chup'];
 const ADMIN_DON_VI_DICH_VU = ['giờ', 'ngày', 'lượt', 'bộ'];
 
 $ma_sua = (int) ($_GET['id'] ?? 0);
@@ -16,10 +16,15 @@ $ten_bang_con = [
     'thiet_bi' => ['thietbi', 'TB_Loai', 'Loại thiết bị'],
     'trang_phuc' => ['trangphuc', 'TP_KichCo', 'Kích cỡ (S, M, L)'],
     'phu_kien' => ['phukien', 'PK_Loai', 'Loại phụ kiện'],
+    'dich_vu' => null,
+    'goi_chup' => null,
 ];
 $loai = (string) ($dv_cu['DV_Loai'] ?? 'phong_chup');
-$bang_con = $ten_bang_con[$loai] ?? $ten_bang_con['phong_chup'];
-$gia_tri_thuoc_tinh = $dv_cu ? (string) gia_tri($conn, "SELECT {$bang_con[1]} FROM {$bang_con[0]} WHERE DV_Ma = ?", [$ma_sua]) : '';
+$bang_con = $ten_bang_con[$loai] ?? null;
+$gia_tri_thuoc_tinh = '';
+if ($dv_cu && $bang_con) {
+    $gia_tri_thuoc_tinh = (string) gia_tri($conn, "SELECT {$bang_con[1]} FROM {$bang_con[0]} WHERE DV_Ma = ?", [$ma_sua]);
+}
 $du_lieu = [
     'ten' => (string) ($dv_cu['DV_Ten'] ?? ''),
     'loai' => $loai,
@@ -51,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $loai = $dv_cu ? $dv_cu['DV_Loai'] : (string) ($_POST['loai'] ?? '');
-    $bang_con = $ten_bang_con[$loai] ?? $ten_bang_con['phong_chup'];
+    $bang_con = $ten_bang_con[$loai] ?? null;
     $du_lieu = [
         'ten' => trim((string) ($_POST['ten'] ?? '')),
         'loai' => $loai,
@@ -101,11 +106,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $ma_dv = (int) $conn->lastInsertId();
             }
 
-            $sql_thuoc_tinh = "SELECT COUNT(*) FROM {$bang_con[0]} WHERE DV_Ma = ?";
-            if ((int) gia_tri($conn, $sql_thuoc_tinh, [$ma_dv]) > 0) {
-                $conn->prepare("UPDATE {$bang_con[0]} SET {$bang_con[1]} = ? WHERE DV_Ma = ?")->execute([$du_lieu['thuoc_tinh'] ?: null, $ma_dv]);
-            } else {
-                $conn->prepare("INSERT INTO {$bang_con[0]} (DV_Ma, {$bang_con[1]}) VALUES (?, ?)")->execute([$ma_dv, $du_lieu['thuoc_tinh'] ?: null]);
+            if ($bang_con) {
+                $sql_thuoc_tinh = "SELECT COUNT(*) FROM {$bang_con[0]} WHERE DV_Ma = ?";
+                if ((int) gia_tri($conn, $sql_thuoc_tinh, [$ma_dv]) > 0) {
+                    $conn->prepare("UPDATE {$bang_con[0]} SET {$bang_con[1]} = ? WHERE DV_Ma = ?")->execute([$du_lieu['thuoc_tinh'] ?: null, $ma_dv]);
+                } else {
+                    $conn->prepare("INSERT INTO {$bang_con[0]} (DV_Ma, {$bang_con[1]}) VALUES (?, ?)")->execute([$ma_dv, $du_lieu['thuoc_tinh'] ?: null]);
+                }
             }
 
             if ($loai === 'trang_phuc') {
@@ -145,7 +152,11 @@ admin_dau($dv_cu ? 'Sửa dịch vụ' : 'Thêm dịch vụ', 'dich-vu');
             <div class="field"><label for="gia">Giá thuê (VND)</label><input id="gia" name="gia" inputmode="numeric" value="<?= h($du_lieu['gia']) ?>" required><?php if (isset($loi['gia'])) : ?><span class="field-error"><?= h($loi['gia']) ?></span><?php endif; ?></div>
             <div class="field"><label for="don_vi">Đơn vị tính</label><select id="don_vi" name="don_vi"><?php foreach (ADMIN_DON_VI_DICH_VU as $m) : ?><option value="<?= h($m) ?>" <?= $du_lieu['don_vi'] === $m ? 'selected' : '' ?>><?= h($m) ?></option><?php endforeach; ?></select></div>
             <div class="field"><label for="so_luong">Số lượng cho thuê cùng lúc</label><input id="so_luong" name="so_luong" inputmode="numeric" value="<?= h($du_lieu['so_luong']) ?>" required><?php if (isset($loi['so_luong'])) : ?><span class="field-error"><?= h($loi['so_luong']) ?></span><?php endif; ?></div>
+            <?php if ($bang_con) : ?>
             <div class="field"><label for="thuoc_tinh"><?= h($bang_con[2]) ?></label><input id="thuoc_tinh" name="thuoc_tinh" value="<?= h($du_lieu['thuoc_tinh']) ?>"><?php if (isset($loi['thuoc_tinh'])) : ?><span class="field-error"><?= h($loi['thuoc_tinh']) ?></span><?php endif; ?></div>
+            <?php else : ?>
+            <input type="hidden" name="thuoc_tinh" value="">
+            <?php endif; ?>
             <?php if ($du_lieu['loai'] === 'trang_phuc') : ?>
                 <?php foreach (['S', 'M', 'L'] as $size) : ?><div class="field"><label for="size_<?= $size ?>">Số lượng size <?= $size ?></label><input id="size_<?= $size ?>" name="size_so_luong[<?= $size ?>]" inputmode="numeric" value="<?= h((string) $du_lieu['size_so_luong'][$size]) ?>"></div><?php endforeach; ?>
             <?php endif; ?>

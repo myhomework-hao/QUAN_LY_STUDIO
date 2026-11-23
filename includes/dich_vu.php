@@ -14,6 +14,8 @@ function thong_tin_loai(string $loai): array
         'phong_chup' => ['nhan' => 'STUDIO',     'ten' => 'Chỗ chụp ảnh'],
         'trang_phuc' => ['nhan' => 'TRANG PHỤC', 'ten' => 'Bộ đồ'],
         'phu_kien'   => ['nhan' => 'PHỤ KIỆN',   'ten' => 'Phụ kiện'],
+        'dich_vu'    => ['nhan' => 'GÓI CƯỚI',   'ten' => 'Gói chụp ảnh cưới'],
+        'goi_chup'   => ['nhan' => 'GÓI HANBOK', 'ten' => 'Gói chụp Hanbok'],
     ];
     return $bang[$loai] ?? ['nhan' => strtoupper($loai), 'ten' => $loai];
 }

@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
 
         $stmt = $conn->prepare(
-            "SELECT nd.ND_Ma, nd.ND_Ten, nd.ND_Email, nd.ND_MatKhau, nd.ND_TrangThai, nd.LND_Ma, nv.NV_TrangThai
+            "SELECT nd.ND_Ma, nd.ND_Ten, nd.ND_Email, nd.ND_MatKhau, nd.ND_TrangThai, nd.LND_Ma, nd.ND_Anh, nv.NV_TrangThai
              FROM nguoidung nd
              LEFT JOIN nhanvien nv ON nv.ND_Ma = nd.ND_Ma
              WHERE nd.ND_Email = ?"
@@ -76,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_name'] = $user['ND_Ten'];
             $_SESSION['user_email'] = $user['ND_Email'];
             $_SESSION['role'] = (int) $user['LND_Ma'];
+            $_SESSION['user_avatar'] = (string) ($user['ND_Anh'] ?? '');
 
             $ve_trang = (string) ($_GET['tu'] ?? '');
             $duong_dan_an_toan = $ve_trang !== ''

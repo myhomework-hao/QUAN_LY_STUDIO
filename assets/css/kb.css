@@ -261,7 +261,7 @@
     border-radius: 50%;
     display: grid;
     place-items: center;
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-tieu-de);
     font-size: 32px;
     color: #fff;
     background: linear-gradient(135deg, var(--accent), var(--accent-dark));
@@ -270,17 +270,17 @@
 .hs-nhan-nho {
     margin: 0 0 4px;
     font-size: 11px;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     color: var(--accent-dark);
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
 }
 
 .hs-ten {
     margin: 0;
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-tieu-de);
     font-size: 28px;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 1.2;
     color: var(--ink);
 }
@@ -343,8 +343,9 @@
     margin: 0 0 20px;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--line);
-    font-size: 18px;
-    font-weight: 700;
+    font-family: var(--font-tieu-de);
+    font-size: 22px;
+    font-weight: 500;
     color: var(--ink);
 }
 .hs-tieu-de i { color: var(--accent-dark); margin-right: 8px; }
@@ -392,7 +393,12 @@
     border: none;
     cursor: pointer;
 }
+.hs-hien { width: 44px; height: 100%; display: flex; align-items: center; justify-content: center; background: none; border: 0; cursor: pointer; color: var(--muted); }
 .hs-hien:hover { color: var(--ink); }
+.hs-hien svg { width: 20px; height: 20px; }
+.hs-hien .bieu-tuong-an { display: none; }
+.hs-hien[aria-pressed="true"] .bieu-tuong-hien { display: none; }
+.hs-hien[aria-pressed="true"] .bieu-tuong-an { display: block; }
 
 .hs-the-khoi form > button[type="submit"] {
     width: 100%;
@@ -403,13 +409,13 @@
     font-weight: 600;
     letter-spacing: 1px;
     color: #fff;
-    background: var(--ink);
+    background: var(--accent-dark);
     border: none;
-    border-radius: 8px;
+    border-radius: 0;
     cursor: pointer;
     transition: background 0.2s;
 }
-.hs-the-khoi form > button[type="submit"]:hover { background: #333333; }
+.hs-the-khoi form > button[type="submit"]:hover { background: var(--accent); }
 
 
 /* =========================================================

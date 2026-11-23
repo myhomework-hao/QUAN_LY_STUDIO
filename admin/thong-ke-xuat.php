@@ -1,6 +1,5 @@
 <?php
-// Xuất báo cáo thống kê ra CSV (mở được bằng Excel): loai=tong_quan | loai=don
-// GET + không thay đổi dữ liệu nên không cần CSRF; quyền admin do khung_admin.php chặn sẵn
+// Xuất báo cáo thống kê ra file Excel (HTML table, mở được bằng Excel và có màu/format)
 require_once __DIR__ . '/khung_admin.php';
 
 $tu = (string) ($_GET['tu'] ?? '');
@@ -8,7 +7,6 @@ $den = (string) ($_GET['den'] ?? '');
 $kieu = ($_GET['kieu'] ?? 'ngay') === 'thang' ? 'thang' : 'ngay';
 $loai = ($_GET['loai'] ?? 'tong_quan') === 'don' ? 'don' : 'tong_quan';
 
-// Lọc sai tham số thì quay lại trang thống kê, không phát file rác
 $kiem_tra = function (string $s): bool {
     $d = DateTime::createFromFormat('Y-m-d', $s);
     return $d && $d->format('Y-m-d') === $s;
@@ -20,20 +18,29 @@ if (!$kiem_tra($tu) || !$kiem_tra($den) || $tu > $den) {
 $tu_gio = $tu . ' 00:00:00';
 $den_gio = date('Y-m-d', strtotime($den . ' +1 day')) . ' 00:00:00';
 
-$ten_file = 'vibe-' . ($loai === 'don' ? 'don-' : 'thong-ke-') . $tu . '_' . $den . '.csv';
-header('Content-Type: text/csv; charset=UTF-8');
+$ten_file = 'vibe-' . ($loai === 'don' ? 'don-' : 'thong-ke-') . $tu . '_' . $den . '.xls';
+header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
 header('Content-Disposition: attachment; filename="' . $ten_file . '"');
 header('Pragma: no-cache');
 
-// BOM UTF-8 để Excel mở tiếng Việt không lỗi font
 echo "\xEF\xBB\xBF";
-$out = fopen('php://output', 'w');
-$csv = function (array $dong) use ($out): void {
-    fputcsv($out, $dong);
-};
-
+?>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+    body { font-family: Arial, sans-serif; }
+    h2 { color: #1f2937; }
+    table { border-collapse: collapse; margin-bottom: 16px; }
+    th, td { border: 1px solid #d1d5db; padding: 6px 10px; }
+    th { background: #2563eb; color: #fff; font-weight: bold; }
+    .tong { background: #f3f4f6; font-weight: bold; }
+    .tieu-de { background: #111827; color: #fff; font-weight: bold; font-size: 14px; }
+</style>
+</head>
+<body>
+<?php
 if ($loai === 'tong_quan') {
-    // Ba khối số liệu tính giống y trang thong-ke.php để file khớp màn hình
     $don_xong = lay_nhieu(
         $conn,
         "SELECT DDL_TongTien, COALESCE(DDL_ThoiDiemHoanThanh, DDL_NgayTao) AS thoi_diem FROM dondatlich
@@ -68,35 +75,42 @@ if ($loai === 'tong_quan') {
          ORDER BY luot DESC, tien DESC LIMIT 10",
         [$tu_gio, $den_gio, TRANG_THAI_DA_HUY, TRANG_THAI_TU_CHOI]
     );
+    ?>
+    <h2>BÁO CÁO THỐNG KÊ - VIBE STUDIO</h2>
+    <p>Từ ngày <?= h($tu) ?> đến ngày <?= h($den) ?></p>
+    <table>
+        <tr><th colspan="2" class="tieu-de">TỔNG QUAN</th></tr>
+        <tr><td>Doanh thu (đơn hoàn thành, VND)</td><td><?= number_format($tong_tien, 0, ',', '.') ?></td></tr>
+        <tr><td>Số đơn hoàn thành</td><td><?= $so_don_hoan_thanh ?></td></tr>
+        <tr><td>Tổng số đơn đặt (mọi trạng thái)</td><td><?= $tong_don ?></td></tr>
+        <tr><td>Giá trị trung bình / đơn (VND)</td><td><?= $so_don_hoan_thanh ? number_format(round($tong_tien / $so_don_hoan_thanh), 0, ',', '.') : 0 ?></td></tr>
+    </table>
 
-    $csv(['BÁO CÁO THỐNG KÊ - VIBE STUDIO']);
-    $csv(['Từ ngày', $tu, 'Đến ngày', $den]);
-    $csv([]);
-    $csv(['TỔNG QUAN']);
-    $csv(['Doanh thu (đơn hoàn thành, VND)', $tong_tien]);
-    $csv(['Số đơn hoàn thành', $so_don_hoan_thanh]);
-    $csv(['Tổng số đơn đặt (mọi trạng thái)', $tong_don]);
-    $csv(['Giá trị trung bình / đơn (VND)', $so_don_hoan_thanh ? round($tong_tien / $so_don_hoan_thanh) : 0]);
-    $csv([]);
-    $csv(['DOANH THU THEO ' . ($kieu === 'ngay' ? 'NGÀY' : 'THÁNG')]);
-    $csv(['Kỳ', 'Doanh thu (VND)']);
-    foreach ($doanh_thu as $khoa => $tien) {
-        $csv([$khoa, $tien]);
-    }
-    $csv([]);
-    $csv(['TOP DỊCH VỤ ĐƯỢC ĐẶT NHIỀU']);
-    $csv(['Dịch vụ', 'Loại', 'Số đơn', 'Tiền thuê (VND)']);
-    foreach ($top_dich_vu as $t) {
-        $csv([$t['DV_Ten'], $t['DV_Loai'], (int) $t['luot'], (float) $t['tien']]);
-    }
-    $csv([]);
-    $csv(['ĐƠN THEO TRẠNG THÁI']);
-    $csv(['Trạng thái', 'Số đơn']);
-    foreach ($theo_trang_thai as $t) {
-        $csv([$t['DDL_TrangThai'], (int) $t['so']]);
-    }
+    <table>
+        <tr><th colspan="2" class="tieu-de">DOANH THU THEO <?= $kieu === 'ngay' ? 'NGÀY' : 'THÁNG' ?></th></tr>
+        <tr><th>Kỳ</th><th>Doanh thu (VND)</th></tr>
+        <?php foreach ($doanh_thu as $khoa => $tien) : ?>
+            <tr><td><?= h($khoa) ?></td><td><?= number_format($tien, 0, ',', '.') ?></td></tr>
+        <?php endforeach; ?>
+    </table>
+
+    <table>
+        <tr><th colspan="4" class="tieu-de">TOP DỊCH VỤ ĐƯỢC ĐẶT NHIỀU</th></tr>
+        <tr><th>Dịch vụ</th><th>Loại</th><th>Số đơn</th><th>Tiền thuê (VND)</th></tr>
+        <?php foreach ($top_dich_vu as $t) : ?>
+            <tr><td><?= h($t['DV_Ten']) ?></td><td><?= h(ten_loai_dich_vu($t['DV_Loai'])) ?></td><td><?= (int) $t['luot'] ?></td><td><?= number_format((float) $t['tien'], 0, ',', '.') ?></td></tr>
+        <?php endforeach; ?>
+    </table>
+
+    <table>
+        <tr><th colspan="2" class="tieu-de">ĐƠN THEO TRẠNG THÁI</th></tr>
+        <tr><th>Trạng thái</th><th>Số đơn</th></tr>
+        <?php foreach ($theo_trang_thai as $t) : ?>
+            <tr><td><?= h($t['DDL_TrangThai']) ?></td><td><?= (int) $t['so'] ?></td></tr>
+        <?php endforeach; ?>
+    </table>
+    <?php
 } else {
-    // Danh sách đơn chi tiết trong khoảng đã chọn, kèm dòng tổng cuối bảng
     $don = lay_nhieu(
         $conn,
         "SELECT d.DDL_Ma, kh.ND_Ten, kh.ND_Email, d.DDL_NgayTao, d.DDL_TrangThai,
@@ -114,26 +128,35 @@ if ($loai === 'tong_quan') {
     foreach ($don as $d) {
         $tong_cong += (float) $d['DDL_TongTien'];
     }
-
-    $csv(['DANH SÁCH ĐƠN THUÊ - VIBE STUDIO']);
-    $csv(['Từ ngày', $tu, 'Đến ngày', $den]);
-    $csv([]);
-    $csv(['Mã đơn', 'Khách hàng', 'Email', 'Ngày tạo', 'Trạng thái', 'Tổng tiền (VND)', 'Mã giảm giá', 'Số tiền giảm (VND)', 'Nhân viên xử lý']);
-    foreach ($don as $d) {
-        $csv([
-            (int) $d['DDL_Ma'],
-            $d['ND_Ten'],
-            $d['ND_Email'],
-            $d['DDL_NgayTao'],
-            $d['DDL_TrangThai'],
-            (float) $d['DDL_TongTien'],
-            $d['DDL_MaGiamGia'],
-            (float) $d['DDL_SoTienGiam'],
-            $d['nv_xu_ly'],
-        ]);
-    }
-    $csv(['TỔNG', '', '', '', '', $tong_cong]);
+    ?>
+    <h2>DANH SÁCH ĐƠN THUÊ - VIBE STUDIO</h2>
+    <p>Từ ngày <?= h($tu) ?> đến ngày <?= h($den) ?></p>
+    <table>
+        <tr>
+            <th>Mã đơn</th><th>Khách hàng</th><th>Email</th><th>Ngày tạo</th><th>Trạng thái</th>
+            <th>Tổng tiền (VND)</th><th>Mã giảm giá</th><th>Số tiền giảm (VND)</th><th>Nhân viên xử lý</th>
+        </tr>
+        <?php foreach ($don as $d) : ?>
+            <tr>
+                <td><?= (int) $d['DDL_Ma'] ?></td>
+                <td><?= h($d['ND_Ten']) ?></td>
+                <td><?= h($d['ND_Email']) ?></td>
+                <td><?= h($d['DDL_NgayTao']) ?></td>
+                <td><?= h($d['DDL_TrangThai']) ?></td>
+                <td><?= number_format((float) $d['DDL_TongTien'], 0, ',', '.') ?></td>
+                <td><?= h($d['DDL_MaGiamGia']) ?></td>
+                <td><?= number_format((float) $d['DDL_SoTienGiam'], 0, ',', '.') ?></td>
+                <td><?= h($d['nv_xu_ly']) ?></td>
+            </tr>
+        <?php endforeach; ?>
+        <tr class="tong">
+            <td colspan="5">TỔNG</td>
+            <td><?= number_format($tong_cong, 0, ',', '.') ?></td>
+            <td colspan="3"></td>
+        </tr>
+    </table>
+    <?php
 }
-
-fclose($out);
-exit;
+?>
+</body>
+</html>

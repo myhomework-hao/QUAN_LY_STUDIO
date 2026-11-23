@@ -60,6 +60,11 @@ $gia_cu = $gia_giao_dien + 500000;
 // Ảnh chính cố định theo gói dịch vụ
 $anh_chinh = !empty($goi['DV_HinhAnh']) ? trim($goi['DV_HinhAnh']) : 'cuoi1.png';
 
+// Mặc định gói chụp trong 1 ngày (08:00 - 17:00 ngày mai); khách có thể đổi.
+$ngay_nhan_mac_dinh = date('Y-m-d', strtotime('+1 day'));
+$gio_nhan_mac_dinh = '08:00';
+$ngay_tra_mac_dinh = date('Y-m-d', strtotime('+1 day'));
+$gio_tra_mac_dinh = '17:00';
 // Danh sách dự phòng 12 mẫu trang phục cưới
 $ds_trang_phuc_mac_dinh = [
     ['DV_Ma' => 45, 'DV_Ten' => 'Mẫu 1 - Váy Cưới 1',   'DV_HinhAnh' => 'vay1.png'],
@@ -356,6 +361,25 @@ require_once __DIR__ . '/../includes/header.php';
                 <input type="hidden" id="selectedSizeNamInput" name="kich_co_nam" value="">
                 <input type="hidden" id="selectedSizeInput" name="kich_co" value="">
 
+                <div class="chon-thoi-gian" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                    <div>
+                        <label for="ngay-nhan" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 12px;">NGÀY CHỤP</label>
+                        <input type="date" id="ngay-nhan" name="ngay_nhan" min="<?= date('Y-m-d') ?>" value="<?= $ngay_nhan_mac_dinh ?>" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
+                    </div>
+                    <div>
+                        <label for="gio-nhan" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 12px;">GIỜ BẮT ĐẦU</label>
+                        <input type="time" id="gio-nhan" name="gio_nhan" value="<?= $gio_nhan_mac_dinh ?>" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
+                    </div>
+                </div>
+
+                <input type="hidden" id="ngay-tra" name="ngay_tra" value="<?= $ngay_tra_mac_dinh ?>">
+
+                <div class="chon-thoi-gian" style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px;">
+                    <div>
+                        <label for="gio-tra" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 12px;">GIỜ KẾT THÚC</label>
+                        <input type="time" id="gio-tra" name="gio_tra" value="<?= $gio_tra_mac_dinh ?>" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdcdc;">
+                    </div>
+                </div>
                 <div class="detail-buttons" style="display: flex; gap: 12px;">
                     <button type="submit" class="main-button rental-button" style="flex: 2; padding: 14px; background: #111; color: #fff; border: none; border-radius: 6px; font-weight: 600; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
                         <i class="fa-solid fa-bag-shopping"></i> Đặt thuê ngay
@@ -531,4 +555,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var ngayNhan = document.getElementById('ngay-nhan');
+    var ngayTra = document.getElementById('ngay-tra');
+    if (ngayNhan && ngayTra) {
+        ngayTra.value = ngayNhan.value;
+        ngayNhan.addEventListener('change', function () {
+            ngayTra.value = ngayNhan.value;
+        });
+    }
+});
+</script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

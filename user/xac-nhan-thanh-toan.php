@@ -63,7 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $loi === '' && $pending) {
                 // Tính lại combo từ giỏ đã chốt; mã giảm giá và 5% online tính trên số còn lại.
                 $combo_tinh = tinh_giam_combo($pending['cart_items']);
                 $sau_combo  = max(0, (float) ($pending['totals']['subtotal'] ?? 0) - (float) $combo_tinh['tong_giam']);
-                $tong       = max(0, $sau_combo - $discount);
+                $giam_may_anh = giam_thue_dai_han($pending['cart_items']);
+                $tong       = max(0, $sau_combo - $discount - $giam_may_anh);
 
                 // Kiểm tra lại còn chỗ tại thời điểm xác nhận (A2: lúc này mới tạo đơn)
                 foreach ($pending['cart_items'] as $vi_tri => $item) {
@@ -132,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $loi === '' && $pending) {
                         throw new DomainException('Mã giảm giá không còn hiệu lực: ' . $kq_recheck['message']);
                     }
                     $discount = (float) $kq_recheck['discount'];
-                    $tong = max(0, $sau_combo - $discount);
+                    $tong = max(0, $sau_combo - $discount - $giam_may_anh);
                 }
 
                 // Thanh toán 100% online: giảm thêm 5% trên số tiền sau mã giảm giá.

@@ -124,7 +124,8 @@ function nv_dau(string $tieu_de, string $muc_chon): void
 {
     $menu = [
         'dich-vu' => ['Dịch vụ', 'my-services.php'],
-        'them' => ['Thêm dịch vụ', 'dich-vu-form.php'],
+        'lich' => ['Lịch thuê', 'lich-thue.php'],
+        'khoa-lich' => ['Khóa lịch', 'khoa-lich.php'],
         'don' => ['Đơn thuê', 'vendor-orders.php'],
             'chat' => ['Chat khách hàng', 'chat.php'],
     ];

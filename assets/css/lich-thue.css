@@ -1,0 +1,275 @@
+/* LICH THUE STUDIO */
+.khung-lich {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    background: #ffffff;
+}
+
+.tieu-de-trang {
+    font-family: var(--font-tieu-de);
+    font-size: 40px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.nhan-nho-trang {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+}
+
+.thanh-loc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.thanh-loc select,
+.thanh-loc input {
+    height: 38px;
+    border: 1px solid var(--line);
+    border-radius: 0;
+    padding: 0 12px;
+    font-family: var(--font-noi-dung);
+    font-size: 12px;
+    background: #ffffff;
+    color: var(--ink);
+}
+
+.nut-chinh {
+    height: 38px;
+    padding: 0 16px;
+    background: var(--ink);
+    color: #ffffff;
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.nut-chinh:hover {
+    background: #333333;
+}
+
+.nut-phu {
+    height: 38px;
+    padding: 0 16px;
+    background: #ffffff;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.nut-phu:hover {
+    background: var(--soft);
+}
+
+.chu-thich-mau {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+}
+
+.chu-thich-mau .mau {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chu-thich-mau .o-mau {
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--line);
+}
+
+/* FullCalendar overrides */
+.fc {
+    --fc-border-color: #e8e8e8;
+    --fc-button-bg-color: var(--ink);
+    --fc-button-border-color: var(--ink);
+    --fc-button-hover-bg-color: #333333;
+    --fc-button-active-bg-color: var(--brown);
+    --fc-today-bg-color: var(--cream);
+    --fc-event-border-color: transparent;
+    --fc-now-indicator-color: #b3261e;
+    font-family: var(--font-noi-dung);
+}
+
+.fc-toolbar-title {
+    font-family: var(--font-tieu-de);
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.fc-button {
+    border-radius: 0 !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+    box-shadow: none !important;
+}
+
+.fc-col-header-cell-cushion {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.fc-daygrid-day.fc-day-today {
+    background: var(--cream);
+}
+
+.fc-daygrid-day-number {
+    font-size: 12px;
+    color: var(--ink);
+}
+
+.fc-day-other .fc-daygrid-day-number {
+    color: #bfbfbf;
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+    border-color: #e8e8e8;
+}
+
+.fc-event {
+    border-radius: 0;
+    border: none;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 4px;
+    transition: opacity 0.3s ease;
+}
+
+.fc-event:hover {
+    opacity: 0.85;
+}
+
+.fc-event-main {
+    color: #ffffff;
+}
+
+.fc-now-indicator {
+    border-color: #b3261e;
+}
+
+/* Modal */
+.hop-chi-tiet {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.hop-chi-tiet.show {
+    display: flex;
+}
+
+.hop-chi-tiet-box {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    border-radius: 0;
+    padding: 24px;
+    width: 90%;
+    max-width: 480px;
+}
+
+.hop-chi-tiet-box h3 {
+    font-family: var(--font-tieu-de);
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+.hop-chi-tiet-box .dong {
+    margin-bottom: 8px;
+}
+
+.hop-chi-tiet-box .nhan {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 2px;
+}
+
+.hop-chi-tiet-box .gia-tri {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+@media (max-width: 768px) {
+    .thanh-loc {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .fc {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 600px) {
+    .tieu-de-trang {
+        font-size: 28px;
+    }
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .hop-chi-tiet {
+        display: none !important;
+    }
+
+    body {
+        background: #ffffff;
+        color: #000000;
+    }
+
+    .fc-event {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color: #ffffff;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+    }
+}

@@ -8,10 +8,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $ma_dich_vu = (int) ($_POST['ma_dich_vu'] ?? 0);
+    $hanh_dong = (string) ($_POST['hanh_dong'] ?? '');
+
+    if ($ma_dich_vu > 0 && $hanh_dong === 'xoa') {
+        $so_don = (int) gia_tri($conn, 'SELECT COUNT(*) FROM chitietdon WHERE DV_Ma = ?', [$ma_dich_vu]);
+        $so_danh_gia = (int) gia_tri($conn, 'SELECT COUNT(*) FROM danhgia WHERE DV_Ma = ?', [$ma_dich_vu]);
+        if ($so_don > 0 || $so_danh_gia > 0) {
+            $conn->prepare('UPDATE dichvu SET DV_DangBan = 0 WHERE DV_Ma = ?')->execute([$ma_dich_vu]);
+            dat_thong_bao('Dịch vụ đã có đơn/đánh giá nên chỉ ẩn, không xóa cứng.');
+        } else {
+            $loai = (string) gia_tri($conn, 'SELECT DV_Loai FROM dichvu WHERE DV_Ma = ?', [$ma_dich_vu]);
+            $bang_con = [
+                'phong_chup' => 'phongchup',
+                'thiet_bi' => 'thietbi',
+                'trang_phuc' => 'trangphuc',
+                'phu_kien' => 'phukien',
+            ][$loai] ?? null;
+            try {
+                $conn->beginTransaction();
+                if ($bang_con) {
+                    $conn->prepare("DELETE FROM {$bang_con} WHERE DV_Ma = ?")->execute([$ma_dich_vu]);
+                }
+                $conn->prepare('DELETE FROM dichvu_kichco WHERE DV_Ma = ?')->execute([$ma_dich_vu]);
+                $conn->prepare('DELETE FROM dichvu WHERE DV_Ma = ?')->execute([$ma_dich_vu]);
+                $conn->commit();
+                dat_thong_bao('Đã xóa dịch vụ.');
+            } catch (Throwable $e) {
+                if ($conn->inTransaction()) $conn->rollBack();
+                dat_thong_bao('Không thể xóa dịch vụ.', 'error');
+            }
+        }
+        chuyen_huong('dich-vu.php');
+    }
+
     $trang_thai_moi = (int) ($_POST['trang_thai_moi'] ?? -1);
     if ($ma_dich_vu > 0 && in_array($trang_thai_moi, [0, 1], true)) {
-        $stmt = $conn->prepare('UPDATE dichvu SET DV_DangBan = ? WHERE DV_Ma = ?');
-        $stmt->execute([$trang_thai_moi, $ma_dich_vu]);
+        $stmt = $conn->prepare('UPDATE dichvu SET DV_DangBan = ? WHERE DV_Ma = ? AND DV_DangBan = ?');
+        $stmt->execute([$trang_thai_moi, $ma_dich_vu, $trang_thai_moi === 1 ? 0 : 1]);
+        if ($stmt->rowCount() === 0) {
+            dat_thong_bao('Trạng thái đã thay đổi, vui lòng tải lại trang.', 'error');
+            chuyen_huong('dich-vu.php');
+        }
         dat_thong_bao($trang_thai_moi === 1 ? 'Đã mở lại dịch vụ.' : 'Đã ẩn dịch vụ khỏi khách hàng.');
     }
     chuyen_huong('dich-vu.php');
@@ -103,7 +140,7 @@ if (($gia_tu !== '' && !ctype_digit($gia_tu)) || ($gia_den !== '' && !ctype_digi
 $dieu_kien = ['1 = 1'];
 $tham_so = [];
 if ($tu_khoa !== '') { $dieu_kien[] = "DV_Ten LIKE ?"; $tham_so[] = '%' . $tu_khoa . '%'; }
-if (in_array($loai, ['phong_chup', 'thiet_bi', 'trang_phuc', 'phu_kien'], true)) { $dieu_kien[] = "DV_Loai = ?"; $tham_so[] = $loai; } else { $loai = ''; }
+if (in_array($loai, ['phong_chup', 'thiet_bi', 'trang_phuc', 'phu_kien', 'dich_vu', 'goi_chup'], true)) { $dieu_kien[] = "DV_Loai = ?"; $tham_so[] = $loai; } else { $loai = ''; }
 if ($hien === '1' || $hien === '0') { $dieu_kien[] = "DV_DangBan = ?"; $tham_so[] = (int) $hien; }
 if ($gia_tu !== '') { $dieu_kien[] = "DV_GiaThue >= ?"; $tham_so[] = (int) $gia_tu; }
 if ($gia_den !== '') { $dieu_kien[] = "DV_GiaThue <= ?"; $tham_so[] = (int) $gia_den; }
@@ -133,7 +170,7 @@ admin_dau('Dịch vụ', 'dich-vu');
                     <label for="loai">Loại</label>
                     <select id="loai" name="loai">
                         <option value="">Tất cả</option>
-                        <?php foreach (['phong_chup', 'thiet_bi', 'trang_phuc', 'phu_kien'] as $m) : ?>
+                        <?php foreach (['phong_chup', 'thiet_bi', 'trang_phuc', 'phu_kien', 'dich_vu', 'goi_chup'] as $m) : ?>
                             <option value="<?= $m ?>" <?= $loai === $m ? 'selected' : '' ?>><?= h(ten_loai_dich_vu($m)) ?></option>
                         <?php endforeach; ?>
                     </select>
@@ -172,6 +209,12 @@ admin_dau('Dịch vụ', 'dich-vu');
                                         <input type="hidden" name="ma_dich_vu" value="<?= (int) $d['DV_Ma'] ?>">
                                         <input type="hidden" name="trang_thai_moi" value="<?= (int) $d['DV_DangBan'] === 1 ? 0 : 1 ?>">
                                         <button type="submit" class="panel-link"><?= (int) $d['DV_DangBan'] === 1 ? 'Ẩn/khóa' : 'Mở lại' ?></button>
+                                    </form>
+                                    <form method="post" style="display:inline" onsubmit="return confirm('Xóa dịch vụ này? Nếu đã có đơn sẽ chỉ ẩn.')">
+                                        <?= csrf_input() ?>
+                                        <input type="hidden" name="ma_dich_vu" value="<?= (int) $d['DV_Ma'] ?>">
+                                        <input type="hidden" name="hanh_dong" value="xoa">
+                                        <button type="submit" class="panel-link" style="color:#c00;">Xóa</button>
                                     </form>
                                 </td>
                             </tr>

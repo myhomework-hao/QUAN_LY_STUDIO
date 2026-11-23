@@ -32,8 +32,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Hai bảng phải cùng trạng thái: lỗi giữa chừng thì rollback cả hai
             $conn->beginTransaction();
             try {
-                $conn->prepare("UPDATE nhanvien SET NV_TrangThai = ? WHERE NV_Ma = ?")->execute([$gia_tri_moi, $nv['NV_Ma']]);
-                $conn->prepare("UPDATE nguoidung SET ND_TrangThai = ? WHERE ND_Ma = ?")->execute([$gia_tri_moi, $nv['ND_Ma']]);
+                $stmt_nv = $conn->prepare("UPDATE nhanvien SET NV_TrangThai = ? WHERE NV_Ma = ? AND NV_TrangThai = ?");
+                $stmt_nv->execute([$gia_tri_moi, $nv['NV_Ma'], $gia_tri_moi === 1 ? 0 : 1]);
+                $stmt_nd = $conn->prepare("UPDATE nguoidung SET ND_TrangThai = ? WHERE ND_Ma = ? AND ND_TrangThai = ?");
+                $stmt_nd->execute([$gia_tri_moi, $nv['ND_Ma'], $gia_tri_moi === 1 ? 0 : 1]);
+                if ($stmt_nv->rowCount() === 0 || $stmt_nd->rowCount() === 0) {
+                    throw new RuntimeException('Trạng thái đã thay đổi, vui lòng tải lại trang.');
+                }
                 $conn->commit();
                 dat_thong_bao(($gia_tri_moi ? 'Đã mở khóa ' : 'Đã khóa ') . $nv['ND_Ten'] . '.');
             } catch (Throwable $e) {

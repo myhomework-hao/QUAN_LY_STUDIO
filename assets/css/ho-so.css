@@ -1,0 +1,415 @@
+/* HO SO CA NHAN */
+.ho-so-trang {
+    background: #ffffff;
+    color: var(--ink);
+}
+
+.ho-so-dau {
+    background: var(--cream);
+    padding: 72px 4% 64px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.ho-so-dau .nhan-nho {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+
+.ho-so-dau h1 {
+    font-family: var(--font-tieu-de);
+    font-size: 68px;
+    font-weight: 500;
+    line-height: 1.1;
+    margin: 0;
+}
+
+.ho-so-dau h1 i {
+    font-family: var(--font-tieu-de);
+    font-style: italic;
+}
+
+.ho-so-dau-phai {
+    text-align: right;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 12px;
+}
+
+.ho-so-than {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 64px 4%;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 80px;
+}
+
+.cot-trai {
+    max-width: 320px;
+}
+
+.ho-so-avatar {
+    aspect-ratio: 4 / 5;
+    background: var(--ink);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-tieu-de);
+    font-size: 72px;
+    font-style: italic;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.ho-so-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.nut-doi-anh {
+    display: inline-block;
+    border: 1px solid var(--ink);
+    background: #fff;
+    color: var(--ink);
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-bottom: 16px;
+}
+
+.ho-so-ten {
+    font-family: var(--font-tieu-de);
+    font-size: 28px;
+    font-weight: 500;
+    margin: 0 0 4px;
+}
+
+.ho-so-email {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 24px;
+}
+
+.menu-ho-so {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid var(--line);
+}
+
+.menu-ho-so li {
+    border-bottom: 1px solid var(--line);
+}
+
+.menu-ho-so a {
+    display: block;
+    padding: 14px 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink);
+}
+
+.menu-ho-so a.dang-chon {
+    font-weight: 700;
+}
+
+.menu-ho-so a.dang-xuat {
+    color: var(--error);
+}
+
+.cot-phai .phan {
+    padding-top: 32px;
+    border-top: 1px solid var(--ink);
+    margin-bottom: 88px;
+}
+
+.cot-phai .phan:last-child {
+    margin-bottom: 0;
+}
+
+.phan-tieu-de {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.phan-so {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: var(--muted);
+}
+
+.phan-ten {
+    font-family: var(--font-tieu-de);
+    font-size: 36px;
+    font-weight: 500;
+    margin: 0;
+}
+
+/* Form */
+.ho-so-form label {
+    display: block;
+    margin: 18px 0 6px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #6b6b6b;
+}
+
+.ho-so-form input,
+.ho-so-form textarea {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #bbb;
+    padding: 8px 0;
+    font: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    background: transparent;
+    outline: none;
+}
+
+.ho-so-form input:focus,
+.ho-so-form textarea:focus {
+    border-bottom-color: var(--ink);
+}
+
+.ho-so-form .hang {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.ho-so-form .full {
+    grid-column: 1 / -1;
+}
+
+.loi-truong {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--error);
+}
+
+.nut-chinh {
+    margin-top: 24px;
+    padding: 12px 24px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.nut-phu {
+    margin-top: 24px;
+    margin-left: 12px;
+    padding: 12px 24px;
+    background: #fff;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.thong-bao {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    border: 1px solid var(--ink);
+    background: #fff;
+    font-size: 13px;
+}
+
+.thong-bao.loi {
+    border-color: var(--error);
+    color: var(--error);
+}
+
+/* Thong ke */
+.thong-ke {
+    display: flex;
+    gap: 40px;
+    align-items: baseline;
+}
+
+.thong-ke .so {
+    font-family: var(--font-tieu-de);
+    font-size: 64px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.thong-ke .nhan {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 6px;
+}
+
+.thong-ke > div {
+    border-right: 1px solid var(--line);
+    padding-right: 40px;
+}
+
+.thong-ke > div:last-child {
+    border-right: none;
+}
+
+/* Don gan day */
+.don-gan-day .dong {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.don-gan-day .ma-don {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+}
+
+.don-gan-day .ten-dv {
+    font-family: var(--font-tieu-de);
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.don-gan-day .thoi-gian {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.the-trang-thai {
+    display: inline-block;
+    padding: 8px 14px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.the-trang-thai.cho-duyet { background: #f5ecd9; color: #6e5320; }
+.the-trang-thai.da-duyet { background: #ece4de; color: #49352b; }
+.the-trang-thai.dang-thue { background: #e3efe6; color: #2e6b3f; }
+.the-trang-thai.da-tu-choi { background: #f6e3e1; color: #b3261e; }
+.the-trang-thai.hoan-thanh { background: #e6f4ea; color: #137333; }
+
+.lien-ket-tat-ca {
+    display: inline-block;
+    margin-top: 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Danh gia */
+.danh-gia-gan-nhat {
+    background: var(--cream);
+    padding: 24px;
+    font-family: var(--font-tieu-de);
+    font-style: italic;
+    font-size: 26px;
+    line-height: 1.4;
+}
+
+.danh-gia-gan-nhat .ten-dv {
+    font-size: 12px;
+    font-style: normal;
+    color: var(--muted);
+    margin-top: 8px;
+}
+
+.dong-nhe {
+    color: var(--muted);
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* Bao mat */
+.bao-mat-dong {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.bao-mat-dong p {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 4px 0 0;
+}
+
+@media (max-width: 900px) {
+    .ho-so-than {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .menu-ho-so {
+        display: flex;
+        overflow-x: auto;
+        gap: 0;
+    }
+
+    .menu-ho-so li {
+        border-bottom: none;
+        border-right: 1px solid var(--line);
+        white-space: nowrap;
+    }
+
+    .thong-ke {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .thong-ke > div {
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+        padding-right: 0;
+        padding-bottom: 20px;
+    }
+
+    .thong-ke > div:last-child {
+        border-bottom: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .ho-so-dau h1 {
+        font-size: 40px;
+    }
+
+    .ho-so-form .hang {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+}

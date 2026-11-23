@@ -23,6 +23,7 @@ $totals     = tinh_tong_gio_hang($cart_items);
 $combo      = tinh_giam_combo($cart_items);
 $giam_combo = (float) $combo['tong_giam'];
 $sau_combo  = max(0, (float) $totals['subtotal'] - $giam_combo);
+$giam_may_anh = giam_thue_dai_han($cart_items);
 
 // ===== COUPON =====
 $coupon_code = $_SESSION['coupon_code'] ?? '';
@@ -39,9 +40,10 @@ if ($coupon_code !== '') {
         $coupon_code = '';
     }
 }
-$totals['combo']    = $giam_combo;
-$totals['discount'] = $discount;
-$totals['total']    = max(0, $sau_combo - $discount);
+$totals['combo']         = $giam_combo;
+$totals['giam_may_anh']  = $giam_may_anh;
+$totals['discount']      = $discount;
+$totals['total']         = max(0, $sau_combo - $discount - $giam_may_anh);
 // ==================
 
 $empty = empty($cart_items);
@@ -94,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
         } else {
             $discount           = (float) $kq_recheck['discount'];
             $totals['discount'] = $discount;
-            $totals['total']    = max(0, $sau_combo - $discount);
+            $totals['total']    = max(0, $sau_combo - $discount - $giam_may_anh);
         }
     }
     // ===================================================
@@ -193,6 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$empty) {
                 'coupon_code'      => $coupon_code !== '' ? $coupon_code : '',
                 'discount'         => $discount,
                 'giam_combo'       => $giam_combo,
+                'giam_may_anh'     => $giam_may_anh,
                 'danh_sach_combo'  => $combo['danh_sach'],
                 'payment'          => $ma_phuong_thuc,
                 'payment_label'    => $cac_phuong_thuc[$ma_phuong_thuc],
@@ -399,6 +402,13 @@ require_once '../includes/header.php';
                         <span style="color: var(--success); font-weight: 700;">−<?= dinh_dang_tien($c['giam']) ?></span>
                     </div>
                 <?php endforeach; ?>
+
+                <?php if (!empty($giam_may_anh) && $giam_may_anh > 0) : ?>
+                    <div class="summary-row">
+                        <span>Giảm thuê dài hạn</span>
+                        <span style="color: var(--success); font-weight: 700;">−<?= dinh_dang_tien($giam_may_anh) ?></span>
+                    </div>
+                <?php endif; ?>
 
                 <?php if ($discount > 0) : ?>
                     <div class="summary-row">

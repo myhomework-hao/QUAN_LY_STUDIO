@@ -20,6 +20,9 @@
     --error: #b3261e;
 
     --header-height: 80px;
+
+    --font-tieu-de: "Bodoni Moda", "Playfair Display", serif;
+    --font-noi-dung: "Montserrat", sans-serif;
 }
 
 * {
@@ -70,7 +73,7 @@ section[id] {
 
 h1 i,
 h2 i {
-    font-family: "Playfair Display", serif;
+    font-family: var(--font-tieu-de);
     font-weight: 500;
 }
 

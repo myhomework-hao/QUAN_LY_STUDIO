@@ -3,13 +3,18 @@ require_once __DIR__ . '/security.php';
 $vai_tro = function_exists('vai_tro_hien_tai') ? vai_tro_hien_tai() : 'guest';
 $ten_hien_thi = function_exists('ten_nguoi_dung_hien_tai') ? ten_nguoi_dung_hien_tai() : '';
 $da_dn = function_exists('da_dang_nhap') ? da_dang_nhap() : false;
+$avatar = $_SESSION['user_avatar'] ?? '';
 $chu_cai_dau = $ten_hien_thi !== '' ? mb_strtoupper(mb_substr($ten_hien_thi, 0, 1)) : '?';
 ?>
 <div class="tai-khoan">
     <?php if ($da_dn): ?>
         <button type="button" class="header-icon tai-khoan-nut da-dang-nhap vt-<?= htmlspecialchars($vai_tro) ?>"
                 aria-label="Tài khoản của <?= htmlspecialchars($ten_hien_thi) ?>" aria-haspopup="true" aria-expanded="false">
-            <span class="tai-khoan-chu"><?= htmlspecialchars($chu_cai_dau) ?></span>
+            <?php if ($avatar !== ''): ?>
+                <img src="<?= BASE_URL ?>assets/uploads/<?= htmlspecialchars($avatar) ?>" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+            <?php else: ?>
+                <span class="tai-khoan-chu"><?= htmlspecialchars($chu_cai_dau) ?></span>
+            <?php endif; ?>
         </button>
     <?php else: ?>
         <button type="button" class="header-icon tai-khoan-nut" aria-label="Tài khoản" aria-haspopup="true" aria-expanded="false">

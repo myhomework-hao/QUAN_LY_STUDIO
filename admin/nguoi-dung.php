@@ -20,8 +20,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         dat_thong_bao('Không tìm thấy khách hàng.', 'error');
         chuyen_huong($dich);
     }
-    $stmt = $conn->prepare("UPDATE nguoidung SET ND_TrangThai = ? WHERE ND_Ma = ?");
-    $stmt->execute([$khoa ? 0 : 1, $ma]);
+    $stmt = $conn->prepare("UPDATE nguoidung SET ND_TrangThai = ? WHERE ND_Ma = ? AND ND_TrangThai = ?");
+    $stmt->execute([$khoa ? 0 : 1, $ma, $khoa ? 1 : 0]);
+    if ($stmt->rowCount() === 0) {
+        dat_thong_bao('Trạng thái đã thay đổi, vui lòng tải lại trang.', 'error');
+        chuyen_huong($dich);
+    }
     dat_thong_bao(($khoa ? 'Đã khóa tài khoản ' : 'Đã mở khóa tài khoản ') . $khach['ND_Ten'] . '.');
     chuyen_huong($dich);
 }

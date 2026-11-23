@@ -250,6 +250,7 @@ $totals = tinh_tong_gio_hang($cart_items);
 $combo = tinh_giam_combo($cart_items);
 $giam_combo = (float) $combo['tong_giam'];
 $sau_combo  = max(0, (float) $totals['subtotal'] - $giam_combo);
+$giam_may_anh = giam_thue_dai_han($cart_items);
 
 $coupon_code = $_SESSION['coupon_code'] ?? '';
 $coupon_info = null;
@@ -266,9 +267,10 @@ if ($coupon_code !== '') {
     }
 }
 
-$totals['combo']    = $giam_combo;
-$totals['discount'] = $discount;
-$totals['total']    = max(0, $sau_combo - $discount);
+$totals['combo']         = $giam_combo;
+$totals['giam_may_anh']  = $giam_may_anh;
+$totals['discount']      = $discount;
+$totals['total']         = max(0, $sau_combo - $discount - $giam_may_anh);
 $tong_so_luong = array_sum(array_column($cart_items, 'qty'));
 $ds_goi_y_combo = goi_y_combo($cart_items);
 
@@ -385,7 +387,7 @@ require_once '../includes/header.php';
 
                                 <?php if ($tp_hien_thi !== '') : ?>
                                     <p class="unit" style="font-size:12px; color:#333; margin-top:4px;">
-                                        Trang phục chọn: <strong><?= htmlspecialchars($tp_hien_thi) ?></strong>
+                                        Đã chọn mẫu: <strong><?= htmlspecialchars($tp_hien_thi) ?></strong>
                                     </p>
                                 <?php endif; ?>
 
@@ -488,6 +490,12 @@ require_once '../includes/header.php';
                 </div>
             <?php endif; ?>
 
+            <?php if (!empty($giam_may_anh) && $giam_may_anh > 0) : ?>
+            <div class="summary-row">
+                <span>Giảm thuê dài hạn</span>
+                <span style="color: var(--success); font-weight: 700;">−<?= dinh_dang_tien($giam_may_anh) ?></span>
+            </div>
+            <?php endif; ?>
             <div class="summary-row total"><span>Tổng cộng</span><span><?= dinh_dang_tien($totals['total']) ?></span></div>
 
             <?php if ($co_loi) : ?>

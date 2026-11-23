@@ -6,8 +6,8 @@ const LOAI_HOP_LE = ['phong_chup', 'thiet_bi', 'trang_phuc', 'phu_kien'];
 const DON_VI_HOP_LE = ['giờ', 'ngày', 'lượt', 'bộ'];
 
 $ma_sua = (int) ($_GET['id'] ?? $_POST['ma_sua'] ?? 0);
-if ($ma_sua > 0) {
-    dat_thong_bao('Chỉ quản trị viên mới được sửa dịch vụ.', 'error');
+if ($ma_sua <= 0) {
+    dat_thong_bao('Chỉ quản trị viên mới được thêm dịch vụ.', 'error');
     chuyen_huong('my-services.php');
 }
 $dv_cu = null;
@@ -21,13 +21,19 @@ if ($ma_sua > 0) {
 
 function lay_thuoc_tinh(PDO $conn, string $loai, int $ma): string
 {
-    $cot = ['phong_chup' => ['phongchup', 'PC_SucChua'], 'thiet_bi' => ['thietbi', 'TB_Loai'], 'trang_phuc' => ['trangphuc', 'TP_KichCo'], 'phu_kien' => ['phukien', 'PK_Loai']][$loai];
+    $cot = ['phong_chup' => ['phongchup', 'PC_SucChua'], 'thiet_bi' => ['thietbi', 'TB_Loai'], 'trang_phuc' => ['trangphuc', 'TP_KichCo'], 'phu_kien' => ['phukien', 'PK_Loai']][$loai] ?? null;
+    if (!$cot) {
+        return '';
+    }
     return (string) gia_tri($conn, "SELECT {$cot[1]} FROM {$cot[0]} WHERE DV_Ma = ?", [$ma]);
 }
 
 function luu_thuoc_tinh(PDO $conn, string $loai, int $ma, string $gia_tri_moi): void
 {
-    $bang = ['phong_chup' => ['phongchup', 'PC_SucChua'], 'thiet_bi' => ['thietbi', 'TB_Loai'], 'trang_phuc' => ['trangphuc', 'TP_KichCo'], 'phu_kien' => ['phukien', 'PK_Loai']][$loai];
+    $bang = ['phong_chup' => ['phongchup', 'PC_SucChua'], 'thiet_bi' => ['thietbi', 'TB_Loai'], 'trang_phuc' => ['trangphuc', 'TP_KichCo'], 'phu_kien' => ['phukien', 'PK_Loai']][$loai] ?? null;
+    if (!$bang) {
+        return;
+    }
     $gia_tri_luu = $loai === 'phong_chup' ? (int) $gia_tri_moi : ($gia_tri_moi !== '' ? $gia_tri_moi : null);
     if ((int) gia_tri($conn, "SELECT COUNT(*) FROM {$bang[0]} WHERE DV_Ma = ?", [$ma]) > 0) {
         $conn->prepare("UPDATE {$bang[0]} SET {$bang[1]} = ? WHERE DV_Ma = ?")->execute([$gia_tri_luu, $ma]);
@@ -98,11 +104,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'thuoc_tinh' => trim((string) ($_POST['thuoc_tinh'] ?? '')),
     ];
 
+    // Nhân viên chỉ được sửa mô tả và số lượng; các thông tin còn lại giữ nguyên từ DB.
+    if ($dv_cu) {
+        $du_lieu['ten'] = (string) $dv_cu['DV_Ten'];
+        $du_lieu['loai'] = (string) $dv_cu['DV_Loai'];
+        $du_lieu['gia'] = (string) (int) $dv_cu['DV_GiaThue'];
+        $du_lieu['don_vi'] = nhan_don_vi((string) $dv_cu['DV_DonViTinh']);
+        $du_lieu['thuoc_tinh'] = lay_thuoc_tinh($conn, $dv_cu['DV_Loai'], $ma_sua);
+        $du_lieu['hien'] = (int) $dv_cu['DV_DangBan'];
+    }
+
     if ($du_lieu['ten'] === '') $loi['ten'] = 'Vui lòng nhập tên dịch vụ.';
     elseif (mb_strlen($du_lieu['ten']) > 150) $loi['ten'] = 'Tên dịch vụ tối đa 150 ký tự.';
-    if (!in_array($du_lieu['loai'], LOAI_HOP_LE, true)) $loi['loai'] = 'Vui lòng chọn loại dịch vụ.';
-    if (!ctype_digit($du_lieu['gia']) || (int) $du_lieu['gia'] <= 0) $loi['gia'] = 'Giá thuê phải là số nguyên dương.';
-    if (!in_array($du_lieu['don_vi'], DON_VI_HOP_LE, true)) $loi['don_vi'] = 'Vui lòng chọn đơn vị tính.';
+    if (!$dv_cu) {
+        if (!in_array($du_lieu['loai'], LOAI_HOP_LE, true)) $loi['loai'] = 'Vui lòng chọn loại dịch vụ.';
+        if (!ctype_digit($du_lieu['gia']) || (int) $du_lieu['gia'] <= 0) $loi['gia'] = 'Giá thuê phải là số nguyên dương.';
+        if (!in_array($du_lieu['don_vi'], DON_VI_HOP_LE, true)) $loi['don_vi'] = 'Vui lòng chọn đơn vị tính.';
+    }
     if (!ctype_digit($du_lieu['so_luong']) || (int) $du_lieu['so_luong'] < 1) $loi['so_luong'] = 'Số lượng phải từ 1 trở lên.';
     if ($du_lieu['loai'] === 'phong_chup' && (!ctype_digit($du_lieu['thuoc_tinh']) || (int) $du_lieu['thuoc_tinh'] < 1)) {
         $loi['thuoc_tinh'] = 'Sức chứa phải là số nguyên dương.';
@@ -164,29 +182,27 @@ $loi_truong = function (string $khoa) use ($loi) {
                 <?= csrf_input() ?>
                 <input type="hidden" name="ma_sua" value="<?= $ma_sua ?>">
                 <div class="form-grid">
-                    <div class="field"><label for="ten">Tên dịch vụ</label><input id="ten" name="ten" value="<?= h($du_lieu['ten']) ?>" required><?php $loi_truong('ten'); ?></div>
+                    <div class="field"><label for="ten">Tên dịch vụ</label><input id="ten" name="ten" value="<?= h($du_lieu['ten']) ?>" disabled required><?php $loi_truong('ten'); ?></div>
                     <div class="field">
                         <label for="loai">Loại</label>
-                        <select id="loai" name="loai" <?= $dv_cu ? 'disabled' : '' ?>>
-                            <?php foreach (LOAI_HOP_LE as $m) : ?><option value="<?= $m ?>" <?= $du_lieu['loai'] === $m ? 'selected' : '' ?>><?= h(ten_loai_dich_vu($m)) ?></option><?php endforeach; ?>
-                        </select>
+                        <input id="loai" value="<?= h(ten_loai_dich_vu($du_lieu['loai'])) ?>" disabled>
+                        <input type="hidden" name="loai" value="<?= h($du_lieu['loai']) ?>">
                         <?php $loi_truong('loai'); ?>
                     </div>
-                    <div class="field"><label for="gia">Giá thuê (₫)</label><input id="gia" name="gia" inputmode="numeric" value="<?= h($du_lieu['gia']) ?>"><?php $loi_truong('gia'); ?></div>
+                    <div class="field"><label for="gia">Giá thuê (₫)</label><input id="gia" name="gia" inputmode="numeric" value="<?= h($du_lieu['gia']) ?>" disabled><?php $loi_truong('gia'); ?></div>
                     <div class="field">
                         <label for="don_vi">Tính theo</label>
-                        <select id="don_vi" name="don_vi">
-                            <?php foreach (DON_VI_HOP_LE as $m) : ?><option value="<?= h($m) ?>" <?= $du_lieu['don_vi'] === $m ? 'selected' : '' ?>><?= h(ucfirst($m)) ?></option><?php endforeach; ?>
-                        </select>
+                        <input id="don_vi" value="<?= h($du_lieu['don_vi']) ?>" disabled>
+                        <input type="hidden" name="don_vi" value="<?= h($du_lieu['don_vi']) ?>">
                         <?php $loi_truong('don_vi'); ?>
                     </div>
                     <div class="field"><label for="so_luong">Số lượng cho thuê cùng lúc</label><input id="so_luong" name="so_luong" inputmode="numeric" value="<?= h($du_lieu['so_luong']) ?>"><?php $loi_truong('so_luong'); ?></div>
-                    <div class="field"><label for="thuoc_tinh" id="nhan_thuoc_tinh"><?= h($nhan_thuoc_tinh[$du_lieu['loai']] ?? 'Thuộc tính') ?></label><input id="thuoc_tinh" name="thuoc_tinh" value="<?= h($du_lieu['thuoc_tinh']) ?>"><?php $loi_truong('thuoc_tinh'); ?></div>
+                    <div class="field"><label for="thuoc_tinh" id="nhan_thuoc_tinh"><?= h($nhan_thuoc_tinh[$du_lieu['loai']] ?? 'Thuộc tính') ?></label><input id="thuoc_tinh" name="thuoc_tinh" value="<?= h($du_lieu['thuoc_tinh']) ?>" disabled><?php $loi_truong('thuoc_tinh'); ?></div>
                     <div class="field"><label for="mo_ta">Mô tả ngắn</label><textarea id="mo_ta" name="mo_ta" rows="3"><?= h($du_lieu['mo_ta']) ?></textarea></div>
                     <div class="field"><label for="mo_ta_ct">Mô tả chi tiết</label><textarea id="mo_ta_ct" name="mo_ta_ct" rows="3"><?= h($du_lieu['mo_ta_ct']) ?></textarea></div>
                     <div class="field">
                         <label for="anh">Ảnh đại diện (JPG, PNG, WEBP, tối đa 3MB)</label>
-                        <input id="anh" name="anh" type="file" accept="image/jpeg,image/png,image/webp">
+                        <input id="anh" name="anh" type="file" accept="image/jpeg,image/png,image/webp" disabled>
                         <?php $loi_truong('anh'); ?>
                         <?php if ($dv_cu && $dv_cu['DV_HinhAnh']) : ?><img class="thumb" src="<?= h(duong_dan_anh($dv_cu['DV_HinhAnh'])) ?>" alt="Ảnh hiện tại"><?php endif; ?>
                     </div>

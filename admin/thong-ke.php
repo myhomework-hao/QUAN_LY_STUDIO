@@ -294,8 +294,8 @@ admin_dau('Thống kê', 'thong-ke');
                 </div>
                 <button class="btn-solid" type="submit">Xem thống kê</button>
                 <?php if (!$loi) : ?>
-                    <a class="btn-line" href="<?= h($lien_ket_xuat_tq) ?>">Tải báo cáo (.csv)</a>
-                    <a class="btn-line" href="<?= h($lien_ket_xuat_don) ?>">Tải danh sách đơn (.csv)</a>
+                    <a class="btn-line" href="<?= h($lien_ket_xuat_tq) ?>">Tải báo cáo Excel (.xls)</a>
+                    <a class="btn-line" href="<?= h($lien_ket_xuat_don) ?>">Tải danh sách đơn Excel (.xls)</a>
                 <?php endif; ?>
             </form>
             <?php if ($loi) : ?><p class="flash flash-error"><?= h($loi) ?></p><?php endif; ?>

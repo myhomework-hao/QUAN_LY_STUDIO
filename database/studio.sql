@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: Nov 13, 2026 at 04:11 PM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Máy chủ: localhost
+-- Thời gian đã tạo: Th10 23, 2026 lúc 06:52 AM
+-- Phiên bản máy phục vụ: 10.4.28-MariaDB
+-- Phiên bản PHP: 8.1.17
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,13 +18,37 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `studio`
+-- Cơ sở dữ liệu: `studio`
 --
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `cau_hinh`
+-- Cấu trúc bảng cho bảng `baocao_huhong`
+--
+
+CREATE TABLE `baocao_huhong` (
+  `BCHH_Ma` int(11) NOT NULL,
+  `DV_Ma` int(11) NOT NULL,
+  `NV_Ma` int(11) NOT NULL,
+  `BCHH_BoPhan` varchar(120) DEFAULT NULL,
+  `BCHH_MoTa` text NOT NULL,
+  `BCHH_TrangThai` varchar(30) NOT NULL DEFAULT 'Chờ xử lý',
+  `BCHH_NgayBao` datetime NOT NULL DEFAULT current_timestamp(),
+  `BCHH_NgayCapNhat` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `baocao_huhong`
+--
+
+INSERT INTO `baocao_huhong` (`BCHH_Ma`, `DV_Ma`, `NV_Ma`, `BCHH_BoPhan`, `BCHH_MoTa`, `BCHH_TrangThai`, `BCHH_NgayBao`, `BCHH_NgayCapNhat`) VALUES
+(1, 15, 1, 'Đèn softbox bên phải', 'hỏng', 'Đang bảo trì', '2026-11-23 09:33:48', '2026-11-23 09:34:18');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `cau_hinh`
 --
 
 CREATE TABLE `cau_hinh` (
@@ -34,7 +58,7 @@ CREATE TABLE `cau_hinh` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
 
 --
--- Dumping data for table `cau_hinh`
+-- Đang đổ dữ liệu cho bảng `cau_hinh`
 --
 
 INSERT INTO `cau_hinh` (`CH_Khoa`, `CH_GiaTri`, `CH_MoTa`) VALUES
@@ -46,7 +70,7 @@ INSERT INTO `cau_hinh` (`CH_Khoa`, `CH_GiaTri`, `CH_MoTa`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `chat_hoi_thoai`
+-- Cấu trúc bảng cho bảng `chat_hoi_thoai`
 --
 
 CREATE TABLE `chat_hoi_thoai` (
@@ -62,7 +86,7 @@ CREATE TABLE `chat_hoi_thoai` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `chat_hoi_thoai`
+-- Đang đổ dữ liệu cho bảng `chat_hoi_thoai`
 --
 
 INSERT INTO `chat_hoi_thoai` (`CHT_Ma`, `ND_Ma`, `NV_Ma`, `CHT_TieuDe`, `CHT_CheDo`, `CHT_TrangThai`, `CHT_NgayTao`, `CHT_NgayCapNhat`, `CHT_NgayDong`) VALUES
@@ -75,7 +99,7 @@ INSERT INTO `chat_hoi_thoai` (`CHT_Ma`, `ND_Ma`, `NV_Ma`, `CHT_TieuDe`, `CHT_Che
 -- --------------------------------------------------------
 
 --
--- Table structure for table `chat_tin_nhan`
+-- Cấu trúc bảng cho bảng `chat_tin_nhan`
 --
 
 CREATE TABLE `chat_tin_nhan` (
@@ -90,7 +114,7 @@ CREATE TABLE `chat_tin_nhan` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `chat_tin_nhan`
+-- Đang đổ dữ liệu cho bảng `chat_tin_nhan`
 --
 
 INSERT INTO `chat_tin_nhan` (`CTN_Ma`, `CHT_Ma`, `CTN_NguoiGui`, `ND_Ma`, `NV_Ma`, `CTN_NoiDung`, `CTN_ThoiDiem`, `CTN_DaDoc`) VALUES
@@ -157,7 +181,7 @@ INSERT INTO `chat_tin_nhan` (`CTN_Ma`, `CHT_Ma`, `CTN_NguoiGui`, `ND_Ma`, `NV_Ma
 -- --------------------------------------------------------
 
 --
--- Table structure for table `chitietdon`
+-- Cấu trúc bảng cho bảng `chitietdon`
 --
 
 CREATE TABLE `chitietdon` (
@@ -173,16 +197,7 @@ CREATE TABLE `chitietdon` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
 
 --
--- Table structure for table `chitietdon_bophan`
---
-
-CREATE TABLE `chitietdon_bophan` (
-  `CTD_Ma` int(11) NOT NULL,
-  `CTDBP_Ten` varchar(120) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
-
---
--- Dumping data for table `chitietdon`
+-- Đang đổ dữ liệu cho bảng `chitietdon`
 --
 
 INSERT INTO `chitietdon` (`CTD_Ma`, `DDL_Ma`, `DV_Ma`, `CTD_SoLuong`, `CTD_KichCo`, `CTD_BatDau`, `CTD_KetThuc`, `CTD_DonGia`, `CTD_ThanhTien`) VALUES
@@ -211,7 +226,18 @@ INSERT INTO `chitietdon` (`CTD_Ma`, `DDL_Ma`, `DV_Ma`, `CTD_SoLuong`, `CTD_KichC
 -- --------------------------------------------------------
 
 --
--- Table structure for table `dangnhap_thatbai`
+-- Cấu trúc bảng cho bảng `chitietdon_bophan`
+--
+
+CREATE TABLE `chitietdon_bophan` (
+  `CTD_Ma` int(11) NOT NULL,
+  `CTDBP_Ten` varchar(120) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `dangnhap_thatbai`
 --
 
 CREATE TABLE `dangnhap_thatbai` (
@@ -224,7 +250,7 @@ CREATE TABLE `dangnhap_thatbai` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `danhgia`
+-- Cấu trúc bảng cho bảng `danhgia`
 --
 
 CREATE TABLE `danhgia` (
@@ -238,7 +264,7 @@ CREATE TABLE `danhgia` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
 
 --
--- Dumping data for table `danhgia`
+-- Đang đổ dữ liệu cho bảng `danhgia`
 --
 
 INSERT INTO `danhgia` (`DG_Ma`, `ND_Ma`, `DDL_Ma`, `DV_Ma`, `DG_SoSao`, `DG_NoiDung`, `DG_NgayTao`) VALUES
@@ -249,7 +275,7 @@ INSERT INTO `danhgia` (`DG_Ma`, `ND_Ma`, `DDL_Ma`, `DV_Ma`, `DG_SoSao`, `DG_NoiD
 -- --------------------------------------------------------
 
 --
--- Table structure for table `dichvu`
+-- Cấu trúc bảng cho bảng `dichvu`
 --
 
 CREATE TABLE `dichvu` (
@@ -266,7 +292,7 @@ CREATE TABLE `dichvu` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
 
 --
--- Dumping data for table `dichvu`
+-- Đang đổ dữ liệu cho bảng `dichvu`
 --
 
 INSERT INTO `dichvu` (`DV_Ma`, `DV_Ten`, `DV_Loai`, `DV_MoTa`, `DV_MoTaChiTiet`, `DV_GiaThue`, `DV_DonViTinh`, `DV_HinhAnh`, `DV_SoLuong`, `DV_DangBan`) VALUES
@@ -278,14 +304,14 @@ INSERT INTO `dichvu` (`DV_Ma`, `DV_Ten`, `DV_Loai`, `DV_MoTa`, `DV_MoTaChiTiet`,
 (6, 'Fujifilm X-T4', 'thiet_bi', 'Máy ảnh nhỏ gọn, lấy nét nhanh và dễ dàng sử dụng.', NULL, 320000, 'ngày', 'cam6.png', 3, 1),
 (7, 'Fujifilm X-T5', 'thiet_bi', 'Máy ảnh Full Frame phù hợp cho nhiều thể loại chụp ảnh chuyên nghiệp.', NULL, 450000, 'ngày', 'cam7.png', 3, 1),
 (8, 'Fujifilm X-A5', 'thiet_bi', 'Máy ảnh nhỏ gọn, phù hợp chụp ảnh và quay video sáng tạo.', NULL, 380000, 'ngày', 'cam8.png', 3, 1),
-(9, 'Phòng Studio Trắng', 'phong_chup', 'Không gian trắng tối giản, phù hợp chụp chân dung và sản phẩm.', NULL, 200000, 'giờ', 'phong1.png', 1, 1),
-(10, 'Phòng Vintage', 'phong_chup', 'Không gian mang phong cách vintage, ấm áp và độc đáo.', NULL, 250000, 'giờ', 'phong2.png', 1, 1),
-(11, 'Phòng Concept Hàn Quốc', 'phong_chup', 'Không gian sáng, nhẹ nhàng phù hợp chụp ảnh cá nhân, lookbook.', NULL, 220000, 'giờ', 'phong3.png', 1, 1),
-(12, 'Khu Chụp Ngoài Trời', 'phong_chup', 'Không gian ngoài trời với nhiều góc chụp tự nhiên, thoáng đãng.', NULL, 300000, 'giờ', 'phong4.png', 1, 1),
-(13, 'Phòng Couple', 'phong_chup', 'Không gian lãng mạn dành cho các concept chụp ảnh đôi, cưới.', NULL, 280000, 'giờ', 'phong5.png', 1, 1),
-(14, 'Phòng Concept Hoa', 'phong_chup', 'Không gian trang trí nhiều hoa tươi và màu sắc sinh động.', NULL, 250000, 'giờ', 'phong6.png', 1, 1),
-(15, 'Phòng Minimal', 'phong_chup', 'Không gian tối giản, hiện đại, dễ dàng phối hợp nhiều concept.', NULL, 180000, 'giờ', 'phong7.png', 1, 1),
-(16, 'Phòng Luxury', 'phong_chup', 'Không gian sang trọng, đẳng cấp, thích hợp chụp ảnh thời trang.', NULL, 350000, 'giờ', 'phong8.png', 1, 1),
+(9, 'Phòng Studio Trắng', 'phong_chup', 'Không gian trắng tối giản, phù hợp chụp chân dung và sản phẩm.', 'Phông nền trắng\nĐèn softbox bên trái\nĐèn softbox bên phải\nĐèn chiếu sáng trên ray trần\nBàn làm việc\nGhế đẩu\nMàn hình theo dõi', 200000, 'giờ', 'phong1.png', 1, 1),
+(10, 'Phòng Vintage', 'phong_chup', 'Không gian mang phong cách vintage, ấm áp và độc đáo.', 'Sofa xanh vintage\nBàn trà gỗ\nBàn ăn gỗ\nGhế ăn gỗ\nKhung tranh treo tường\nĐèn tản sáng studio\nRay trượt máy quay', 250000, 'giờ', 'phong2.png', 1, 1),
+(11, 'Phòng Concept Hàn Quốc', 'phong_chup', 'Không gian sáng, nhẹ nhàng phù hợp chụp ảnh cá nhân, lookbook.', 'Sofa đen\nBàn trà nhỏ\nThảm khu chụp\nPhông nền trắng\nĐèn softbox\nĐèn đứng studio', 220000, 'giờ', 'phong3.png', 1, 1),
+(12, 'Khu Chụp Ngoài Trời', 'phong_chup', 'Không gian ngoài trời với nhiều góc chụp tự nhiên, thoáng đãng.', 'Phông nền cuộn trắng\nĐèn softbox\nĐèn tản sáng dạng lưới\nGiàn khung treo đèn\nXe đẩy máy quay\nMàn hình theo dõi', 300000, 'giờ', 'phong4.png', 1, 1),
+(13, 'Phòng Couple', 'phong_chup', 'Không gian lãng mạn dành cho các concept chụp ảnh đôi, cưới.', 'Ghế bành trắng\nBàn đá lớn\nChậu cây trang trí\nKệ trang trí\nPhông nền trắng\nĐèn softbox', 280000, 'giờ', 'phong5.png', 1, 1),
+(14, 'Phòng Concept Hoa', 'phong_chup', 'Không gian trang trí nhiều hoa tươi và màu sắc sinh động.', 'Phông nền trắng\nGhế gỗ\nGhế đẩu gỗ\nĐèn softbox bên trái\nĐèn softbox bên phải\nMàn hình theo dõi', 250000, 'giờ', 'phong6.png', 1, 1),
+(15, 'Phòng Minimal', 'phong_chup', 'Không gian tối giản, hiện đại, dễ dàng phối hợp nhiều concept.', 'Phông nền trắng\nĐèn softbox bên trái\nĐèn softbox bên phải\nMàn hình theo dõi\nGiá treo trang phục\nBàn làm việc\nGhế bàn', 180000, 'giờ', 'phong7.png', 1, 1),
+(16, 'Phòng Luxury', 'phong_chup', 'Không gian sang trọng, đẳng cấp, thích hợp chụp ảnh thời trang.', 'Phông nền trắng\nĐèn softbox bên trái\nĐèn softbox bên phải\nMàn hình theo dõi\nGiá treo trang phục\nBàn dụng cụ', 350000, 'giờ', 'phong8.png', 1, 1),
 (17, 'Streetwear', 'trang_phuc', 'Trang phục phong cách đường phố pha chút cổ điển cực kỳ cá tính và nổi bật.', NULL, 150000, 'lượt', 'bo1.png', 10, 1),
 (18, 'Aesthetic Grunge', 'trang_phuc', 'Trang phục với phong cách Y2K pha chút Vintage Grunge đầy cá tính.', NULL, 180000, 'lượt', 'bo2.png', 10, 1),
 (19, 'Hanbok Hàn Quốc', 'trang_phuc', 'Trang phục Hanbok truyền thống nhiều màu sắc nổi bật.', NULL, 200000, 'lượt', 'bo3.png', 10, 1),
@@ -305,29 +331,72 @@ INSERT INTO `dichvu` (`DV_Ma`, `DV_Ten`, `DV_Loai`, `DV_MoTa`, `DV_MoTaChiTiet`,
 (33, 'Len Canon RF 85mm f/2 Macro', 'phu_kien', 'Len chụp chân dung quốc dân, nhỏ gọn, nét tốt.', NULL, 500000, 'ngày', 'len1.png', 3, 1),
 (34, 'Len Nikon PC-E 45mm f2.8D ED', 'phu_kien', 'Len zoom cao cấp khẩu lớn chuyên nghiệp.', NULL, 400000, 'ngày', 'len2.png', 2, 1),
 (35, 'Len Canon EF 20-35mm f/2.8L USM', 'phu_kien', 'Len chuyên chụp phong cảnh, không gian rộng trong studio.', NULL, 450000, 'ngày', 'len3.png', 2, 1),
-(36, 'Len Fujifilm XF 500mm F5.6 LM', 'phu_kien', 'Len chuyên chụp cận cảnh chi tiết sản phẩm, trang sức.', NULL, 1300000, 'ngày', 'len4.png', 2, 1);
-
---
--- Mô tả riêng các món trong từng phòng.
--- Có thể chạy riêng khối UPDATE này trên CSDL hiện có.
---
-UPDATE `dichvu`
-SET `DV_MoTaChiTiet` = CASE `DV_Ma`
-  WHEN 9 THEN 'Phông nền trắng\nĐèn softbox bên trái\nĐèn softbox bên phải\nĐèn chiếu sáng trên ray trần\nBàn làm việc\nGhế đẩu\nMàn hình theo dõi'
-  WHEN 10 THEN 'Sofa xanh vintage\nBàn trà gỗ\nBàn ăn gỗ\nGhế ăn gỗ\nKhung tranh treo tường\nĐèn tản sáng studio\nRay trượt máy quay'
-  WHEN 11 THEN 'Sofa đen\nBàn trà nhỏ\nThảm khu chụp\nPhông nền trắng\nĐèn softbox\nĐèn đứng studio'
-  WHEN 12 THEN 'Phông nền cuộn trắng\nĐèn softbox\nĐèn tản sáng dạng lưới\nGiàn khung treo đèn\nXe đẩy máy quay\nMàn hình theo dõi'
-  WHEN 13 THEN 'Ghế bành trắng\nBàn đá lớn\nChậu cây trang trí\nKệ trang trí\nPhông nền trắng\nĐèn softbox'
-  WHEN 14 THEN 'Phông nền trắng\nGhế gỗ\nGhế đẩu gỗ\nĐèn softbox bên trái\nĐèn softbox bên phải\nMàn hình theo dõi'
-  WHEN 15 THEN 'Phông nền trắng\nĐèn softbox bên trái\nĐèn softbox bên phải\nMàn hình theo dõi\nGiá treo trang phục\nBàn làm việc\nGhế bàn'
-  WHEN 16 THEN 'Phông nền trắng\nĐèn softbox bên trái\nĐèn softbox bên phải\nMàn hình theo dõi\nGiá treo trang phục\nBàn dụng cụ'
-END
-WHERE `DV_Loai` = 'phong_chup' AND `DV_Ma` IN (9, 10, 11, 12, 13, 14, 15, 16);
+(36, 'Len Fujifilm XF 500mm F5.6 LM', 'phu_kien', 'Len chuyên chụp cận cảnh chi tiết sản phẩm, trang sức.', NULL, 1300000, 'ngày', 'len4.png', 2, 1),
+(37, 'Look 1 - Royal White', 'dich_vu', 'Gói chụp ảnh cưới phong cách hoàng gia thanh lịch tại studio.', 'cuoi1.png,vay1.png,vay2.png,vay3.png,vay4.png,vay5.png', 2500000, 'gói', 'cuoi12.png', 5, 1),
+(38, 'Look 2 - Classic Couple', 'dich_vu', 'Concept chụp đôi cổ điển, nhẹ nhàng và tự nhiên.', 'Bao gồm: Trang phục cô dâu chú rể, makeup tone Hàn Quốc, chụp không giới hạn file tại 2 bối cảnh studio.', 2200000, 'gói', 'cuoi2.png', 5, 1),
+(39, 'Look 3 - European Vintage', 'dich_vu', 'Phong cách cưới châu Âu cổ điển sang trọng.', 'Bao gồm: Váy cưới đuôi cá hoặc xòe bồng, vest tông trầm, hỗ trợ phụ kiện hoa cầm tay và khăn voan.', 2800000, 'gói', 'cuoi3.png', 5, 1),
+(40, 'Look 4 - Modern Confetti', 'dich_vu', 'Concept hiện đại, trẻ trung và rạng rỡ.', 'Bao gồm: Trang phục hiện đại, đạo cụ pháo giấy/hoa tươi, ekip nhiếp ảnh gia và stylist theo sát buổi chụp.', 2400000, 'gói', 'cuoi4.png', 5, 1),
+(41, 'Look 5 - Champagne Toast', 'dich_vu', 'Bối cảnh tiệc rượu sang trọng, ấm cúng.', 'Bao gồm: Bàn tiệc decor sẵn, ly champagne, trang phục dự tiệc/cưới cao cấp và chỉnh màu nghệ thuật.', 2600000, 'gói', 'cuoi5.png', 5, 1),
+(42, 'Look 6 - Luxury Golden', 'dich_vu', 'Concept ánh vàng hoàng gia lộng lẫy.', 'Bao gồm: Bối cảnh đèn chùm pha lê, váy cưới đính kết thủ công, makeup chuyên nghiệp.', 3200000, 'gói', 'cuoi6.png', 5, 1),
+(43, 'Look 7 - Spring Blossom', 'dich_vu', 'Không gian ngập tràn hoa tươi mùa xuân lãng mạn.', 'Bao gồm: Decor hoa tươi theo mùa, 2 bộ trang phục tự chọn, tặng kèm 1 ảnh phóng lớn ép gỗ.', 2700000, 'gói', 'cuoi7.png', 5, 1),
+(44, 'Look 8 - Minimalist White', 'dich_vu', 'Concept chụp ảnh cưới mang phong cách tạp chí thời trang hiện đại, cá tính.', 'Bao gồm: Trang phục cô dâu chú rể thiết kế riêng, makeup tone editorial, chụp tại studio với ánh sáng nghệ thuật.', 2900000, 'gói', 'cuoi8.png', 5, 1),
+(45, 'Mẫu 1 - Váy Cưới 1', 'trang_phuc', 'Trang phục cô dâu & chú rể.', NULL, 180000, 'ngày', 'vay1.png', 10, 1),
+(46, 'Mẫu 2 - Váy Cưới 2', 'trang_phuc', 'Trang phục cô dâu & chú rể.', NULL, 180000, 'ngày', 'vay2.png', 10, 1),
+(47, 'Mẫu 3 - Váy Cưới 3', 'trang_phuc', 'Trang phục cô dâu & chú rể.', NULL, 180000, 'ngày', 'vay3.png', 10, 1),
+(48, 'Mẫu 4 - Váy Cưới 4', 'trang_phuc', 'Trang phục cô dâu & chú rể.', NULL, 180000, 'ngày', 'vay4.png', 10, 1),
+(49, 'Mẫu 5 - Váy Cưới 5', 'trang_phuc', 'Trang phục cô dâu & chú rể.', NULL, 180000, 'ngày', 'vay5.png', 10, 1),
+(50, 'Mẫu 6 - Váy Cưới 6', 'trang_phuc', 'Trang phục cô dâu & chú rể.', NULL, 180000, 'ngày', 'vay6.png', 10, 1),
+(51, 'Mẫu 7 - Váy Cưới 7', 'trang_phuc', 'Trang phục cô dâu & chú rể.', NULL, 180000, 'ngày', 'vay7.png', 10, 1),
+(52, 'Mẫu 8 - Váy Cưới 8', 'trang_phuc', 'Trang phục cô dâu & chú rể.', NULL, 180000, 'ngày', 'vay8.png', 10, 1),
+(53, 'Mẫu 9 - Váy Cưới 9', 'trang_phuc', 'Trang phục cô dâu & chú rể.', NULL, 180000, 'ngày', 'vay9.png', 10, 1),
+(54, 'Mẫu 10 - Váy Cưới 10', 'trang_phuc', 'Trang phục cô dâu & chú rể.', NULL, 180000, 'ngày', 'vay10.png', 10, 1),
+(55, 'Mẫu 11 - Váy Cưới 11', 'trang_phuc', 'Trang phục cô dâu & chú rể.', NULL, 180000, 'ngày', 'vay11.png', 10, 1),
+(56, 'Mẫu 12 - Váy Cưới 12', 'trang_phuc', 'Trang phục cô dâu & chú rể.', NULL, 180000, 'ngày', 'vay12.png', 10, 1),
+(57, 'Áo Dài 1 - Tĩnh Mịch Hoa Loa Kèn', 'trang_phuc', 'Áo dài gấm đỏ sang trọng phù hợp lễ ăn hỏi và chụp ảnh cưới truyền thống.', NULL, 220000, 'gói', 'aodai1.png', 10, 1),
+(58, 'Áo Dài 2 - Thanh Khí Sen Trắng', 'trang_phuc', 'Áo dài lụa trắng tinh khôi, nhẹ nhàng, dễ phối hợp nhiều concept.', NULL, 200000, 'gói', 'aodai2.png', 10, 1),
+(59, 'Áo Dài 3 - Duyên Xanh Bên Quạt', 'trang_phuc', 'Thiết kế áo dài cách tân cổ yếm trẻ trung, tôn dáng và nổi bật.', NULL, 210000, 'gói', 'aodai3.png', 10, 1),
+(60, 'Áo Dài 4 - Sắc Hồng Gia Tiên', 'trang_phuc', 'Áo dài họa tiết hoa sen thêu tinh xảo mang nét đẹp truyền thống Việt Nam.', NULL, 220000, 'gói', 'aodai4.png', 10, 1),
+(61, 'Áo Dài 5 - Nàng Xuân Cổng Cổ', 'trang_phuc', 'Set áo dài đồng điệu dành cho cặp đôi chụp ảnh lễ gia tiên và kỷ niệm.', NULL, 260000, 'gói', 'aodai5.png', 10, 1),
+(62, 'Áo Dài 6 - Khúc Cầm Nón Hoa', 'trang_phuc', 'Tông màu pastel ngọt ngào, nữ tính, phù hợp chụp studio và ngoại cảnh.', NULL, 200000, 'gói', 'aodai6.png', 10, 1),
+(63, 'Áo Dài 7 - Mộng Sen Voan Trắng', 'trang_phuc', 'Chất liệu nhung cao cấp, lên ảnh đằm thắm và quý phái.', NULL, 240000, 'gói', 'aodai7.png', 10, 1),
+(64, 'Áo Dài 8 - Phu Thê Son Sắt', 'trang_phuc', 'Phong cách áo dài cổ điển nhẹ nhàng, hợp concept phố cổ và vintage.', NULL, 210000, 'gói', 'aodai8.png', 10, 1),
+(69, 'Áo Dài 1 - Gấm Đỏ Hoàng Gia', 'trang_phuc', 'Áo dài gấm đỏ sang trọng phù hợp lễ ăn hỏi và chụp ảnh cưới truyền thống.', NULL, 220000, 'gói', 'ao1.png', 10, 1),
+(70, 'Áo Dài 2 - Lụa Trắng Thanh Lịch', 'trang_phuc', 'Áo dài lụa trắng tinh khôi, nhẹ nhàng, dễ phối hợp nhiều concept.', NULL, 200000, 'gói', 'ao2.png', 10, 1),
+(71, 'Áo Dài 3 - Cổ Yếm Cách Tân', 'trang_phuc', 'Thiết kế áo dài cách tân cổ yếm trẻ trung, tôn dáng và nổi bật.', NULL, 210000, 'gói', 'ao3.png', 10, 1),
+(72, 'Áo Dài 4 - Thêu Hoa Sen', 'trang_phuc', 'Áo dài họa tiết hoa sen thêu tinh xảo mang nét đẹp truyền thống Việt Nam.', NULL, 220000, 'gói', 'ao4.png', 10, 1),
+(73, 'Áo Dài 5 - Cặp Đôi Gia Tiên', 'trang_phuc', 'Set áo dài đồng điệu dành cho cặp đôi chụp ảnh lễ gia tiên và kỷ niệm.', NULL, 260000, 'gói', 'ao5.png', 10, 1),
+(74, 'Áo Dài 6 - Pastel Dịu Dàng', 'trang_phuc', 'Tông màu pastel ngọt ngào, nữ tính, phù hợp chụp studio và ngoại cảnh.', NULL, 200000, 'gói', 'ao6.png', 10, 1),
+(75, 'Áo Dài 7 - Nhung Sang Trọng', 'trang_phuc', 'Chất liệu nhung cao cấp, lên ảnh đằm thắm và quý phái.', NULL, 240000, 'gói', 'ao7.png', 10, 1),
+(76, 'Áo Dài 8 - Nàng Thơ Phố Cổ', 'trang_phuc', 'Phong cách áo dài cổ điển nhẹ nhàng, hợp concept phố cổ và vintage.', NULL, 210000, 'gói', 'ao8.png', 10, 1),
+(77, 'Áo Dài 9 - Ren Hoa Tinh Xảo', 'trang_phuc', 'Phối ren hoa thanh thoát, tạo điểm nhấn mềm mại và duyên dáng.', NULL, 230000, 'gói', 'ao9.png', 10, 1),
+(78, 'Áo Dài 10 - Tơ Tằm Ánh Kim', 'trang_phuc', 'Chất liệu tơ tằm bắt sáng nhẹ, sang trọng cho tiệc cưới và lễ hỏi.', NULL, 250000, 'gói', 'ao10.png', 10, 1),
+(79, 'Áo Dài 11 - Ngọc Trai Thanh Tú', 'trang_phuc', 'Đính kết ngọc trai tinh tế, tôn nét dịu dàng của cô dâu.', NULL, 240000, 'gói', 'ao11.png', 10, 1),
+(80, 'Áo Dài 12 - Hoàng Hôn Hiện Đại', 'trang_phuc', 'Form áo dài cách tân hiện đại, dễ di chuyển khi chụp ngoại cảnh.', NULL, 220000, 'gói', 'ao12.png', 10, 1),
+(81, 'Hanbok 1 - Hỷ Phục Gấm Trắng', 'trang_phuc', 'Hanbok cặp đôi trắng kem thêu họa tiết bạc trang nhã trong studio.', NULL, 1200000, 'bộ', 'phuc1.png', 1, 1),
+(82, 'Hanbok 2 - Ánh Trăng Thuần Khiết', 'trang_phuc', 'Hanbok trắng voan kết hợp vương miện và tua rua tinh tế trên nền tối.', NULL, 1200000, 'bộ', 'phuc2.png', 1, 1),
+(83, 'Hanbok 3 - Tím Mộng Nàng Thơ', 'trang_phuc', 'Hanbok cặp đôi sắc hồng phấn và tím nhạt dịu dàng, thanh lịch.', NULL, 1200000, 'bộ', 'phuc3.png', 1, 1),
+(84, 'Hanbok 4 - Sương Mai Thanh Tân', 'trang_phuc', 'Hanbok cặp đôi trắng - xanh pastel nhẹ nhàng, tươi sáng.', NULL, 1200000, 'bộ', 'phuc4.png', 1, 1),
+(85, 'Hanbok 5 - Đào Phai Giao Duyên', 'trang_phuc', 'Hanbok cặp đôi hồng phấn kem nhạt bên bình hoa mùa xuân.', NULL, 1200000, 'bộ', 'phuc5.png', 1, 1),
+(86, 'Hanbok 6 - Xanh Lam Lưu Luyến', 'trang_phuc', 'Hanbok cặp đôi xanh lam thêu bạc thanh thoát cùng nhành hoa xanh.', NULL, 1200000, 'bộ', 'phuc6.png', 1, 1),
+(87, 'Hanbok 7 - Họa Tiết Thủy Mặc', 'trang_phuc', 'Hanbok xanh khói hoa văn cổ điển trên nền tranh hoa mẫu đơn.', NULL, 1200000, 'bộ', 'phuc7.png', 1, 1),
+(88, 'Hanbok 8 - Khổng Tước Hạc Tiên', 'trang_phuc', 'Hanbok cặp đôi họa tiết chim công và hạc sang trọng, đậm nét cổ phong.', NULL, 1200000, 'bộ', 'phuc8.png', 1, 1),
+(89, 'Hanbok 9 - Sơn Thủy Hữu Tình', 'trang_phuc', 'Hanbok cặp đôi thêu hoa hồng pastel giữa núi đồi xanh mát.', NULL, 1200000, 'bộ', 'phuc9.png', 1, 1),
+(90, 'Hanbok 10 - Dạ Khúc Huyền Bí', 'trang_phuc', 'Hanbok cặp đôi sắc xám khói và hồng ngọc trai nổi bật trên nền đen studio.', NULL, 1200000, 'bộ', 'phuc10.png', 1, 1),
+(91, 'Hanbok 11 - Nắng Mai Kiến Trúc', 'trang_phuc', 'Hanbok hồng phấn tay bồng và áo choàng kem thanh thoát bên cầu thang cong trắng.', NULL, 1200000, 'bộ', 'phuc11.png', 1, 1),
+(92, 'Hanbok 12 - Giao Thoa Lịch Lãm', 'trang_phuc', 'Sự kết hợp độc đáo giữa Hanbok cổ truyền và vest tuxedo đen sang trọng.', NULL, 1200000, 'bộ', 'phuc12.png', 1, 1),
+(93, 'Hanbok 1 - Palace Corridor', 'goi_chup', 'Gói chụp Hanbok truyền thống dọc hành lang cung điện cổ kính.', NULL, 3500000, 'gói', 'han1.png', 1, 1),
+(94, 'Hanbok 2 - Traditional Hanok', 'goi_chup', 'Gói chụp Hanbok cặp đôi thanh lịch trước mái ngói cong nhà cổ Hanok.', NULL, 3500000, 'gói', 'han2.png', 1, 1),
+(95, 'Hanbok 3 - Cherry Blossom Palace', 'goi_chup', 'Gói chụp Hanbok cặp đôi sắc xanh - hồng dịu dàng dưới hoa anh đào.', NULL, 3500000, 'gói', 'han3.png', 1, 1),
+(96, 'Hanbok 4 - Winter Snow', 'goi_chup', 'Gói chụp Hanbok đỏ thẫm thêu rồng vàng nổi bật dưới tuyết và ô đỏ.', NULL, 3500000, 'gói', 'han4.png', 1, 1),
+(97, 'Hanbok 5 - Autumn Village', 'goi_chup', 'Gói chụp Hanbok cặp đôi sắc xám - trắng trang nhã khung cảnh thu.', NULL, 3500000, 'gói', 'han5.png', 1, 1),
+(98, 'Hanbok 6 - Royal Pavilion', 'goi_chup', 'Gói chụp Hanbok cặp đôi nắm tay thanh thoát dưới hiên lầu các.', NULL, 3500000, 'gói', 'han6.png', 1, 1),
+(99, 'Hanbok 7 - Traditional Wedding Gate', 'goi_chup', 'Gói chụp Hanbok nghi lễ sắc cam - xanh đậm trước cổng gỗ cổ.', NULL, 3500000, 'gói', 'han7.png', 1, 1),
+(100, 'Hanbok 8 - Outdoor Garden', 'goi_chup', 'Gói chụp Hanbok cặp đôi sang trọng, tinh tế trong không gian sân vườn.', NULL, 3500000, 'gói', 'han8.png', 1, 1);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `dichvu_kichco`
+-- Cấu trúc bảng cho bảng `dichvu_kichco`
 --
 
 CREATE TABLE `dichvu_kichco` (
@@ -339,7 +408,7 @@ CREATE TABLE `dichvu_kichco` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
 
 --
--- Dumping data for table `dichvu_kichco`
+-- Đang đổ dữ liệu cho bảng `dichvu_kichco`
 --
 
 INSERT INTO `dichvu_kichco` (`DVK_Ma`, `DV_Ma`, `DVK_Ten`, `DVK_SoLuong`, `DVK_DangHoatDong`) VALUES
@@ -371,7 +440,7 @@ INSERT INTO `dichvu_kichco` (`DVK_Ma`, `DV_Ma`, `DVK_Ten`, `DVK_SoLuong`, `DVK_D
 -- --------------------------------------------------------
 
 --
--- Table structure for table `dondatlich`
+-- Cấu trúc bảng cho bảng `dondatlich`
 --
 
 CREATE TABLE `dondatlich` (
@@ -406,7 +475,7 @@ CREATE TABLE `dondatlich` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `dondatlich`
+-- Đang đổ dữ liệu cho bảng `dondatlich`
 --
 
 INSERT INTO `dondatlich` (`DDL_Ma`, `ND_Ma`, `DDL_TongTien`, `DDL_MaGiamGia`, `DDL_SoTienGiam`, `DDL_TienCoc`, `DDL_TrangThai`, `NV_Ma`, `DDL_ThoiDiemXuLy`, `DDL_LyDoTuChoi`, `DDL_NgayTao`, `DDL_GhiChu`, `DDL_TenNguoiThue`, `DDL_SDTNguoiThue`, `DDL_CCCD`, `DDL_DiaChi`, `DDL_ThoiDiemHuy`, `DDL_LyDoHuy`, `DDL_TrangThaiHoanTien`, `DDL_SoTienHoan`, `DDL_NganHangHoan`, `DDL_SoTKHoan`, `DDL_ChuTKHoan`, `DDL_ThongTinHoan`, `NV_MaHoanTien`, `DDL_ThoiDiemHoanTien`, `NV_MaHoanThanh`, `DDL_ThoiDiemHoanThanh`) VALUES
@@ -433,7 +502,7 @@ INSERT INTO `dondatlich` (`DDL_Ma`, `ND_Ma`, `DDL_TongTien`, `DDL_MaGiamGia`, `D
 -- --------------------------------------------------------
 
 --
--- Table structure for table `giohang`
+-- Cấu trúc bảng cho bảng `giohang`
 --
 
 CREATE TABLE `giohang` (
@@ -450,7 +519,7 @@ CREATE TABLE `giohang` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `hinhanh`
+-- Cấu trúc bảng cho bảng `hinhanh`
 --
 
 CREATE TABLE `hinhanh` (
@@ -463,7 +532,7 @@ CREATE TABLE `hinhanh` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `lichthue`
+-- Cấu trúc bảng cho bảng `lichthue`
 --
 
 CREATE TABLE `lichthue` (
@@ -476,7 +545,7 @@ CREATE TABLE `lichthue` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
 
 --
--- Dumping data for table `lichthue`
+-- Đang đổ dữ liệu cho bảng `lichthue`
 --
 
 INSERT INTO `lichthue` (`LT_Ma`, `DV_Ma`, `LT_BatDau`, `LT_KetThuc`, `LT_TrangThai`, `LT_HetHanGiu`) VALUES
@@ -652,7 +721,7 @@ INSERT INTO `lichthue` (`LT_Ma`, `DV_Ma`, `LT_BatDau`, `LT_KetThuc`, `LT_TrangTh
 -- --------------------------------------------------------
 
 --
--- Table structure for table `loai_nguoi_dung`
+-- Cấu trúc bảng cho bảng `loai_nguoi_dung`
 --
 
 CREATE TABLE `loai_nguoi_dung` (
@@ -661,7 +730,7 @@ CREATE TABLE `loai_nguoi_dung` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `loai_nguoi_dung`
+-- Đang đổ dữ liệu cho bảng `loai_nguoi_dung`
 --
 
 INSERT INTO `loai_nguoi_dung` (`LND_Ma`, `LND_Ten`) VALUES
@@ -672,7 +741,7 @@ INSERT INTO `loai_nguoi_dung` (`LND_Ma`, `LND_Ten`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `ma_giam_gia`
+-- Cấu trúc bảng cho bảng `ma_giam_gia`
 --
 
 CREATE TABLE `ma_giam_gia` (
@@ -692,7 +761,7 @@ CREATE TABLE `ma_giam_gia` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `ma_giam_gia`
+-- Đang đổ dữ liệu cho bảng `ma_giam_gia`
 --
 
 INSERT INTO `ma_giam_gia` (`MG_Ma`, `MG_Code`, `MG_MoTa`, `MG_Loai`, `MG_GiaTri`, `MG_DonToiThieu`, `MG_GiamToiDa`, `MG_SoLuong`, `MG_DaDung`, `MG_NgayBatDau`, `MG_NgayKetThuc`, `MG_DangHoatDong`, `MG_NgayTao`) VALUES
@@ -702,7 +771,7 @@ INSERT INTO `ma_giam_gia` (`MG_Ma`, `MG_Code`, `MG_MoTa`, `MG_Loai`, `MG_GiaTri`
 -- --------------------------------------------------------
 
 --
--- Table structure for table `nguoidung`
+-- Cấu trúc bảng cho bảng `nguoidung`
 --
 
 CREATE TABLE `nguoidung` (
@@ -719,7 +788,7 @@ CREATE TABLE `nguoidung` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `nguoidung`
+-- Đang đổ dữ liệu cho bảng `nguoidung`
 --
 
 INSERT INTO `nguoidung` (`ND_Ma`, `ND_Ten`, `ND_GioiTinh`, `ND_NgaySinh`, `ND_SDT`, `ND_Email`, `ND_MatKhau`, `ND_TrangThai`, `ND_NgayTao`, `LND_Ma`) VALUES
@@ -733,7 +802,7 @@ INSERT INTO `nguoidung` (`ND_Ma`, `ND_Ten`, `ND_GioiTinh`, `ND_NgaySinh`, `ND_SD
 -- --------------------------------------------------------
 
 --
--- Table structure for table `nhanvien`
+-- Cấu trúc bảng cho bảng `nhanvien`
 --
 
 CREATE TABLE `nhanvien` (
@@ -746,7 +815,7 @@ CREATE TABLE `nhanvien` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `nhanvien`
+-- Đang đổ dữ liệu cho bảng `nhanvien`
 --
 
 INSERT INTO `nhanvien` (`NV_Ma`, `ND_Ma`, `NV_MaNhanVien`, `NV_ChucVu`, `NV_NgayVaoLam`, `NV_TrangThai`) VALUES
@@ -755,24 +824,7 @@ INSERT INTO `nhanvien` (`NV_Ma`, `ND_Ma`, `NV_MaNhanVien`, `NV_ChucVu`, `NV_Ngay
 -- --------------------------------------------------------
 
 --
--- Table structure for table `baocao_huhong`
---
-
-CREATE TABLE `baocao_huhong` (
-  `BCHH_Ma` int(11) NOT NULL,
-  `DV_Ma` int(11) NOT NULL,
-  `NV_Ma` int(11) NOT NULL,
-  `BCHH_BoPhan` varchar(120) DEFAULT NULL,
-  `BCHH_MoTa` text NOT NULL,
-  `BCHH_TrangThai` varchar(30) NOT NULL DEFAULT 'Chờ xử lý',
-  `BCHH_NgayBao` datetime NOT NULL DEFAULT current_timestamp(),
-  `BCHH_NgayCapNhat` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `phongchup`
+-- Cấu trúc bảng cho bảng `phongchup`
 --
 
 CREATE TABLE `phongchup` (
@@ -782,7 +834,7 @@ CREATE TABLE `phongchup` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `phongchup`
+-- Đang đổ dữ liệu cho bảng `phongchup`
 --
 
 INSERT INTO `phongchup` (`DV_Ma`, `PC_SucChua`, `PC_TrangThai`) VALUES
@@ -798,7 +850,7 @@ INSERT INTO `phongchup` (`DV_Ma`, `PC_SucChua`, `PC_TrangThai`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `phukien`
+-- Cấu trúc bảng cho bảng `phukien`
 --
 
 CREATE TABLE `phukien` (
@@ -808,7 +860,7 @@ CREATE TABLE `phukien` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `phukien`
+-- Đang đổ dữ liệu cho bảng `phukien`
 --
 
 INSERT INTO `phukien` (`DV_Ma`, `PK_Loai`, `PK_TinhTrang`) VALUES
@@ -828,7 +880,7 @@ INSERT INTO `phukien` (`DV_Ma`, `PK_Loai`, `PK_TinhTrang`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `thanhtoan`
+-- Cấu trúc bảng cho bảng `thanhtoan`
 --
 
 CREATE TABLE `thanhtoan` (
@@ -843,7 +895,7 @@ CREATE TABLE `thanhtoan` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `thanhtoan`
+-- Đang đổ dữ liệu cho bảng `thanhtoan`
 --
 
 INSERT INTO `thanhtoan` (`TT_Ma`, `DDL_Ma`, `TT_Loai`, `TT_SoTien`, `TT_PhuongThuc`, `TT_MaThamChieu`, `TT_TrangThai`, `TT_ThoiDiem`) VALUES
@@ -872,7 +924,7 @@ INSERT INTO `thanhtoan` (`TT_Ma`, `DDL_Ma`, `TT_Loai`, `TT_SoTien`, `TT_PhuongTh
 -- --------------------------------------------------------
 
 --
--- Table structure for table `thietbi`
+-- Cấu trúc bảng cho bảng `thietbi`
 --
 
 CREATE TABLE `thietbi` (
@@ -882,7 +934,7 @@ CREATE TABLE `thietbi` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `thietbi`
+-- Đang đổ dữ liệu cho bảng `thietbi`
 --
 
 INSERT INTO `thietbi` (`DV_Ma`, `TB_Loai`, `TB_TinhTrang`) VALUES
@@ -898,7 +950,7 @@ INSERT INTO `thietbi` (`DV_Ma`, `TB_Loai`, `TB_TinhTrang`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `trangphuc`
+-- Cấu trúc bảng cho bảng `trangphuc`
 --
 
 CREATE TABLE `trangphuc` (
@@ -908,7 +960,7 @@ CREATE TABLE `trangphuc` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `trangphuc`
+-- Đang đổ dữ liệu cho bảng `trangphuc`
 --
 
 INSERT INTO `trangphuc` (`DV_Ma`, `TP_KichCo`, `TP_TinhTrang`) VALUES
@@ -919,20 +971,41 @@ INSERT INTO `trangphuc` (`DV_Ma`, `TP_KichCo`, `TP_TinhTrang`) VALUES
 (21, 'S, M, L', 'Tốt'),
 (22, 'S, M, L', 'Tốt'),
 (23, 'S, M, L', 'Tốt'),
-(24, 'S, M, L', 'Tốt');
+(24, 'S, M, L', 'Tốt'),
+(69, 'S, M, L', 'Tốt'),
+(70, 'S, M, L', 'Tốt'),
+(71, 'S, M, L', 'Tốt'),
+(72, 'S, M, L', 'Tốt'),
+(73, 'S, M, L', 'Tốt'),
+(74, 'S, M, L', 'Tốt'),
+(75, 'S, M, L', 'Tốt'),
+(76, 'S, M, L', 'Tốt'),
+(77, 'S, M, L', 'Tốt'),
+(78, 'S, M, L', 'Tốt'),
+(79, 'S, M, L', 'Tốt'),
+(80, 'S, M, L', 'Tốt');
 
 --
--- Indexes for dumped tables
+-- Chỉ mục cho các bảng đã đổ
 --
 
 --
--- Indexes for table `cau_hinh`
+-- Chỉ mục cho bảng `baocao_huhong`
+--
+ALTER TABLE `baocao_huhong`
+  ADD PRIMARY KEY (`BCHH_Ma`),
+  ADD KEY `ix_bchh_trangthai_ngay` (`BCHH_TrangThai`,`BCHH_NgayBao`),
+  ADD KEY `ix_bchh_dv` (`DV_Ma`),
+  ADD KEY `fk_bchh_nv` (`NV_Ma`);
+
+--
+-- Chỉ mục cho bảng `cau_hinh`
 --
 ALTER TABLE `cau_hinh`
   ADD PRIMARY KEY (`CH_Khoa`);
 
 --
--- Indexes for table `chat_hoi_thoai`
+-- Chỉ mục cho bảng `chat_hoi_thoai`
 --
 ALTER TABLE `chat_hoi_thoai`
   ADD PRIMARY KEY (`CHT_Ma`),
@@ -941,7 +1014,7 @@ ALTER TABLE `chat_hoi_thoai`
   ADD KEY `idx_cht_trangthai` (`CHT_TrangThai`,`CHT_NgayCapNhat`);
 
 --
--- Indexes for table `chat_tin_nhan`
+-- Chỉ mục cho bảng `chat_tin_nhan`
 --
 ALTER TABLE `chat_tin_nhan`
   ADD PRIMARY KEY (`CTN_Ma`),
@@ -950,7 +1023,7 @@ ALTER TABLE `chat_tin_nhan`
   ADD KEY `idx_ctn_nhanvien` (`NV_Ma`);
 
 --
--- Indexes for table `chitietdon`
+-- Chỉ mục cho bảng `chitietdon`
 --
 ALTER TABLE `chitietdon`
   ADD PRIMARY KEY (`CTD_Ma`),
@@ -958,13 +1031,13 @@ ALTER TABLE `chitietdon`
   ADD KEY `fk_ctd_ddl` (`DDL_Ma`);
 
 --
--- Indexes for table `chitietdon_bophan`
+-- Chỉ mục cho bảng `chitietdon_bophan`
 --
 ALTER TABLE `chitietdon_bophan`
   ADD PRIMARY KEY (`CTD_Ma`,`CTDBP_Ten`);
 
 --
--- Indexes for table `dangnhap_thatbai`
+-- Chỉ mục cho bảng `dangnhap_thatbai`
 --
 ALTER TABLE `dangnhap_thatbai`
   ADD PRIMARY KEY (`DNTB_Ma`),
@@ -972,7 +1045,7 @@ ALTER TABLE `dangnhap_thatbai`
   ADD KEY `idx_ip_tg` (`DNTB_IP`,`DNTB_ThoiGian`);
 
 --
--- Indexes for table `danhgia`
+-- Chỉ mục cho bảng `danhgia`
 --
 ALTER TABLE `danhgia`
   ADD PRIMARY KEY (`DG_Ma`),
@@ -981,14 +1054,14 @@ ALTER TABLE `danhgia`
   ADD KEY `fk_dg_dv` (`DV_Ma`);
 
 --
--- Indexes for table `dichvu`
+-- Chỉ mục cho bảng `dichvu`
 --
 ALTER TABLE `dichvu`
   ADD PRIMARY KEY (`DV_Ma`),
   ADD KEY `ix_dv_loai` (`DV_Loai`,`DV_DangBan`);
 
 --
--- Indexes for table `dichvu_kichco`
+-- Chỉ mục cho bảng `dichvu_kichco`
 --
 ALTER TABLE `dichvu_kichco`
   ADD PRIMARY KEY (`DVK_Ma`),
@@ -996,7 +1069,7 @@ ALTER TABLE `dichvu_kichco`
   ADD KEY `ix_dvk_dv` (`DV_Ma`);
 
 --
--- Indexes for table `dondatlich`
+-- Chỉ mục cho bảng `dondatlich`
 --
 ALTER TABLE `dondatlich`
   ADD PRIMARY KEY (`DDL_Ma`),
@@ -1008,7 +1081,7 @@ ALTER TABLE `dondatlich`
   ADD KEY `ix_ddl_nvhoantien` (`NV_MaHoanTien`);
 
 --
--- Indexes for table `giohang`
+-- Chỉ mục cho bảng `giohang`
 --
 ALTER TABLE `giohang`
   ADD PRIMARY KEY (`GH_Ma`),
@@ -1016,28 +1089,28 @@ ALTER TABLE `giohang`
   ADD KEY `fk_gh_dv` (`DV_Ma`);
 
 --
--- Indexes for table `hinhanh`
+-- Chỉ mục cho bảng `hinhanh`
 --
 ALTER TABLE `hinhanh`
   ADD PRIMARY KEY (`HA_Ma`),
   ADD KEY `fk_ha_dv` (`DV_Ma`);
 
 --
--- Indexes for table `lichthue`
+-- Chỉ mục cho bảng `lichthue`
 --
 ALTER TABLE `lichthue`
   ADD PRIMARY KEY (`LT_Ma`),
   ADD UNIQUE KEY `uq_lt_dv_batdau` (`DV_Ma`,`LT_BatDau`);
 
 --
--- Indexes for table `loai_nguoi_dung`
+-- Chỉ mục cho bảng `loai_nguoi_dung`
 --
 ALTER TABLE `loai_nguoi_dung`
   ADD PRIMARY KEY (`LND_Ma`),
   ADD UNIQUE KEY `uq_lnd_ten` (`LND_Ten`);
 
 --
--- Indexes for table `ma_giam_gia`
+-- Chỉ mục cho bảng `ma_giam_gia`
 --
 ALTER TABLE `ma_giam_gia`
   ADD PRIMARY KEY (`MG_Ma`),
@@ -1045,7 +1118,7 @@ ALTER TABLE `ma_giam_gia`
   ADD KEY `idx_code` (`MG_Code`);
 
 --
--- Indexes for table `nguoidung`
+-- Chỉ mục cho bảng `nguoidung`
 --
 ALTER TABLE `nguoidung`
   ADD PRIMARY KEY (`ND_Ma`),
@@ -1053,7 +1126,7 @@ ALTER TABLE `nguoidung`
   ADD KEY `fk_nd_lnd` (`LND_Ma`);
 
 --
--- Indexes for table `nhanvien`
+-- Chỉ mục cho bảng `nhanvien`
 --
 ALTER TABLE `nhanvien`
   ADD PRIMARY KEY (`NV_Ma`),
@@ -1061,163 +1134,162 @@ ALTER TABLE `nhanvien`
   ADD UNIQUE KEY `uq_nv_ma` (`NV_MaNhanVien`);
 
 --
--- Indexes for table `baocao_huhong`
---
-ALTER TABLE `baocao_huhong`
-  ADD PRIMARY KEY (`BCHH_Ma`),
-  ADD KEY `ix_bchh_trangthai_ngay` (`BCHH_TrangThai`,`BCHH_NgayBao`),
-  ADD KEY `ix_bchh_dv` (`DV_Ma`);
-
---
--- Indexes for table `phongchup`
+-- Chỉ mục cho bảng `phongchup`
 --
 ALTER TABLE `phongchup`
   ADD PRIMARY KEY (`DV_Ma`);
 
 --
--- Indexes for table `phukien`
+-- Chỉ mục cho bảng `phukien`
 --
 ALTER TABLE `phukien`
   ADD PRIMARY KEY (`DV_Ma`);
 
 --
--- Indexes for table `thanhtoan`
+-- Chỉ mục cho bảng `thanhtoan`
 --
 ALTER TABLE `thanhtoan`
   ADD PRIMARY KEY (`TT_Ma`),
   ADD KEY `fk_tt_ddl` (`DDL_Ma`);
 
 --
--- Indexes for table `thietbi`
+-- Chỉ mục cho bảng `thietbi`
 --
 ALTER TABLE `thietbi`
   ADD PRIMARY KEY (`DV_Ma`);
 
 --
--- Indexes for table `trangphuc`
+-- Chỉ mục cho bảng `trangphuc`
 --
 ALTER TABLE `trangphuc`
   ADD PRIMARY KEY (`DV_Ma`);
 
 --
--- AUTO_INCREMENT for dumped tables
+-- AUTO_INCREMENT cho các bảng đã đổ
 --
 
 --
--- AUTO_INCREMENT for table `chat_hoi_thoai`
+-- AUTO_INCREMENT cho bảng `baocao_huhong`
+--
+ALTER TABLE `baocao_huhong`
+  MODIFY `BCHH_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT cho bảng `chat_hoi_thoai`
 --
 ALTER TABLE `chat_hoi_thoai`
   MODIFY `CHT_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT for table `chat_tin_nhan`
+-- AUTO_INCREMENT cho bảng `chat_tin_nhan`
 --
 ALTER TABLE `chat_tin_nhan`
   MODIFY `CTN_Ma` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
 
 --
--- AUTO_INCREMENT for table `chitietdon`
+-- AUTO_INCREMENT cho bảng `chitietdon`
 --
 ALTER TABLE `chitietdon`
   MODIFY `CTD_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
--- AUTO_INCREMENT for table `dangnhap_thatbai`
+-- AUTO_INCREMENT cho bảng `dangnhap_thatbai`
 --
 ALTER TABLE `dangnhap_thatbai`
   MODIFY `DNTB_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT for table `danhgia`
+-- AUTO_INCREMENT cho bảng `danhgia`
 --
 ALTER TABLE `danhgia`
   MODIFY `DG_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT for table `dichvu`
+-- AUTO_INCREMENT cho bảng `dichvu`
 --
 ALTER TABLE `dichvu`
-  MODIFY `DV_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+  MODIFY `DV_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=101;
 
 --
--- AUTO_INCREMENT for table `dichvu_kichco`
+-- AUTO_INCREMENT cho bảng `dichvu_kichco`
 --
 ALTER TABLE `dichvu_kichco`
   MODIFY `DVK_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
--- AUTO_INCREMENT for table `dondatlich`
+-- AUTO_INCREMENT cho bảng `dondatlich`
 --
 ALTER TABLE `dondatlich`
   MODIFY `DDL_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
--- AUTO_INCREMENT for table `giohang`
+-- AUTO_INCREMENT cho bảng `giohang`
 --
 ALTER TABLE `giohang`
   MODIFY `GH_Ma` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `hinhanh`
+-- AUTO_INCREMENT cho bảng `hinhanh`
 --
 ALTER TABLE `hinhanh`
   MODIFY `HA_Ma` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `lichthue`
+-- AUTO_INCREMENT cho bảng `lichthue`
 --
 ALTER TABLE `lichthue`
   MODIFY `LT_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=225;
 
 --
--- AUTO_INCREMENT for table `loai_nguoi_dung`
+-- AUTO_INCREMENT cho bảng `loai_nguoi_dung`
 --
 ALTER TABLE `loai_nguoi_dung`
   MODIFY `LND_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT for table `ma_giam_gia`
+-- AUTO_INCREMENT cho bảng `ma_giam_gia`
 --
 ALTER TABLE `ma_giam_gia`
   MODIFY `MG_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT for table `nguoidung`
+-- AUTO_INCREMENT cho bảng `nguoidung`
 --
 ALTER TABLE `nguoidung`
   MODIFY `ND_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT for table `nhanvien`
+-- AUTO_INCREMENT cho bảng `nhanvien`
 --
 ALTER TABLE `nhanvien`
   MODIFY `NV_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `baocao_huhong`
---
-ALTER TABLE `baocao_huhong`
-  MODIFY `BCHH_Ma` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `thanhtoan`
+-- AUTO_INCREMENT cho bảng `thanhtoan`
 --
 ALTER TABLE `thanhtoan`
   MODIFY `TT_Ma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
--- Constraints for dumped tables
+-- Các ràng buộc cho các bảng đã đổ
 --
 
 --
--- Constraints for table `chat_hoi_thoai`
+-- Các ràng buộc cho bảng `baocao_huhong`
+--
+ALTER TABLE `baocao_huhong`
+  ADD CONSTRAINT `fk_bchh_dv` FOREIGN KEY (`DV_Ma`) REFERENCES `dichvu` (`DV_Ma`),
+  ADD CONSTRAINT `fk_bchh_nv` FOREIGN KEY (`NV_Ma`) REFERENCES `nhanvien` (`NV_Ma`);
+
+--
+-- Các ràng buộc cho bảng `chat_hoi_thoai`
 --
 ALTER TABLE `chat_hoi_thoai`
   ADD CONSTRAINT `fk_cht_nguoidung` FOREIGN KEY (`ND_Ma`) REFERENCES `nguoidung` (`ND_Ma`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_cht_nhanvien` FOREIGN KEY (`NV_Ma`) REFERENCES `nhanvien` (`NV_Ma`) ON DELETE SET NULL;
 
 --
--- Constraints for table `chat_tin_nhan`
+-- Các ràng buộc cho bảng `chat_tin_nhan`
 --
 ALTER TABLE `chat_tin_nhan`
   ADD CONSTRAINT `fk_ctn_hoithoai` FOREIGN KEY (`CHT_Ma`) REFERENCES `chat_hoi_thoai` (`CHT_Ma`) ON DELETE CASCADE,
@@ -1225,20 +1297,20 @@ ALTER TABLE `chat_tin_nhan`
   ADD CONSTRAINT `fk_ctn_nhanvien` FOREIGN KEY (`NV_Ma`) REFERENCES `nhanvien` (`NV_Ma`) ON DELETE SET NULL;
 
 --
--- Constraints for table `chitietdon`
+-- Các ràng buộc cho bảng `chitietdon`
 --
 ALTER TABLE `chitietdon`
   ADD CONSTRAINT `fk_ctd_ddl` FOREIGN KEY (`DDL_Ma`) REFERENCES `dondatlich` (`DDL_Ma`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_ctd_dv` FOREIGN KEY (`DV_Ma`) REFERENCES `dichvu` (`DV_Ma`);
 
 --
--- Constraints for table `chitietdon_bophan`
+-- Các ràng buộc cho bảng `chitietdon_bophan`
 --
 ALTER TABLE `chitietdon_bophan`
   ADD CONSTRAINT `fk_ctdbp_ctd` FOREIGN KEY (`CTD_Ma`) REFERENCES `chitietdon` (`CTD_Ma`) ON DELETE CASCADE;
 
 --
--- Constraints for table `danhgia`
+-- Các ràng buộc cho bảng `danhgia`
 --
 ALTER TABLE `danhgia`
   ADD CONSTRAINT `fk_dg_ddl` FOREIGN KEY (`DDL_Ma`) REFERENCES `dondatlich` (`DDL_Ma`) ON DELETE CASCADE,
@@ -1246,13 +1318,13 @@ ALTER TABLE `danhgia`
   ADD CONSTRAINT `fk_dg_nd` FOREIGN KEY (`ND_Ma`) REFERENCES `nguoidung` (`ND_Ma`);
 
 --
--- Constraints for table `dichvu_kichco`
+-- Các ràng buộc cho bảng `dichvu_kichco`
 --
 ALTER TABLE `dichvu_kichco`
   ADD CONSTRAINT `fk_dvk_dv` FOREIGN KEY (`DV_Ma`) REFERENCES `dichvu` (`DV_Ma`) ON DELETE CASCADE;
 
 --
--- Constraints for table `dondatlich`
+-- Các ràng buộc cho bảng `dondatlich`
 --
 ALTER TABLE `dondatlich`
   ADD CONSTRAINT `fk_ddl_nd` FOREIGN KEY (`ND_Ma`) REFERENCES `nguoidung` (`ND_Ma`),
@@ -1261,69 +1333,62 @@ ALTER TABLE `dondatlich`
   ADD CONSTRAINT `fk_ddl_nv_ht` FOREIGN KEY (`NV_MaHoanThanh`) REFERENCES `nhanvien` (`NV_Ma`);
 
 --
--- Constraints for table `giohang`
+-- Các ràng buộc cho bảng `giohang`
 --
 ALTER TABLE `giohang`
   ADD CONSTRAINT `fk_gh_dv` FOREIGN KEY (`DV_Ma`) REFERENCES `dichvu` (`DV_Ma`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_gh_nd` FOREIGN KEY (`ND_Ma`) REFERENCES `nguoidung` (`ND_Ma`) ON DELETE CASCADE;
 
 --
--- Constraints for table `hinhanh`
+-- Các ràng buộc cho bảng `hinhanh`
 --
 ALTER TABLE `hinhanh`
   ADD CONSTRAINT `fk_ha_dv` FOREIGN KEY (`DV_Ma`) REFERENCES `dichvu` (`DV_Ma`) ON DELETE CASCADE;
 
 --
--- Constraints for table `lichthue`
+-- Các ràng buộc cho bảng `lichthue`
 --
 ALTER TABLE `lichthue`
   ADD CONSTRAINT `fk_lt_dv` FOREIGN KEY (`DV_Ma`) REFERENCES `dichvu` (`DV_Ma`) ON DELETE CASCADE;
 
 --
--- Constraints for table `nguoidung`
+-- Các ràng buộc cho bảng `nguoidung`
 --
 ALTER TABLE `nguoidung`
   ADD CONSTRAINT `fk_nd_lnd` FOREIGN KEY (`LND_Ma`) REFERENCES `loai_nguoi_dung` (`LND_Ma`);
 
 --
--- Constraints for table `nhanvien`
+-- Các ràng buộc cho bảng `nhanvien`
 --
 ALTER TABLE `nhanvien`
   ADD CONSTRAINT `fk_nv_nd` FOREIGN KEY (`ND_Ma`) REFERENCES `nguoidung` (`ND_Ma`);
 
 --
--- Constraints for table `baocao_huhong`
---
-ALTER TABLE `baocao_huhong`
-  ADD CONSTRAINT `fk_bchh_dv` FOREIGN KEY (`DV_Ma`) REFERENCES `dichvu` (`DV_Ma`),
-  ADD CONSTRAINT `fk_bchh_nv` FOREIGN KEY (`NV_Ma`) REFERENCES `nhanvien` (`NV_Ma`);
-
---
--- Constraints for table `phongchup`
+-- Các ràng buộc cho bảng `phongchup`
 --
 ALTER TABLE `phongchup`
   ADD CONSTRAINT `fk_pc_dv` FOREIGN KEY (`DV_Ma`) REFERENCES `dichvu` (`DV_Ma`) ON DELETE CASCADE;
 
 --
--- Constraints for table `phukien`
+-- Các ràng buộc cho bảng `phukien`
 --
 ALTER TABLE `phukien`
   ADD CONSTRAINT `fk_pk_dv` FOREIGN KEY (`DV_Ma`) REFERENCES `dichvu` (`DV_Ma`) ON DELETE CASCADE;
 
 --
--- Constraints for table `thanhtoan`
+-- Các ràng buộc cho bảng `thanhtoan`
 --
 ALTER TABLE `thanhtoan`
   ADD CONSTRAINT `fk_tt_ddl` FOREIGN KEY (`DDL_Ma`) REFERENCES `dondatlich` (`DDL_Ma`) ON DELETE CASCADE;
 
 --
--- Constraints for table `thietbi`
+-- Các ràng buộc cho bảng `thietbi`
 --
 ALTER TABLE `thietbi`
   ADD CONSTRAINT `fk_tb_dv` FOREIGN KEY (`DV_Ma`) REFERENCES `dichvu` (`DV_Ma`) ON DELETE CASCADE;
 
 --
--- Constraints for table `trangphuc`
+-- Các ràng buộc cho bảng `trangphuc`
 --
 ALTER TABLE `trangphuc`
   ADD CONSTRAINT `fk_tp_dv` FOREIGN KEY (`DV_Ma`) REFERENCES `dichvu` (`DV_Ma`) ON DELETE CASCADE;

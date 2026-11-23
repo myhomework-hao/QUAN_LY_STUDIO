@@ -141,6 +141,8 @@ function ten_loai_dich_vu(string $loai): string
         'thiet_bi' => 'Máy ảnh - thiết bị',
         'trang_phuc' => 'Trang phục',
         'phu_kien' => 'Phụ kiện - đạo cụ',
+        'dich_vu' => 'Gói chụp ảnh cưới',
+        'goi_chup' => 'Gói chụp Hanbok',
     ][$loai] ?? $loai;
 }
 
