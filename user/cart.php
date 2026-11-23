@@ -24,6 +24,31 @@ function so_luong_toi_da(PDO $conn, int $ma_dich_vu): int
     return $so === false ? 0 : min(SO_LUONG_TOI_DA_MOI_DICH_VU, (int) $so);
 }
 
+function co_cau_hinh_size_db(PDO $conn, int $ma_dich_vu): bool
+{
+    try {
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM dichvu_kichco WHERE DV_Ma = ? AND DVK_DangHoatDong = 1");
+        $stmt->execute([$ma_dich_vu]);
+        return (int) $stmt->fetchColumn() > 0;
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+// Chuẩn hóa danh sách trang phục về tối đa 2 mẫu, phân cách bằng "|".
+function chuan_hoa_ds_trang_phuc(string $raw, bool $chi_so = false): string
+{
+    $phan = preg_split('/[,|]/', $raw) ?: [];
+    $phan = array_values(array_filter(array_map('trim', $phan), 'strlen'));
+    if ($chi_so) {
+        $phan = array_values(array_filter($phan, static function ($giatri) {
+            return ctype_digit($giatri) && (int) $giatri > 0;
+        }));
+    }
+    $phan = array_values(array_unique($phan));
+    return implode('|', array_slice($phan, 0, 2));
+}
+
 // Gợi ý món còn thiếu để đủ điều kiện combo, kèm liên kết lọc đúng loại ở trang sản phẩm.
 function goi_y_combo(array $cart_items): array
 {
@@ -100,12 +125,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $dv = $stmt->fetch(PDO::FETCH_ASSOC);
         }
         
-        // Bắt dữ liệu ngày và giờ gửi lên từ form
-        $ngay_nhan = trim((string) ($_POST['ngay_nhan'] ?? ''));
-        $gio_nhan  = trim((string) ($_POST['gio_nhan'] ?? '08:00'));
-        $ngay_tra  = trim((string) ($_POST['ngay_tra'] ?? ''));
-        $gio_tra   = trim((string) ($_POST['gio_tra'] ?? '17:00'));
-        $kich_co   = trim((string) ($_POST['kich_co'] ?? ''));
+        // Bắt dữ liệu ngày, giờ, size và trang phục gửi lên từ form
+        $ngay_nhan      = trim((string) ($_POST['ngay_nhan'] ?? ''));
+        $gio_nhan       = trim((string) ($_POST['gio_nhan'] ?? '08:00'));
+        $ngay_tra       = trim((string) ($_POST['ngay_tra'] ?? ''));
+        $gio_tra        = trim((string) ($_POST['gio_tra'] ?? '17:00'));
+        $kich_co_nu     = trim((string) ($_POST['kich_co_nu'] ?? ''));
+        $kich_co_nam    = trim((string) ($_POST['kich_co_nam'] ?? ''));
+        $kich_co        = trim((string) ($_POST['kich_co'] ?? ''));
+        if ($kich_co === '') {
+            $parts_sz = [];
+            if ($kich_co_nu !== '') $parts_sz[] = 'Nữ: ' . $kich_co_nu;
+            if ($kich_co_nam !== '') $parts_sz[] = 'Nam: ' . $kich_co_nam;
+            $kich_co = implode(' | ', $parts_sz);
+        }
+        $trang_phuc_id  = chuan_hoa_ds_trang_phuc(trim((string) ($_POST['trang_phuc_id'] ?? '')), true);
+        $trang_phuc_anh = chuan_hoa_ds_trang_phuc(trim((string) ($_POST['trang_phuc'] ?? '')));
+        $trang_phuc_ten = chuan_hoa_ds_trang_phuc(trim((string) ($_POST['trang_phuc_ten'] ?? '')));
+
+        // Nếu form không truyền ngày nhận (VD: trang gói cưới service-detail-view.php), tự động lấy ngày mai
+        $tu_dong_ngay = ($ngay_nhan === '');
+        if ($tu_dong_ngay) {
+            $ngay_mac_dinh = date('Y-m-d', strtotime('+1 day'));
+            $ngay_nhan = $ngay_mac_dinh;
+            $gio_nhan  = '08:00';
+            $ngay_tra  = $ngay_mac_dinh;
+            $gio_tra   = '17:00';
+        }
 
         // Kiểm tra nếu là dịch vụ tính theo lượt thì gộp thời gian theo 1 mốc, ngược lại theo khoảng thời gian nhận/trả
         $don_vi_tinh = chuan_hoa_don_vi((string) ($dv['DV_DonViTinh'] ?? 'ngay'));
@@ -131,24 +177,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['thong_bao_dat'] = 'Dịch vụ này hiện không còn nhận thuê.';
         } elseif ($tg === null) {
             $_SESSION['thong_bao_dat'] = 'Vui lòng chọn thời gian nhận và trả hợp lệ.';
-        } elseif (strtotime($tg['bat_dau']) <= time()) {
+        } elseif (!$tu_dong_ngay && strtotime($tg['bat_dau']) <= time()) {
             $_SESSION['thong_bao_dat'] = 'Thời gian nhận đã qua, vui lòng chọn khung giờ khác.';
-        } elseif (strtotime($tg['ket_thuc']) <= time()) {
+        } elseif (!$tu_dong_ngay && strtotime($tg['ket_thuc']) <= time()) {
             $_SESSION['thong_bao_dat'] = 'Thời gian thuê đã qua, vui lòng chọn lại.';
         } else {
-            // Tạo khóa riêng cho từng sản phẩm + size + khung giờ.
+            // Tạo khóa riêng cho từng sản phẩm + size + trang phục + khung giờ.
             // Nhờ vậy đặt cùng dịch vụ ở hai khung giờ khác nhau sẽ không ghi đè nhau.
             $khoa_thoi_gian = substr(md5($tg['bat_dau'] . '|' . $tg['ket_thuc']), 0, 10);
-            $cart_key = $ma . ($kich_co !== '' ? '_' . $kich_co : '') . '_' . $khoa_thoi_gian;
+            $khoa_tp = $trang_phuc_id !== '' ? '_tp' . md5($trang_phuc_id) : '';
+            $cart_key = $ma . ($kich_co !== '' ? '_' . $kich_co : '') . $khoa_tp . '_' . $khoa_thoi_gian;
 
             $da_co = is_array($_SESSION['cart'][$cart_key] ?? null) ? (int) ($_SESSION['cart'][$cart_key]['qty'] ?? 0) : 0;
             
             $_SESSION['cart'][$cart_key] = [
-                'id' => $ma,
-                'qty' => min($toi_da, max(1, $da_co + $so_luong)),
-                'bat_dau' => $tg['bat_dau'],
-                'ket_thuc' => $tg['ket_thuc'],
-                'kich_co' => $kich_co,
+                'id'             => $ma,
+                'qty'            => min($toi_da, max(1, $da_co + $so_luong)),
+                'bat_dau'        => $tg['bat_dau'],
+                'ket_thuc'       => $tg['ket_thuc'],
+                'kich_co'        => $kich_co,
+                'kich_co_nu'     => $kich_co_nu,
+                'kich_co_nam'    => $kich_co_nam,
+                'trang_phuc_id'  => $trang_phuc_id !== '' ? $trang_phuc_id : null,
+                'trang_phuc_anh' => $trang_phuc_anh,
+                'trang_phuc_ten' => $trang_phuc_ten,
             ];
             $_SESSION['thong_bao_dat'] = 'Đã thêm dịch vụ vào giỏ hàng.';
         }
@@ -230,7 +282,13 @@ foreach ($cart_items as $k => $item) {
         $cart_items[$k]['canh_bao'] = 'Thời gian thuê không hợp lệ hoặc đã qua, vui lòng xóa và chọn lại.';
     } else {
         try {
-            kiem_tra_con_cho($conn, (int) $item['id'], $item['ten'], $tg['bat_dau'], $tg['ket_thuc'], (int) $item['qty'], (string) $item['kich_co']);
+            $ma_item = (int) $item['id'];
+            $sz_check = (string) ($item['kich_co'] ?? '');
+            // Gói Hanbok (ID 93..100) hoặc dịch vụ không có dòng size trong dichvu_kichco thì không kiểm tra size theo DV_Ma của gói
+            if (($ma_item >= 93 && $ma_item <= 100) || !co_cau_hinh_size_db($conn, $ma_item)) {
+                $sz_check = '';
+            }
+            kiem_tra_con_cho($conn, $ma_item, $item['ten'], $tg['bat_dau'], $tg['ket_thuc'], (int) $item['qty'], $sz_check);
         } catch (DomainException $e) {
             $cart_items[$k]['canh_bao'] = $e->getMessage();
         }
@@ -279,7 +337,31 @@ require_once '../includes/header.php';
                         <a href="services.php" class="btn-dark">XEM DỊCH VỤ</a>
                     </div>
                 <?php else : ?>
-                    <?php foreach ($cart_items as $item) : $toi_da = max(1, min(SO_LUONG_TOI_DA_MOI_DICH_VU, (int) $item['so_luong'])); ?>
+                    <?php foreach ($cart_items as $item) :
+                        $toi_da = max(1, min(SO_LUONG_TOI_DA_MOI_DICH_VU, (int) $item['so_luong']));
+                        $tp_id  = (string) ($item['trang_phuc_id'] ?? '');
+                        $tp_anh = (string) ($item['trang_phuc_anh'] ?? '');
+                        $tp_ten = (string) ($item['trang_phuc_ten'] ?? '');
+
+                        // Giỏ cũ chỉ có id: tra cứu tên trong CSDL để hiển thị lại cho thân thiện.
+                        if ($tp_ten === '' && $tp_id !== '') {
+                            $ten_tim = [];
+                            foreach (explode('|', $tp_id) as $ma_tp) {
+                                $ma_tp = (int) $ma_tp;
+                                if ($ma_tp <= 0) {
+                                    continue;
+                                }
+                                $stmt_tp = $conn->prepare("SELECT DV_Ten FROM dichvu WHERE DV_Ma = ?");
+                                $stmt_tp->execute([$ma_tp]);
+                                $ten = (string) ($stmt_tp->fetchColumn() ?: '');
+                                if ($ten !== '') {
+                                    $ten_tim[] = $ten;
+                                }
+                            }
+                            $tp_ten = implode('|', $ten_tim);
+                        }
+                        $tp_hien_thi = str_replace('|', ' + ', $tp_ten !== '' ? $tp_ten : $tp_anh);
+                    ?>
                         <div class="cart-row">
                             <img src="<?= htmlspecialchars(duong_dan_anh($item['anh'] ?: 'default.png')) ?>" alt="<?= htmlspecialchars($item['ten']) ?>">
                             <div>
@@ -298,6 +380,12 @@ require_once '../includes/header.php';
                                             → <?= htmlspecialchars(dinh_dang_ngay_gio($item['tg']['ket_thuc'])) ?>
                                         <?php endif; ?>
                                         (<?= (int) $item['so_don_vi'] ?> <?= htmlspecialchars(ten_don_vi_gio_hang((string) $item['don_vi'])) ?>)
+                                    </p>
+                                <?php endif; ?>
+
+                                <?php if ($tp_hien_thi !== '') : ?>
+                                    <p class="unit" style="font-size:12px; color:#333; margin-top:4px;">
+                                        Trang phục chọn: <strong><?= htmlspecialchars($tp_hien_thi) ?></strong>
                                     </p>
                                 <?php endif; ?>
 
