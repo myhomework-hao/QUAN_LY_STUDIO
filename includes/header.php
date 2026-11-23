@@ -86,6 +86,7 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
         <nav class="navbar">
             <a href="<?= BASE_URL ?>index.php" class="<?= $trang_hien_tai === 'trang-chu' ? 'active' : '' ?>">TRANG CHỦ</a>
             <a href="<?= BASE_URL ?>user/services.php" class="<?= $trang_hien_tai === 'san-pham' ? 'active' : '' ?>">SẢN PHẨM</a>
+            <a href="<?= BASE_URL ?>user/dich-vu.php" class="<?= $trang_hien_tai === 'dich-vu' ? 'active' : '' ?>">DỊCH VỤ</a>
             <a href="<?= BASE_URL ?>user/policy.php" class="<?= $trang_hien_tai === 'chinh-sach' ? 'active' : '' ?>">CHÍNH SÁCH</a>
         </nav>
  
@@ -114,4 +115,4 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
  
 <script>
     const IS_LOGGED_IN = <?= !empty($_SESSION['user_id']) ? 'true' : 'false' ?>;
-</script>     
+</script>
