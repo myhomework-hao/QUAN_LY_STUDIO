@@ -13,7 +13,7 @@ $js_rieng = ['assets/js/homepage.js?v=' . time()];
 $ten_danh_muc_theo_loai = [
     'thiet_bi'   => 'Máy ảnh - thiết bị',
     'phong_chup' => 'Chỗ chụp ảnh',
-    'trang_phuc' => 'Bộ đồ',
+    'trang_phuc' => 'Trang phục',
     'phu_kien'   => 'Phụ kiện - đạo cụ',
 ];
 
@@ -56,14 +56,14 @@ require_once __DIR__ . '/includes/header.php';
                 YOUR <i>VIBE.</i>
             </h1>
             <p class="hero-description">
-                Chúng tôi biến những khoảnh khắc của bạn
-                thành những hình ảnh đáng nhớ.
+                Cho thuê máy ảnh, phòng chụp ảnh, trang phục và thiết bị quay/chụp —
+                mọi thứ bạn cần cho buổi sáng tạo.
             </p>
             <a href="#products" class="main-button">XEM SẢN PHẨM</a>
         </div>
 
         <div class="hero-image">
-            <img src="https://images.unsplash.com/photo-1554048612-b6a482bc67e5?auto=format&fit=crop&w=1200&q=80" alt="VIBE Studio">
+            <img src="<?= BASE_URL ?>assets/uploads/phong1.png" alt="Không gian studio cho thuê máy ảnh, trang phục và thiết bị chụp ảnh">
         </div>
     </section>
 
@@ -106,7 +106,7 @@ require_once __DIR__ . '/includes/header.php';
                 <a href="<?= BASE_URL ?>user/services.php?loai=trang_phuc" class="service-item">
                     <span>03</span>
                     <div>
-                        <h3>BỘ ĐỒ</h3>
+                        <h3>TRANG PHỤC</h3>
                         <p>Trang phục cho chân dung, couple, sự kiện và lookbook.</p>
                     </div>
                     <strong>↗</strong>
